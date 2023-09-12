@@ -1,0 +1,15 @@
+[submodule "graphquery/external/googletest"]
+	path = graphquery/external/googletest
+	url = https://github.com/google/googletest.git
+[submodule "graphquery/external/glew"]
+	path = graphquery/external/glew
+	url = https://github.com/Perlmint/glew-cmake.git
+[submodule "graphquery/external/imgui"]
+	path = graphquery/external/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "graphquery/external/fmt"]
+	path = graphquery/external/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "graphquery/external/glfw"]
+	path = graphquery/external/glfw
+	url = https://github.com/glfw/glfw.git
