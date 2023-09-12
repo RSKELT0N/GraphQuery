@@ -1,0 +1,64 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+     "major": 3,
+     "minor": 23,
+     "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "unix_release",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/unix/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "ENABLE_TESTING": "OFF",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "unix_debug",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/unix/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "ENABLE_TESTING": "ON",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "unix_release_ninja",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/unix/release",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "ENABLE_TESTING": "OFF",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "unix_debug_ninja",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/unix/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "ENABLE_TESTING": "ON",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "unix_release",
+            "configurePreset": "unix_release"
+        },
+        {
+            "name": "unix_debug",
+            "configurePreset": "unix_debug"
+        }
+    ]
+  }

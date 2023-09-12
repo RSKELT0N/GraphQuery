@@ -9,27 +9,27 @@ project(
         LANGUAGES C CXX)
 
 # Only perform if this is the root project
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR) 
-  set(SOURCE_FOLDER core)
-  set(TESTS_FOLDER tests)
-  set(EXECUTABLE_NAME graph-query)			# Define executable name for project
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  set(PROJECT_ROOT graphquery)
+  set(SOURCE_FOLDER ${PROJECT_ROOT}/core)
+  set(TESTS_FOLDER ${PROJECT_ROOT}/tests)
 
-#  set(CMAKE_CXX_EXTENSIONS off)            # Ensures -std=c++xx is provided, rather than -std=g++xx
   set(CMAKE_CXX_STANDARD 20)                # Define the C++ standard
   message("-- C++ standard is set to -std=c++${CMAKE_CXX_STANDARD}")
 
+  set(EXECUTABLE_NAME graph-query)			# Define executable name for project
+
 # add submodules
-  add_subdirectory(external/googletest)
-  add_subdirectory(external/fmtlib)
-  add_subdirectory(external/glfw)
-  add_subdirectory(external/glew-cmake)
-  add_subdirectory(external)
+  add_subdirectory(${PROJECT_ROOT}/external/googletest)
+  add_subdirectory(${PROJECT_ROOT}/external/fmtlib)
+  add_subdirectory(${PROJECT_ROOT}/external/glfw)
+  add_subdirectory(${PROJECT_ROOT}/external/glew-cmake)
+  add_subdirectory(${PROJECT_ROOT}/external)
 
 # source
   add_subdirectory(${SOURCE_FOLDER})
 
-  option(PACKAGE_TESTS "Build the tests" ON)
-  if(PACKAGE_TESTS)
+  if(CMAKE_TESTING_ENABLED)
     enable_testing()
     add_subdirectory(${TESTS_FOLDER})
   endif()

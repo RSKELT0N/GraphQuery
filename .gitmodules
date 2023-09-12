@@ -1,16 +1,16 @@
-[submodule "external/googletest"]
-	path = external/googletest
+[submodule "graphquery/external/googletest"]
+	path = graphquery/external/googletest
 	url = https://github.com/google/googletest.git
-[submodule "external/fmtlib"]
-	path = external/fmtlib
+[submodule "graphquery/external/fmtlib"]
+	path = graphquery/external/fmtlib
 	url = https://github.com/fmtlib/fmt.git
-[submodule "external/glfw"]
-	path = external/glfw
+[submodule "graphquery/external/glfw"]
+	path = graphquery/external/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "external/glew-cmake"]
-	path = external/glew-cmake
+[submodule "graphquery/external/glew-cmake"]
+	path = graphquery/external/glew-cmake
 	url = https://github.com/Perlmint/glew-cmake.git
-[submodule "external/imgui"]
-	path = external/imgui
+[submodule "graphquery/external/imgui"]
+	path = graphquery/external/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
