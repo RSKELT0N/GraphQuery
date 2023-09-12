@@ -7,18 +7,26 @@ find_package(OpenGL REQUIRED)
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/imgui/)
 
 # Retrieve source files, under SOURCE_FOLDER
-file(GLOB SOURCES ${SOURCE_DIR}/*.cpp
-                  ${SOURCE_DIR}/backends/imgui_impl_glfw.cpp
-                  ${SOURCE_DIR}/backends/imgui_impl_opengl3.cpp)
+file(GLOB_RECURSE
+		SOURCES
+		${SOURCE_DIR}/*.cpp
+		${SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+		${SOURCE_DIR}/backends/imgui_impl_opengl3.cpp)
 
 # Add files for compilation.
-add_library(imgui STATIC ${SOURCES})
+add_library(imgui
+		STATIC
+		${SOURCES})
 
 # Link the following librariies
-target_link_libraries(imgui PUBLIC libglew_static
-                                   glfw
-                                   OpenGL::GL)
+target_link_libraries(imgui
+		PUBLIC
+		libglew_static
+		glfw
+		OpenGL::GL)
 
 # Add program include directories
-target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui/
-										${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends)
+target_include_directories(imgui
+		PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}/imgui/
+		${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends)

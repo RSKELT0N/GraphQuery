@@ -2,14 +2,14 @@
 cmake_minimum_required(VERSION 3.17)
 
 # Project declaration of base project.
-project(
-        GraphQuery
+project(GraphQuery
         VERSION 0.1
-		    DESCRIPTION "A graph database to represent vertices and edges."
+        DESCRIPTION "A graph database to represent vertices and edges."
         LANGUAGES C CXX)
 
 # Only perform if this is the root project
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+
   set(PROJECT_ROOT graphquery)
   set(SOURCE_FOLDER ${PROJECT_ROOT}/core)
   set(TESTS_FOLDER ${PROJECT_ROOT}/tests)

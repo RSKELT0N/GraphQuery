@@ -1,12 +1,20 @@
-# TITLE #
-## DESCRIPTION
+# GraphQuery #
+*A graph database to represent edges between nodes
+that hold properties and information renered through a GUI application..*
 
-```
-Default README.md file for C-CPP-Base-Project.
-```
+## Build and compile project
 
+
+### Build project
+```
+cmake --list-presets                            ; View available presets
+cmake --preset [preset] -B [build_directory]    ; Build project with defined preset
+```
 ### Compile
 ```
-cmake -B [build_folder]
-cmake --build [build_folder]
+cmake --build [build_directory]
+```
+### Clean project
+```
+rm -rf [build_directory]
 ```
