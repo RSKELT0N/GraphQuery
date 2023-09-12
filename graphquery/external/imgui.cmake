@@ -7,11 +7,11 @@ find_package(OpenGL REQUIRED)
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/imgui/)
 
 # Retrieve source files, under SOURCE_FOLDER
-file(GLOB_RECURSE
-		SOURCES
-		${SOURCE_DIR}/*.cpp
-		${SOURCE_DIR}/backends/imgui_impl_glfw.cpp
-		${SOURCE_DIR}/backends/imgui_impl_opengl3.cpp)
+file(GLOB
+	SOURCES
+	${SOURCE_DIR}/*.cpp
+	${SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+	${SOURCE_DIR}/backends/imgui_impl_opengl3.cpp)
 
 # Add files for compilation.
 add_library(imgui

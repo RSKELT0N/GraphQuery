@@ -31,7 +31,7 @@
         {
             "name": "unix_release_ninja",
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/unix/release",
+            "binaryDir": "${sourceDir}/build/unix/ninja/release",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "ENABLE_TESTING": "OFF",
@@ -42,7 +42,7 @@
         {
             "name": "unix_debug_ninja",
             "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build/unix/debug",
+            "binaryDir": "${sourceDir}/build/unix/ninja/debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "ENABLE_TESTING": "ON",

@@ -21,9 +21,9 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
 # add submodules
   add_subdirectory(${PROJECT_ROOT}/external/googletest)
-  add_subdirectory(${PROJECT_ROOT}/external/fmtlib)
+  add_subdirectory(${PROJECT_ROOT}/external/fmt)
   add_subdirectory(${PROJECT_ROOT}/external/glfw)
-  add_subdirectory(${PROJECT_ROOT}/external/glew-cmake)
+  add_subdirectory(${PROJECT_ROOT}/external/glew)
   add_subdirectory(${PROJECT_ROOT}/external)
 
 # source
