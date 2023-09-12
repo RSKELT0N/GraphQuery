@@ -11,8 +11,8 @@ project(GraphQuery
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   set(PROJECT_ROOT graphquery)
-  set(SOURCE_FOLDER ${PROJECT_ROOT}/core)
-  set(TESTS_FOLDER ${PROJECT_ROOT}/tests)
+  set(CORE ${PROJECT_ROOT}/core)
+  set(TESTS ${PROJECT_ROOT}/tests)
 
   set(CMAKE_CXX_STANDARD 20)                # Define the C++ standard
   message("-- C++ standard is set to -std=c++${CMAKE_CXX_STANDARD}")
@@ -27,11 +27,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   add_subdirectory(${PROJECT_ROOT}/external)
 
 # source
-  add_subdirectory(${SOURCE_FOLDER})
+  add_subdirectory(${CORE})
 
   if(CMAKE_TESTING_ENABLED)
     enable_testing()
-    add_subdirectory(${TESTS_FOLDER})
+    add_subdirectory(${TESTS})
   endif()
 
   message("-- ${PROJECT_NAME} [${PROJECT_VERSION}] build files has been defined")

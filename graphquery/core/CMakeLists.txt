@@ -2,11 +2,12 @@
 cmake_minimum_required(VERSION 3.17)
 
 # Setting project definitions.
-set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(SOURCE_DIR src)
 
 # Retrieve source files, under SOURCE_FOLDER
 file(GLOB_RECURSE
         SOURCES
+        main.cpp
         ${SOURCE_DIR}/*.cpp)
 
 # Set source files to compile for generating executable
@@ -26,4 +27,4 @@ target_link_libraries(${EXECUTABLE_NAME}
 # Add program include directories
 target_include_directories(${EXECUTABLE_NAME}
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        include)
