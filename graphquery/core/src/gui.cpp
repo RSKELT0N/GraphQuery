@@ -1,33 +1,51 @@
 #include <gui.hpp>
 
+#include <cstdio>
+#include <imnodes.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 static void Clean_Up();
 static void On_Update();
+static void NodesEditorInitialise();
 
-void graphquery::gui::Initialise(const char* window_name)
+int graphquery::gui::Initialise(const char* window_name)
 {
-    glfwInit();
-    const char* glsl_version = "#version 130";
+    glfwSetErrorCallback([](int error, const char* desc)
+    {
+        fprintf(stderr, "GLFW Error %d: %s\n", error, desc);
+    });
+    
+    if(glfwInit() == GLFW_FALSE) return 1;
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 
     // Create window with graphics context
     m_window = glfwCreateWindow(1280, 720, window_name, nullptr, nullptr);
+
+    if(graphquery::gui::m_window == nullptr)
+    {
+        return 1;
+    }
+
     glfwMakeContextCurrent(graphquery::gui::m_window);
     glfwSwapInterval(1); // Enable vsync
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    NodesEditorInitialise();
+
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
-    io.ConfigViewportsNoAutoMerge = true;
-    io.ConfigViewportsNoTaskBarIcon = true;
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
+    ImNodes::StyleColorsDark();
 
     ImGuiStyle& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -38,10 +56,25 @@ void graphquery::gui::Initialise(const char* window_name)
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(graphquery::gui::m_window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    if(!ImGui_ImplOpenGL3_Init("#version 400")) return 1;
+
+    return 0;
 }
 
-void graphquery::gui::Run()
+void NodesEditorInitialise()
+{
+    ImNodes::CreateContext();
+    ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
+
+    ImNodesIO& io = ImNodes::GetIO();
+    io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
+    io.MultipleSelectModifier.Modifier = &ImGui::GetIO().KeyCtrl;
+
+    ImNodesStyle& style = ImNodes::GetStyle();
+    style.Flags |= ImNodesStyleFlags_GridLinesPrimary | ImNodesStyleFlags_GridSnapping;
+}
+
+void graphquery::gui::Render()
 {
     while(glfwWindowShouldClose(graphquery::gui::m_window) == 0)
     {
@@ -61,6 +94,28 @@ static void On_Update()
 
     // Show demo window
     ImGui::ShowDemoWindow();
+
+    ImGui::Begin("node editor");
+    ImNodes::BeginNodeEditor();
+
+    ImNodes::BeginNode(1);
+
+    const int output_attr_id = 2;
+    ImNodes::BeginOutputAttribute(output_attr_id);
+    // in between Begin|EndAttribute calls, you can call ImGui
+    // UI functions
+    ImGui::Text("output pin");
+    ImNodes::EndOutputAttribute();
+
+    ImNodes::EndNode();
+
+    ImNodes::EndNodeEditor();
+    ImGui::End();
+
+    static int count = 0;
+    if(ImGui::Begin("Test")) {}
+    ImGui::Text("%s: %d", "Count", count++);
+    ImGui::End();
 
     // Rendering
     ImGui::Render();

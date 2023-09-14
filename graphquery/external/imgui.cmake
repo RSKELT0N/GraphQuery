@@ -3,15 +3,13 @@ cmake_minimum_required(VERSION 3.17)
 
 find_package(OpenGL REQUIRED)
 
-# Setting project definitions.
-set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/imgui/)
-
 # Retrieve source files, under SOURCE_FOLDER
 file(GLOB
 	SOURCES
-	${SOURCE_DIR}/*.cpp
-	${SOURCE_DIR}/backends/imgui_impl_glfw.cpp
-	${SOURCE_DIR}/backends/imgui_impl_opengl3.cpp)
+	${CMAKE_CURRENT_SOURCE_DIR}/imgui/*.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_glfw.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/imnode/*.cpp)
 
 # Add files for compilation.
 add_library(imgui
@@ -29,4 +27,5 @@ target_link_libraries(imgui
 target_include_directories(imgui
 		PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/imgui/
-		${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends)
+		${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/
+		${CMAKE_CURRENT_SOURCE_DIR}/imnode/)
