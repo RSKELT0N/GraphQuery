@@ -14,17 +14,18 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(CORE ${PROJECT_ROOT}/core)
   set(TESTS ${PROJECT_ROOT}/tests)
 
-  set(CMAKE_CXX_STANDARD 20)                # Define the C++ standard
+  set(CMAKE_CXX_STANDARD 20)                          # Define the C++ standard
   message("-- C++ standard is set to -std=c++${CMAKE_CXX_STANDARD}")
 
-  set(EXECUTABLE_NAME graph-query)			# Define executable name for project
+  set(EXECUTABLE_NAME graph-query)			              # Define executable name for project
 
 # add submodules
   add_subdirectory(${PROJECT_ROOT}/external/googletest)
   add_subdirectory(${PROJECT_ROOT}/external/fmt)
   add_subdirectory(${PROJECT_ROOT}/external/glfw)
   add_subdirectory(${PROJECT_ROOT}/external/glew)
-  add_subdirectory(${PROJECT_ROOT}/external)
+
+  add_subdirectory(${PROJECT_ROOT}/external)          # imgui
 
 # source
   add_subdirectory(${CORE})

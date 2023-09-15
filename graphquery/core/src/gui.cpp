@@ -18,8 +18,18 @@ int graphquery::gui::Initialise(const char* window_name)
     
     if(glfwInit() == GLFW_FALSE) return 1;
 
+#if defined(__APPLE__)
+    // GL 3.2 + GLSL 150
+    const char* glsl_version = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
+#else
+    // GL 3.0 + GLSL 130
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+#endif
 
     // Create window with graphics context
     m_window = glfwCreateWindow(1280, 720, window_name, nullptr, nullptr);
@@ -56,7 +66,7 @@ int graphquery::gui::Initialise(const char* window_name)
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(graphquery::gui::m_window, true);
-    if(!ImGui_ImplOpenGL3_Init("#version 400")) return 1;
+    if(!ImGui_ImplOpenGL3_Init(ImGui_GL_VERSION)) return 1;
 
     return 0;
 }
@@ -98,16 +108,20 @@ static void On_Update()
     ImGui::Begin("node editor");
     ImNodes::BeginNodeEditor();
 
-    ImNodes::BeginNode(1);
+    for(int i = 0; i < 10; i++)
+    {
+        ImNodes::BeginNode(i);
 
-    const int output_attr_id = 2;
-    ImNodes::BeginOutputAttribute(output_attr_id);
-    // in between Begin|EndAttribute calls, you can call ImGui
-    // UI functions
-    ImGui::Text("output pin");
-    ImNodes::EndOutputAttribute();
+        ImNodes::BeginOutputAttribute(i);
+        ImGui::Text("Opin %d", i);
+        ImNodes::EndOutputAttribute();
 
-    ImNodes::EndNode();
+        ImNodes::BeginInputAttribute(i*2);
+        ImGui::Text("Ipin %d", i*2);
+        ImNodes::EndInputAttribute();
+
+        ImNodes::EndNode();
+    }
 
     ImNodes::EndNodeEditor();
     ImGui::End();

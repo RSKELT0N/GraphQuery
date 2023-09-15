@@ -9,7 +9,7 @@ file(GLOB
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui/*.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_glfw.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/imgui_impl_opengl3.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/imnode/*.cpp)
+	${CMAKE_CURRENT_SOURCE_DIR}/imnodes/*.cpp)
 
 # Add files for compilation.
 add_library(imgui
@@ -28,4 +28,5 @@ target_include_directories(imgui
 		PUBLIC
 		${CMAKE_CURRENT_SOURCE_DIR}/imgui/
 		${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/
-		${CMAKE_CURRENT_SOURCE_DIR}/imnode/)
+		${CMAKE_CURRENT_SOURCE_DIR}/imnode/
+		${CMAKE_CURRENT_SOURCE_DIR}/imnodes/)

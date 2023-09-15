@@ -1,7 +1,11 @@
 #pragma once
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #define GL_SILENCE_DEPRECATION
+#define ImGUI_GL_VERSION "#version 400"
+#else
+#define ImGui_GL_VERSION "#version 130"
+#define whwh 1
 #endif
 
 #include <imgui.h>

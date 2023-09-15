@@ -13,6 +13,3 @@
 [submodule "graphquery/external/glfw"]
 	path = graphquery/external/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "graphquery/external/imnode"]
-	path = graphquery/external/imnode
-	url = https://github.com/Nelarius/imnodes.git
