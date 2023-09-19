@@ -5,47 +5,62 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+static int Initialise_GLFW(const char *);
+static int Initialise_IMGUI();
+static int Initialise_Nodes_Editor();
+static int Initialise_Frames();
 static void Clean_Up();
 static void On_Update();
-static void NodesEditorInitialise();
 
 int graphquery::gui::Initialise(const char* window_name)
+{
+    return Initialise_GLFW(window_name) |
+           Initialise_IMGUI() |
+           Initialise_Nodes_Editor() |
+           Initialise_Frames();
+}
+
+int Initialise_GLFW(const char * window_name)
 {
     glfwSetErrorCallback([](int error, const char* desc)
     {
         fprintf(stderr, "GLFW Error %d: %s\n", error, desc);
     });
-    
+
     if(glfwInit() == GLFW_FALSE) return 1;
 
 #if defined(__APPLE__)
-    // GL 3.2 + GLSL 150
-    const char* glsl_version = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 #else
     // GL 3.0 + GLSL 130
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 #endif
 
     // Create window with graphics context
-    m_window = glfwCreateWindow(1280, 720, window_name, nullptr, nullptr);
+    graphquery::gui::_window = glfwCreateWindow(1280, 720, window_name, nullptr, nullptr);
 
-    if(graphquery::gui::m_window == nullptr)
+    if(graphquery::gui::_window == nullptr)
     {
         return 1;
     }
 
-    glfwMakeContextCurrent(graphquery::gui::m_window);
+    glfwMakeContextCurrent(graphquery::gui::_window);
     glfwSwapInterval(1); // Enable vsync
 
+    return 0;
+}
+
+int Initialise_IMGUI()
+{
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    NodesEditorInitialise();
 
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
@@ -55,7 +70,6 @@ int graphquery::gui::Initialise(const char* window_name)
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    ImNodes::StyleColorsDark();
 
     ImGuiStyle& style = ImGui::GetStyle();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -65,15 +79,18 @@ int graphquery::gui::Initialise(const char* window_name)
     }
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(graphquery::gui::m_window, true);
-    if(!ImGui_ImplOpenGL3_Init(ImGui_GL_VERSION)) return 1;
+    ImGui_ImplGlfw_InitForOpenGL(graphquery::gui::_window, true);
+
+    if(!ImGui_ImplOpenGL3_Init(IMGUI_GL_VERSION))
+        return 1;
 
     return 0;
 }
 
-void NodesEditorInitialise()
+int Initialise_Nodes_Editor()
 {
     ImNodes::CreateContext();
+    ImNodes::StyleColorsDark();
     ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
 
     ImNodesIO& io = ImNodes::GetIO();
@@ -82,11 +99,18 @@ void NodesEditorInitialise()
 
     ImNodesStyle& style = ImNodes::GetStyle();
     style.Flags |= ImNodesStyleFlags_GridLinesPrimary | ImNodesStyleFlags_GridSnapping;
+
+    return 0;
+}
+
+int Initialise_Frames()
+{
+    return 0;
 }
 
 void graphquery::gui::Render()
 {
-    while(glfwWindowShouldClose(graphquery::gui::m_window) == 0)
+    while(glfwWindowShouldClose(graphquery::gui::_window) == 0)
     {
         On_Update();
     }
@@ -116,7 +140,7 @@ static void On_Update()
         ImGui::Text("Opin %d", i);
         ImNodes::EndOutputAttribute();
 
-        ImNodes::BeginInputAttribute(i*2);
+        ImNodes::BeginInputAttribute(i+9);
         ImGui::Text("Ipin %d", i*2);
         ImNodes::EndInputAttribute();
 
@@ -134,13 +158,13 @@ static void On_Update()
     // Rendering
     ImGui::Render();
     int display_w, display_h;
-    glfwGetFramebufferSize(graphquery::gui::m_window, &display_w, &display_h);
+    glfwGetFramebufferSize(graphquery::gui::_window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
 
-    glClearColor(graphquery::gui::m_background.x * graphquery::gui::m_background.w,
-                 graphquery::gui::m_background.y * graphquery::gui::m_background.w,
-                 graphquery::gui::m_background.z * graphquery::gui::m_background.w,
-                 graphquery::gui::m_background.w);
+    glClearColor(graphquery::gui::_background.x * graphquery::gui::_background.w,
+                 graphquery::gui::_background.y * graphquery::gui::_background.w,
+                 graphquery::gui::_background.z * graphquery::gui::_background.w,
+                 graphquery::gui::_background.w);
 
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -156,7 +180,7 @@ static void On_Update()
         glfwMakeContextCurrent(backup_current_context);
     }
 
-    glfwSwapBuffers(graphquery::gui::m_window);
+    glfwSwapBuffers(graphquery::gui::_window);
 }
 
 static void Clean_Up()
@@ -166,6 +190,6 @@ static void Clean_Up()
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    glfwDestroyWindow(graphquery::gui::m_window);
+    glfwDestroyWindow(graphquery::gui::_window);
     glfwTerminate();
 }
