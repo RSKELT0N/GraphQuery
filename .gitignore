@@ -3,3 +3,4 @@ imgui.ini
 .idea/
 cmake-build-debug/
 .vscode/
+.DS_Store
