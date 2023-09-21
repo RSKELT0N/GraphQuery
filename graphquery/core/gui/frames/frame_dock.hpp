@@ -7,7 +7,7 @@ namespace graphquery::gui
     class CFrameDock : public IFrame
     {
     public:
-        CFrameDock(GLFWwindow *, bool);
+        CFrameDock(GLFWwindow *, bool &);
         ~CFrameDock() override;
 
     public:
@@ -15,6 +15,7 @@ namespace graphquery::gui
     private:
         GLFWwindow * m_window;
         ImGuiViewport * m_viewp;
+        bool & m_is_opened;
     };
 
 

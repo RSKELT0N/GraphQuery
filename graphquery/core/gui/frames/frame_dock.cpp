@@ -1,16 +1,16 @@
 #include "frame_dock.hpp"
 #include <cstdio>
 
-graphquery::gui::CFrameDock::CFrameDock(GLFWwindow * window, bool is_open) : m_window(window), m_viewp(ImGui::GetMainViewport())
+graphquery::gui::CFrameDock::CFrameDock(GLFWwindow * window, bool & is_open) : m_window(window), m_viewp(ImGui::GetMainViewport()), m_is_opened(is_open)
 {
     this->m_flags = (ImGuiWindowFlags_NoCollapse |
                     ImGuiWindowFlags_NoMove |
                     ImGuiWindowFlags_NoResize |
                     ImGuiWindowFlags_NoBringToFrontOnFocus |
                     ImGuiWindowFlags_MenuBar |
-                    ImGuiWindowFlags_NoTitleBar);
+                    ImGuiWindowFlags_NoTitleBar |
+                    ImGuiWindowFlags_NoNavFocus);
 
-    this->m_is_opened = is_open;
 }
 
 graphquery::gui::CFrameDock::~CFrameDock() = default;
@@ -21,7 +21,9 @@ void graphquery::gui::CFrameDock::Render_Frame() noexcept
     ImGui::SetNextWindowPos(m_viewp->Pos);
     ImGui::SetNextWindowSize(m_viewp->Size);
 
-    ImGui::Begin("Graph Query", &m_is_opened, m_flags);
+    if(ImGui::Begin("Graph Query", &m_is_opened, m_flags)) {}
+
+    ImGui::DockSpace(ImGui::GetID("Graph Query"), ImVec2(0.0F, 0.0F), ImGuiDockNodeFlags_None);
 
     ImGui::End();
 }
