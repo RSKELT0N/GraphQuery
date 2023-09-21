@@ -1,8 +1,8 @@
 #pragma once
 
-#include <logger.hpp>
-#include <fmt/format.h>
-#include <fmt/color.h>
+#include "log/logger.hpp"
+#include "fmt/format.h"
+#include "fmt/color.h"
 
 namespace graphquery::logger
 {

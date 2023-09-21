@@ -1,23 +1,38 @@
-#include <gui.hpp>
+#include "gui.hpp"
 
 #include <cstdio>
-#include <imnodes.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
+#include <algorithm>
+#include "imnodes.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+
+#include "gui/frames/frame_output.hpp"
 
 static int Initialise_GLFW(const char *);
 static int Initialise_IMGUI();
 static int Initialise_Nodes_Editor();
 static int Initialise_Frames();
+static void Render_Frames();
 static void Clean_Up();
 static void On_Update();
 
 int graphquery::gui::Initialise(const char* window_name)
 {
-    return Initialise_GLFW(window_name) |
-           Initialise_IMGUI() |
-           Initialise_Nodes_Editor() |
-           Initialise_Frames();
+    int valid = Initialise_GLFW(window_name);
+    valid |= Initialise_IMGUI();
+    valid |= Initialise_Nodes_Editor();
+    valid |= Initialise_Frames();
+
+    return valid;
+}
+
+void graphquery::gui::Render()
+{
+    while(glfwWindowShouldClose(*graphquery::gui::_window) == 0)
+    {
+        On_Update();
+    }
+    Clean_Up();
 }
 
 int Initialise_GLFW(const char * window_name)
@@ -43,26 +58,26 @@ int Initialise_GLFW(const char * window_name)
 #endif
 
     // Create window with graphics context
-    graphquery::gui::_window = glfwCreateWindow(1280, 720, window_name, nullptr, nullptr);
+    graphquery::gui::_window = std::make_unique<GLFWwindow *>(glfwCreateWindow(1280, 720, window_name, nullptr, nullptr));
 
     if(graphquery::gui::_window == nullptr)
     {
         return 1;
     }
 
-    glfwMakeContextCurrent(graphquery::gui::_window);
+    glfwMakeContextCurrent(*graphquery::gui::_window);
     glfwSwapInterval(1); // Enable vsync
 
     return 0;
 }
 
-int Initialise_IMGUI()
-{
+int Initialise_IMGUI() {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO &io = ImGui::GetIO();
+    (void) io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
@@ -71,15 +86,14 @@ int Initialise_IMGUI()
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
+    ImGuiStyle &style = ImGui::GetStyle();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(graphquery::gui::_window, true);
+    ImGui_ImplGlfw_InitForOpenGL(*graphquery::gui::_window, true);
 
     if(!ImGui_ImplOpenGL3_Init(IMGUI_GL_VERSION))
         return 1;
@@ -105,16 +119,21 @@ int Initialise_Nodes_Editor()
 
 int Initialise_Frames()
 {
+    // Log output frame
+    graphquery::gui::_frames.emplace_back(std::make_unique<graphquery::gui::IFrame *>(new graphquery::gui::CFrameLog()));
     return 0;
 }
 
-void graphquery::gui::Render()
+static void Render_Frames()
 {
-    while(glfwWindowShouldClose(graphquery::gui::_window) == 0)
+    // Show demo window
+    ImGui::ShowDemoWindow();
+    std::for_each(graphquery::gui::_frames.begin(),
+                  graphquery::gui::_frames.end(),
+                  [] (std::unique_ptr<graphquery::gui::IFrame *> & frame)
     {
-        On_Update();
-    }
-    Clean_Up();
+        (*frame)->Render_Frame();
+    });
 }
 
 static void On_Update()
@@ -126,8 +145,7 @@ static void On_Update()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    // Show demo window
-    ImGui::ShowDemoWindow();
+    Render_Frames();
 
     ImGui::Begin("node editor");
     ImNodes::BeginNodeEditor();
@@ -150,15 +168,10 @@ static void On_Update()
     ImNodes::EndNodeEditor();
     ImGui::End();
 
-    static int count = 0;
-    if(ImGui::Begin("Test")) {}
-    ImGui::Text("%s: %d", "Count", count++);
-    ImGui::End();
-
     // Rendering
     ImGui::Render();
     int display_w, display_h;
-    glfwGetFramebufferSize(graphquery::gui::_window, &display_w, &display_h);
+    glfwGetFramebufferSize(*graphquery::gui::_window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
 
     glClearColor(graphquery::gui::_background.x * graphquery::gui::_background.w,
@@ -180,7 +193,7 @@ static void On_Update()
         glfwMakeContextCurrent(backup_current_context);
     }
 
-    glfwSwapBuffers(graphquery::gui::_window);
+    glfwSwapBuffers(*graphquery::gui::_window);
 }
 
 static void Clean_Up()
@@ -190,6 +203,6 @@ static void Clean_Up()
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    glfwDestroyWindow(graphquery::gui::_window);
+    glfwDestroyWindow(*graphquery::gui::_window);
     glfwTerminate();
 }

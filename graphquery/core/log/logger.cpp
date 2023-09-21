@@ -1,5 +1,8 @@
 #include "logger.hpp"
 
+#include <algorithm>
+#include <iostream>
+
 graphquery::logger::CLogSystem::CLogSystem()
 {
     this->m_level = ELogType::LOG_SYSTEM_LEVEL;

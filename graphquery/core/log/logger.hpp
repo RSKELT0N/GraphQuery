@@ -1,8 +1,8 @@
 /************************************************************
 * \author Ryan Skelton                                      *
 * \date 18/09/2023                                          *
-* \file logger.hpp                                          *
-* \brief logger header file containing symbols to control   *
+* \file log.hpp                                          *
+* \brief log header file containing symbols to control   *
 *       output towards to the program in different forms.   *
 ************************************************************/
 

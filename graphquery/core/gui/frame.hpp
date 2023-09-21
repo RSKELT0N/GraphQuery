@@ -1,5 +1,7 @@
 #pragma once
 
+#include "imgui.h"
+
 namespace graphquery::gui
 {
     class IFrame
@@ -14,6 +16,6 @@ namespace graphquery::gui
         IFrame & operator=(IFrame &&) = delete;
 
     public:
-        virtual void Render_Frame() noexcept = 0;
+        [[maybe_unused]] virtual void Render_Frame() noexcept = 0;
     };
 }

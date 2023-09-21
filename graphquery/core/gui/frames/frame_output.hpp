@@ -1,6 +1,6 @@
 #pragma once
 
-#include "frame.hpp"
+#include <gui/frame.hpp>
 
 namespace graphquery::gui
 {
@@ -12,6 +12,9 @@ namespace graphquery::gui
 
     public:
         void Render_Frame() noexcept override;
+
+    private:
+        void Render_Clear_Button() noexcept;
     };
 
 }

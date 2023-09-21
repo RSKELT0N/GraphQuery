@@ -25,5 +25,5 @@ graphquery::logger::CLogSTDO::Log(graphquery::logger::ELogType log_type, const s
             break;
     }
 
-    fmt::print("{} {}", ret, out);
+    fmt::print("{} {}\n", ret, out);
 }
