@@ -1,7 +1,5 @@
 #include "gui.hpp"
-#include "log/logger.hpp"
 #include "log/loggers/log_stdo.hpp"
-#include "log/loggers/log_gui.hpp"
 
 #include <cstdio>
 #include <algorithm>
@@ -9,9 +7,12 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
+#include <log/logger.hpp>
+#include <log/loggers/log_gui.hpp>
+
 #include <gui/frames/frame_output.hpp>
 #include <gui/frames/frame_dock.hpp>
-#include <log/logger.hpp>
+#include <gui/frames/frame_menubar.hpp>
 
 static int Initialise_GLFW(const char *);
 static int Initialise_IMGUI();
@@ -21,6 +22,11 @@ static void Render_Frames();
 static void Clean_Up();
 static void On_Update();
 
+bool frame_dock_open = false;
+bool frame_output_open = true;
+
+graphquery::logger::CLogSystem log__;
+
 int graphquery::gui::Initialise(const char* window_name)
 {
     int valid = Initialise_GLFW(window_name);
@@ -28,13 +34,14 @@ int graphquery::gui::Initialise(const char* window_name)
     valid |= Initialise_Nodes_Editor();
     valid |= Initialise_Frames();
 
+    log__.Add_Logger(new graphquery::logger::CLogGUI());
+    log__.Add_Logger(new graphquery::logger::CLogSTDO());
+
     return valid;
 }
 
 void graphquery::gui::Render()
 {
-    graphquery::logger::CLogSystem logSystem;
-    logSystem.Add_Logger(new graphquery::logger::CLogGUI());
     while(glfwWindowShouldClose(*graphquery::gui::_window) == 0)
     {
         On_Update();
@@ -127,7 +134,10 @@ int Initialise_Nodes_Editor()
 int Initialise_Frames()
 {
     // Background dock frame
-    graphquery::gui::_frames.emplace_back(std::make_unique<graphquery::gui::IFrame *>(new graphquery::gui::CFrameDock(* graphquery::gui::_window, true)));
+    graphquery::gui::_frames.emplace_back(std::make_unique<graphquery::gui::IFrame *>(new graphquery::gui::CFrameDock(* graphquery::gui::_window, frame_dock_open)));
+
+    // Menu bar
+    graphquery::gui::_frames.emplace_back(std::make_unique<graphquery::gui::IFrame *>(new graphquery::gui::CFrameMenuBar()));
 
     // Log output frame
     graphquery::gui::_frames.emplace_back(std::make_unique<graphquery::gui::IFrame *>(new graphquery::gui::CFrameLog()));
@@ -136,14 +146,11 @@ int Initialise_Frames()
 
 static void Render_Frames()
 {
-    // Show demo window
-    ImGui::ShowDemoWindow();
     std::for_each(graphquery::gui::_frames.begin(),
                   graphquery::gui::_frames.end(),
-                  [] (std::unique_ptr<graphquery::gui::IFrame *> & frame)
-    {
-        (*frame)->Render_Frame();
-    });
+                  [] (std::unique_ptr<graphquery::gui::IFrame *> & frame) {
+                        (*frame)->Render_Frame();
+                  });
 }
 
 static void On_Update()
@@ -157,37 +164,12 @@ static void On_Update()
 
     Render_Frames();
 
-    ImGui::Begin("node editor");
-    ImNodes::BeginNodeEditor();
-
-    for(int i = 0; i < 10; i++)
-    {
-        ImNodes::BeginNode(i);
-
-        ImNodes::BeginOutputAttribute(i);
-        ImGui::Text("Opin %d", i);
-        ImNodes::EndOutputAttribute();
-
-        ImNodes::BeginInputAttribute(i+9);
-        ImGui::Text("Ipin %d", i*2);
-        ImNodes::EndInputAttribute();
-
-        ImNodes::EndNode();
-    }
-
-    ImNodes::EndNodeEditor();
-    ImGui::End();
-
     // Rendering
     ImGui::Render();
+
     int display_w, display_h;
     glfwGetFramebufferSize(*graphquery::gui::_window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
-
-    glClearColor(graphquery::gui::_background.x * graphquery::gui::_background.w,
-                 graphquery::gui::_background.y * graphquery::gui::_background.w,
-                 graphquery::gui::_background.z * graphquery::gui::_background.w,
-                 graphquery::gui::_background.w);
 
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

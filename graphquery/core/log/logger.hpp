@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 #ifndef NDEBUG
 #define LOG_SYSTEM_LEVEL debug
@@ -58,10 +59,10 @@ namespace graphquery::logger
     public:
         void Log(ELogType, const std::string &) const noexcept;
         void Assert(bool, ELogType, const std::string &) const noexcept;
-        void Add_Logger(const ILog *) noexcept;
+        void Add_Logger(ILog *) noexcept;
 
     private:
         ELogType m_level;
-        std::vector<const ILog *> *m_loggers;
+        std::vector<std::unique_ptr<ILog *>> * m_loggers;
     };
 }

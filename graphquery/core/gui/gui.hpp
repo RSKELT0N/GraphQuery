@@ -21,5 +21,4 @@ namespace graphquery::gui
 
     inline std::vector<std::unique_ptr<IFrame *> > _frames;
     inline std::unique_ptr<GLFWwindow*> _window;
-    inline constexpr ImVec4 _background = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 }

@@ -1,4 +1,5 @@
 #include <log/loggers/log_gui.hpp>
+
 #include <imgui.h>
 
 graphquery::logger::CLogGUI::~CLogGUI() {
@@ -8,25 +9,29 @@ graphquery::logger::CLogGUI::~CLogGUI() {
 void
 graphquery::logger::CLogGUI::Log(graphquery::logger::ELogType log_type, const std::string& out) const noexcept
 {
-    std::string ret;
+    ImVec4 col;
+
+    if(ImGui::Begin("Output")) {}
+    ImGui::Text("[");
+    ImGui::SameLine();
 
     switch(log_type)
     {
         case ELogType::debug:
-            ret += fmt::format("[{}]", fmt::format(fg(fmt::color::cyan), "DEBUG"));
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 255.0f), "DEBUG");       // cyan
             break;
         case ELogType::info:
-            ret += fmt::format("[{}]", fmt::format(fg(fmt::color::green), "INFO"));
+            ImGui::TextColored(ImVec4(0.0f, 128.0f, 0.0f, 255.0f), "%s", "INFO");     // green
             break;
         case ELogType::warning:
-            ret += fmt::format("[{}]", fmt::format(fg(fmt::color::yellow), "WARNING"));
+            ImGui::TextColored(ImVec4(255.0f, 255.0f, 0.0f, 255.0f), "WARNING");   // yellow
             break;
         case ELogType::error:
-            ret += fmt::format("[{}]", fmt::format(fg(fmt::color::red), "ERROR"));
+            ImGui::TextColored(ImVec4(255.0f, 0.0f, 0.0f, 255.0f), "ERROR");     // red
             break;
     }
 
-    if(ImGui::Begin("Output")) {}
-    ImGui::Text("%s %s", ret.c_str(), out.c_str());
+    ImGui::SameLine();
+    ImGui::Text("%s %s", "]", out.c_str());
     ImGui::End();
 }

@@ -21,6 +21,5 @@ namespace graphquery::gui
 
     protected:
         ImGuiWindowFlags m_flags;
-        bool m_is_opened;
     };
 }
