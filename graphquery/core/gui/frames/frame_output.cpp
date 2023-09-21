@@ -11,9 +11,7 @@ graphquery::gui::CFrameLog::~CFrameLog()
 
 void graphquery::gui::CFrameLog::Render_Frame() noexcept
 {
-    if(ImGui::Begin("Output"))
-    {
-    }
+    ImGui::Begin("Output");
 
     ImGui::End();
 }

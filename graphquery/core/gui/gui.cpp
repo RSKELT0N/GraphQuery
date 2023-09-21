@@ -1,12 +1,17 @@
 #include "gui.hpp"
+#include "log/logger.hpp"
+#include "log/loggers/log_stdo.hpp"
+#include "log/loggers/log_gui.hpp"
 
 #include <cstdio>
 #include <algorithm>
-#include "imnodes.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
+#include <imnodes.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
 
-#include "gui/frames/frame_output.hpp"
+#include <gui/frames/frame_output.hpp>
+#include <gui/frames/frame_dock.hpp>
+#include <log/logger.hpp>
 
 static int Initialise_GLFW(const char *);
 static int Initialise_IMGUI();
@@ -28,6 +33,8 @@ int graphquery::gui::Initialise(const char* window_name)
 
 void graphquery::gui::Render()
 {
+    graphquery::logger::CLogSystem logSystem;
+    logSystem.Add_Logger(new graphquery::logger::CLogGUI());
     while(glfwWindowShouldClose(*graphquery::gui::_window) == 0)
     {
         On_Update();
@@ -119,6 +126,9 @@ int Initialise_Nodes_Editor()
 
 int Initialise_Frames()
 {
+    // Background dock frame
+    graphquery::gui::_frames.emplace_back(std::make_unique<graphquery::gui::IFrame *>(new graphquery::gui::CFrameDock(* graphquery::gui::_window, true)));
+
     // Log output frame
     graphquery::gui::_frames.emplace_back(std::make_unique<graphquery::gui::IFrame *>(new graphquery::gui::CFrameLog()));
     return 0;

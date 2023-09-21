@@ -1,6 +1,7 @@
 #pragma once
 
-#include "imgui.h"
+#include <imgui.h>
+#include <GLFW/glfw3.h>
 
 namespace graphquery::gui
 {
@@ -17,5 +18,9 @@ namespace graphquery::gui
 
     public:
         [[maybe_unused]] virtual void Render_Frame() noexcept = 0;
+
+    protected:
+        ImGuiWindowFlags m_flags;
+        bool m_is_opened;
     };
 }
