@@ -17,7 +17,4 @@ namespace graphquery::gui
         ImGuiViewport * m_viewp;
         bool & m_is_opened;
     };
-
-
-
 }

@@ -10,9 +10,7 @@ project(GraphQuery
 # Only perform if this is the root project
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
-  set(PROJECT_ROOT graphquery)
-  set(CORE ${PROJECT_ROOT}/core)
-  set(TESTS ${PROJECT_ROOT}/tests)
+  set(PROJECT graphquery)
 
   set(CMAKE_CXX_STANDARD 20)                          # Define the C++ standard
   message("-- C++ standard is set to -std=c++${CMAKE_CXX_STANDARD}")
@@ -20,19 +18,19 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(EXECUTABLE_NAME graph-query)			              # Define executable name for project
 
 # add submodules
-  add_subdirectory(${PROJECT_ROOT}/external/googletest)
-  add_subdirectory(${PROJECT_ROOT}/external/fmt)
-  add_subdirectory(${PROJECT_ROOT}/external/glfw)
-  add_subdirectory(${PROJECT_ROOT}/external/glew)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/googletest)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/fmt)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glfw)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glew)
 
-  add_subdirectory(${PROJECT_ROOT}/external)          # imgui
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external)          # imgui
 
 # source
-  add_subdirectory(${CORE})
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core)
 
   if(CMAKE_TESTING_ENABLED)
     enable_testing()
-    add_subdirectory(${TESTS})
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/tests)
   endif()
 
   message("-- ${PROJECT_NAME} [${PROJECT_VERSION}] build files has been defined")

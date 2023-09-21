@@ -4,26 +4,48 @@ graphquery::logger::CLogSTDO::~CLogSTDO() {
     ILog::~ILog();
 }
 
-void
-graphquery::logger::CLogSTDO::Log(graphquery::logger::ELogType log_type, const std::string& out) const noexcept
+void graphquery::logger::CLogSTDO::Debug(const std::string & out) const noexcept
 {
-    std::string ret;
+    std::string formatted = Colourise(CLogSystem::ELogType::debug, out);
+    fmt::print("{}", formatted);
+}
 
-    switch(log_type)
+void graphquery::logger::CLogSTDO::Info(const std::string & out) const noexcept
+{
+    std::string formatted = Colourise(CLogSystem::ELogType::info, out);
+    fmt::print("{}", formatted);
+}
+
+void graphquery::logger::CLogSTDO::Warning(const std::string & out) const noexcept
+{
+    std::string formatted = Colourise(CLogSystem::ELogType::warning, out);
+    fmt::print("{}", formatted);
+}
+
+void graphquery::logger::CLogSTDO::Error(const std::string & out) const noexcept
+{
+    std::string formatted = Colourise(CLogSystem::ELogType::error, out);
+    fmt::print("{}", formatted);
+}
+
+std::string graphquery::logger::CLogSTDO::Colourise(graphquery::logger::CLogSystem::ELogType type, const std::string &) const noexcept
+{
+    std::string formatted = {};
+    switch(type)
     {
-        case ELogType::debug:
-            ret += fmt::format("[{}]", fmt::format(fg(fmt::color::cyan), "DEBUG"));
+        case CLogSystem::ELogType::debug:
+            formatted = fmt::format("{}", fmt::format(fg(fmt::color::cyan), "DEBUG"));
             break;
-        case ELogType::info:
-            ret += fmt::format("[{}]", fmt::format(fg(fmt::color::green), "INFO"));
+        case CLogSystem::ELogType::info:
+            formatted = fmt::format("{}", fmt::format(fg(fmt::color::green), "INFO"));
             break;
-        case ELogType::warning:
-            ret += fmt::format("[{}]", fmt::format(fg(fmt::color::yellow), "WARNING"));
+        case CLogSystem::ELogType::warning:
+            formatted = fmt::format("{}", fmt::format(fg(fmt::color::yellow), "WARNING"));
             break;
-        case ELogType::error:
-            ret += fmt::format("[{}]", fmt::format(fg(fmt::color::red), "ERROR"));
+        case CLogSystem::ELogType::error:
+            formatted = fmt::format("{}", fmt::format(fg(fmt::color::red), "ERROR"));
             break;
     }
 
-    fmt::print("{} {}\n", ret, out);
+    return formatted;
 }

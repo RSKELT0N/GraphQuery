@@ -13,6 +13,40 @@ namespace graphquery::logger
         ~CLogSTDO() override;
 
     protected:
-        void Log(ELogType, const std::string &) const noexcept override;
+
+        /****************************************************************
+        ** \brief Virtual debug function for the logging system to call
+        **        to render output towards the derived class.
+        **
+        ** \param const std::string & - Output to be rendered.
+        ***************************************************************/
+        void Debug(const std::string &) const noexcept override;
+
+        /****************************************************************
+        ** \brief Virtual debug function for the logging system to call
+        **        to render output towards the derived class.
+        **
+        ** \param const std::string & - Output to be rendered.
+        ***************************************************************/
+        void Info(const std::string &) const noexcept override;
+
+        /****************************************************************
+        ** \brief Virtual warning function for the logging system to call
+        **        to render output towards the derived class.
+        **
+        ** \param const std::string & - Output to be rendered.
+        ***************************************************************/
+        void Warning(const std::string &) const noexcept override;
+
+        /****************************************************************
+        ** \brief Virtual error function for the logging system to call
+        **        to render output towards the derived class.
+        **
+        ** \param const std::string & - Output to be rendered.
+        ***************************************************************/
+        void Error(const std::string &) const noexcept override;
+
+    private:
+        [[nodiscard]] std::string Colourise(CLogSystem::ELogType type, const std::string &) const noexcept;
     };
 }

@@ -1,8 +1,5 @@
 #include <cstdlib>
 #include <gui/gui.hpp>
-#include <log/logger.hpp>
-#include <log/loggers/log_stdo.hpp>
-#include <log/loggers/log_gui.hpp>
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {

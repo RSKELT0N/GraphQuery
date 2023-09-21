@@ -8,7 +8,6 @@
 #include <backends/imgui_impl_opengl3.h>
 
 #include <log/logger.hpp>
-#include <log/loggers/log_gui.hpp>
 
 #include <gui/frames/frame_output.hpp>
 #include <gui/frames/frame_dock.hpp>
@@ -34,7 +33,6 @@ int graphquery::gui::Initialise(const char* window_name)
     valid |= Initialise_Nodes_Editor();
     valid |= Initialise_Frames();
 
-    log__.Add_Logger(new graphquery::logger::CLogGUI());
     log__.Add_Logger(new graphquery::logger::CLogSTDO());
 
     return valid;
@@ -146,11 +144,9 @@ int Initialise_Frames()
 
 static void Render_Frames()
 {
-    std::for_each(graphquery::gui::_frames.begin(),
-                  graphquery::gui::_frames.end(),
-                  [] (std::unique_ptr<graphquery::gui::IFrame *> & frame) {
-                        (*frame)->Render_Frame();
-                  });
+    std::for_each(graphquery::gui::_frames.begin(), graphquery::gui::_frames.end(), [] (auto & frame) {
+        (*frame)->Render_Frame();
+    });
 }
 
 static void On_Update()
