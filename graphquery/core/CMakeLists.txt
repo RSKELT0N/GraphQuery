@@ -19,7 +19,8 @@ target_compile_options(${EXECUTABLE_NAME}
 target_link_libraries(${EXECUTABLE_NAME}
         PRIVATE
         fmt
-        imgui)
+        imgui
+        dylib)
 
 # Add program include directories
 target_include_directories(${EXECUTABLE_NAME}
