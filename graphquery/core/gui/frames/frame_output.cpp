@@ -1,12 +1,10 @@
-#include "frame_output.hpp"
+#include "frame_output.h"
 
 graphquery::gui::CFrameLog::CFrameLog()
 {
     m_flags = ImGuiWindowFlags_NoCollapse |
               ImGuiWindowFlags_AlwaysVerticalScrollbar;
 }
-
-graphquery::gui::CFrameLog::~CFrameLog() = default;
 
 void graphquery::gui::CFrameLog::Render_Frame() noexcept
 {

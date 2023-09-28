@@ -1,17 +1,15 @@
-#include "gui.hpp"
-#include "log/loggers/log_stdo.hpp"
+#include "gui.h"
 
 #include <cstdio>
 #include <algorithm>
-#include <imnodes.h>
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_opengl3.h>
 
-#include <log/logger.hpp>
+#include "imnodes.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
 
-#include <gui/frames/frame_output.hpp>
-#include <gui/frames/frame_dock.hpp>
-#include <gui/frames/frame_menubar.hpp>
+#include "frames/frame_output.h"
+#include "frames/frame_dock.h"
+#include "frames/frame_menubar.h"
 
 static int Initialise_GLFW(const char *);
 static int Initialise_IMGUI();
@@ -24,16 +22,12 @@ static void On_Update();
 bool frame_dock_open = false;
 bool frame_output_open = true;
 
-graphquery::logger::CLogSystem log__;
-
 int graphquery::gui::Initialise(const char* window_name)
 {
     int valid = Initialise_GLFW(window_name);
     valid |= Initialise_IMGUI();
     valid |= Initialise_Nodes_Editor();
     valid |= Initialise_Frames();
-
-    log__.Add_Logger(new graphquery::logger::CLogSTDO());
 
     return valid;
 }

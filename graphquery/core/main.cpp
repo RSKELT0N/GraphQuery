@@ -1,10 +1,15 @@
-#include <cstdlib>
-#include <gui/gui.hpp>
+#include "db/system.h"
+#include "gui/gui.h"
+
+#include <cassert>
+
+using namespace graphquery;
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
 {
-    if(graphquery::gui::Initialise("Graph Query") != 0) return 1;
-    graphquery::gui::Render();
+    assert(database::Initialise() == database::valid && "Database failed to initialise");
+    assert(gui::Initialise("Graph Query") == 0 && "GUI failed to initialise");
 
+    graphquery::gui::Render();
     return EXIT_SUCCESS;
 }

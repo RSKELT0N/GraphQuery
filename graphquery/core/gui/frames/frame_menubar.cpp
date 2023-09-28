@@ -1,4 +1,4 @@
-#include "frame_menubar.hpp"
+#include "frame_menubar.h"
 #include <cstdio>
 
 graphquery::gui::CFrameMenuBar::~CFrameMenuBar() = default;

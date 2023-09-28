@@ -7,18 +7,18 @@
 #define IMGUI_GL_VERSION "#version 130"
 #endif
 
-#include "frame.hpp"
-
 #include <memory>
 #include <vector>
-#include "imgui.h"
-#include "GLFW/glfw3.h"
+
+#include "frame.h"
+#include "./imgui.h"
+#include "./GLFW/glfw3.h"
 
 namespace graphquery::gui
 {
     void Render();
     [[nodiscard]] int Initialise(const char* window_name);
 
-    inline std::vector<std::unique_ptr<IFrame *> > _frames;
-    inline std::unique_ptr<GLFWwindow*> _window;
+    inline static std::vector<std::unique_ptr<IFrame *> > _frames;
+    inline static std::unique_ptr<GLFWwindow*> _window;
 }

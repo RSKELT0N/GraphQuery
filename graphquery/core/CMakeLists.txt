@@ -1,6 +1,8 @@
 # cmake sub-directory for src specification
 cmake_minimum_required(VERSION 3.17)
 
+add_subdirectory(log)
+
 # Retrieve source files, under SOURCE_FOLDER
 file(GLOB_RECURSE
         SOURCES
@@ -18,9 +20,9 @@ target_compile_options(${EXECUTABLE_NAME}
 
 target_link_libraries(${EXECUTABLE_NAME}
         PRIVATE
-        fmt
         imgui
-        dylib)
+        dylib
+        logsystem)
 
 # Add program include directories
 target_include_directories(${EXECUTABLE_NAME}

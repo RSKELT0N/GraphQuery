@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gui/frame.hpp>
+#include "gui/frame.h"
 
 namespace graphquery::gui
 {

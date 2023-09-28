@@ -1,7 +1,7 @@
 #pragma once
 
-#include <gui/frame.hpp>
-#include <log/logger.hpp>
+#include "gui/frame.h"
+#include "log/logger.h"
 
 namespace graphquery::gui
 {
@@ -9,7 +9,7 @@ class CFrameLog : public graphquery::gui::IFrame, public graphquery::logger::ILo
     {
     public:
         CFrameLog();
-        ~CFrameLog() override;
+        ~CFrameLog() = default;
 
     public:
         void Render_Frame() noexcept override;

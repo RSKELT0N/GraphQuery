@@ -1,8 +1,8 @@
 #pragma once
 
-#include "log/logger.hpp"
-#include "fmt/format.h"
-#include "fmt/color.h"
+#include "./log/logger.h"
+#include "./fmt/format.h"
+#include "./fmt/color.h"
 
 namespace graphquery::logger
 {
@@ -10,7 +10,7 @@ namespace graphquery::logger
     {
     public:
         CLogSTDO() = default;
-        ~CLogSTDO() override;
+        ~CLogSTDO() = default;
 
     protected:
 
@@ -47,6 +47,6 @@ namespace graphquery::logger
         void Error(const std::string &) const noexcept override;
 
     private:
-        [[nodiscard]] std::string Colourise(CLogSystem::ELogType type, const std::string &) const noexcept;
+        [[nodiscard]] std::string Colourise(ELogType type, const std::string &) const noexcept;
     };
 }

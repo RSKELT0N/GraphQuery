@@ -1,4 +1,4 @@
-#include "frame_dock.hpp"
+#include "frame_dock.h"
 
 graphquery::gui::CFrameDock::CFrameDock(GLFWwindow * window, bool & is_open) : m_window(window), m_viewp(ImGui::GetMainViewport()), m_is_opened(is_open)
 {

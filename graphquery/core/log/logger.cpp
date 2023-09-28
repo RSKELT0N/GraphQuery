@@ -1,33 +1,26 @@
-#include "logger.hpp"
+#include "logger.h"
+
+#include "fmt/format.h"
 
 #include <algorithm>
-#include <iostream>
 #include <ctime>
 #include <mutex>
-
-#include <fmt/format.h>
 
 graphquery::logger::CLogSystem::CLogSystem()
 {
     this->m_level = ELogType::LOG_SYSTEM_LEVEL;
-    this->m_loggers = new std::vector<std::unique_ptr<ILog *>>();
-}
-
-graphquery::logger::CLogSystem::~CLogSystem()
-{
-    delete this->m_loggers;
+    this->m_loggers = std::make_unique<std::vector<std::unique_ptr<ILog *>>>();
 }
 
 void
-graphquery::logger::CLogSystem::Add_Logger(ILog * logger) noexcept
+graphquery::logger::CLogSystem::Add_Logger(std::unique_ptr<ILog *> logger) noexcept
 {
-    this->m_loggers->emplace_back(std::make_unique<ILog *>(logger));
+    this->m_loggers->emplace_back(std::move(logger));
 }
 
-void graphquery::logger::CLogSystem::Debug(std::string & out) const noexcept
+void graphquery::logger::CLogSystem::Debug(std::string & out) noexcept
 {
-    static std::mutex mtx;
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(m_mtx);
     if(this->m_level <= ELogType::debug)
     {
        std::string formatted = Format_Output(ELogType::debug, out);
@@ -38,10 +31,9 @@ void graphquery::logger::CLogSystem::Debug(std::string & out) const noexcept
     }
 }
 
-void graphquery::logger::CLogSystem::Info(std::string & out) const noexcept
+void graphquery::logger::CLogSystem::Info(std::string & out) noexcept
 {
-    static std::mutex mtx;
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(m_mtx);
     if(this->m_level <= ELogType::info)
     {
         std::string formatted = Format_Output(ELogType::info, out);
@@ -52,10 +44,9 @@ void graphquery::logger::CLogSystem::Info(std::string & out) const noexcept
     }
 }
 
-void graphquery::logger::CLogSystem::Warning(std::string & out) const noexcept
+void graphquery::logger::CLogSystem::Warning(std::string & out) noexcept
 {
-    static std::mutex mtx;
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(m_mtx);
     if(this->m_level <= ELogType::warning)
     {
         std::string formatted = Format_Output(ELogType::warning, out);
@@ -65,10 +56,9 @@ void graphquery::logger::CLogSystem::Warning(std::string & out) const noexcept
         });
     }
 }
-void graphquery::logger::CLogSystem::Error(std::string & out) const noexcept
+void graphquery::logger::CLogSystem::Error(std::string & out) noexcept
 {
-    static std::mutex mtx;
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(m_mtx);
     if(this->m_level <= ELogType::error)
     {
         std::string formatted = Format_Output(ELogType::error, out);
