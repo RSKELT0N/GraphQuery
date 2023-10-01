@@ -1,4 +1,4 @@
-#include "gui.h"
+#include "interact_gui.h"
 
 #include <cstdio>
 #include <algorithm>
@@ -7,24 +7,19 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
-#include "frames/frame_output.h"
-#include "frames/frame_dock.h"
-#include "frames/frame_menubar.h"
+#include "interact/interfaces/gui/frames/frame_output.h"
+#include "interact/interfaces/gui/frames/frame_dock.h"
+#include "interact/interfaces/gui/frames/frame_menubar.h"
 
-static int Initialise_GLFW(const char *);
-static int Initialise_IMGUI();
-static int Initialise_Nodes_Editor();
-static int Initialise_Frames();
-static void Render_Frames();
-static void Clean_Up();
-static void On_Update();
-
-bool frame_dock_open = false;
-bool frame_output_open = true;
-
-int graphquery::gui::Initialise(const char* window_name)
+graphquery::interact::CInteractGUI::CInteractGUI()
 {
-    int valid = Initialise_GLFW(window_name);
+    Initialise();
+}
+
+
+int graphquery::interact::CInteractGUI::Initialise() noexcept
+{
+    int valid = Initialise_GLFW();
     valid |= Initialise_IMGUI();
     valid |= Initialise_Nodes_Editor();
     valid |= Initialise_Frames();
@@ -32,16 +27,16 @@ int graphquery::gui::Initialise(const char* window_name)
     return valid;
 }
 
-void graphquery::gui::Render()
+void graphquery::interact::CInteractGUI::Render() noexcept
 {
-    while(glfwWindowShouldClose(*graphquery::gui::_window) == 0)
+    [[likely]] while(glfwWindowShouldClose(*m_window) == 0)
     {
         On_Update();
     }
     Clean_Up();
 }
 
-int Initialise_GLFW(const char * window_name)
+int graphquery::interact::CInteractGUI::Initialise_GLFW() noexcept
 {
     glfwSetErrorCallback([](int error, const char* desc)
     {
@@ -64,20 +59,21 @@ int Initialise_GLFW(const char * window_name)
 #endif
 
     // Create window with graphics context
-    graphquery::gui::_window = std::make_unique<GLFWwindow *>(glfwCreateWindow(1280, 720, window_name, nullptr, nullptr));
+    m_window = std::make_unique<GLFWwindow *>(glfwCreateWindow(1280, 720, PROJECT_NAME, nullptr, nullptr));
 
-    if(graphquery::gui::_window == nullptr)
+    [[unlikely]] if(m_window == nullptr)
     {
         return 1;
     }
 
-    glfwMakeContextCurrent(*graphquery::gui::_window);
+    glfwMakeContextCurrent(*m_window);
     glfwSwapInterval(1); // Enable vsync
 
     return 0;
 }
 
-int Initialise_IMGUI() {
+int graphquery::interact::CInteractGUI::Initialise_IMGUI() noexcept
+{
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -99,15 +95,15 @@ int Initialise_IMGUI() {
     }
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(*graphquery::gui::_window, true);
+    ImGui_ImplGlfw_InitForOpenGL(*m_window, true);
 
-    if(!ImGui_ImplOpenGL3_Init(IMGUI_GL_VERSION))
+    if(!ImGui_ImplOpenGL3_Init(IMGUI_GL_VERSION)) [[unlikely]]
         return 1;
 
     return 0;
 }
 
-int Initialise_Nodes_Editor()
+int graphquery::interact::CInteractGUI::Initialise_Nodes_Editor() noexcept
 {
     ImNodes::CreateContext();
     ImNodes::StyleColorsDark();
@@ -123,27 +119,27 @@ int Initialise_Nodes_Editor()
     return 0;
 }
 
-int Initialise_Frames()
+int graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
 {
     // Background dock frame
-    graphquery::gui::_frames.emplace_back(std::make_unique<graphquery::gui::IFrame *>(new graphquery::gui::CFrameDock(* graphquery::gui::_window, frame_dock_open)));
+    m_frames.emplace_back(std::make_unique<graphquery::interact::IFrame *>(new graphquery::interact::CFrameDock(*m_window, m_frame_dock_open)));
 
     // Menu bar
-    graphquery::gui::_frames.emplace_back(std::make_unique<graphquery::gui::IFrame *>(new graphquery::gui::CFrameMenuBar()));
+    m_frames.emplace_back(std::make_unique<graphquery::interact::IFrame *>(new graphquery::interact::CFrameMenuBar()));
 
     // Log output frame
-    graphquery::gui::_frames.emplace_back(std::make_unique<graphquery::gui::IFrame *>(new graphquery::gui::CFrameLog()));
+    m_frames.emplace_back(std::make_unique<graphquery::interact::IFrame *>(new graphquery::interact::CFrameLog()));
     return 0;
 }
 
-static void Render_Frames()
+void graphquery::interact::CInteractGUI::Render_Frames() noexcept
 {
-    std::for_each(graphquery::gui::_frames.begin(), graphquery::gui::_frames.end(), [] (auto & frame) {
+    std::for_each(m_frames.begin(), m_frames.end(), [] (auto & frame) {
         (*frame)->Render_Frame();
     });
 }
 
-static void On_Update()
+void graphquery::interact::CInteractGUI::On_Update() noexcept
 {
     glfwPollEvents();
 
@@ -158,7 +154,7 @@ static void On_Update()
     ImGui::Render();
 
     int display_w, display_h;
-    glfwGetFramebufferSize(*graphquery::gui::_window, &display_w, &display_h);
+    glfwGetFramebufferSize(*m_window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
 
     glClear(GL_COLOR_BUFFER_BIT);
@@ -167,7 +163,7 @@ static void On_Update()
     // Update and Render additional Platform Windows
     // (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
     //  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    [[likely]] if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         GLFWwindow* backup_current_context = glfwGetCurrentContext();
         ImGui::UpdatePlatformWindows();
@@ -175,16 +171,16 @@ static void On_Update()
         glfwMakeContextCurrent(backup_current_context);
     }
 
-    glfwSwapBuffers(*graphquery::gui::_window);
+    glfwSwapBuffers(*m_window);
 }
 
-static void Clean_Up()
+void graphquery::interact::CInteractGUI::Clean_Up() noexcept
 {
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 
-    glfwDestroyWindow(*graphquery::gui::_window);
+    glfwDestroyWindow(*m_window);
     glfwTerminate();
 }

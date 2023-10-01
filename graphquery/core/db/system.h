@@ -1,10 +1,13 @@
 #pragma once
 
-#include <memory>
-
+#include "lib.h"
 #include "../log/logger.h"
+#include "../interact/interact.h"
 #include "../log/loggers/log_stdo.h"
-#include "../gui/frames/frame_output.h"
+#include "../interact/interfaces/gui/interact_gui.h"
+#include "../interact/interfaces/gui/frames/frame_output.h"
+
+#include <memory>
 
 namespace graphquery::database
 {
@@ -12,7 +15,7 @@ namespace graphquery::database
     ** \brief Status code enumeration to ensure
     **        correctness.
     ***********************************************/
-    enum EStatus : uint8_t
+    enum class EStatus : uint8_t
     {
         valid = 0,
         invalid = 1
@@ -27,6 +30,12 @@ namespace graphquery::database
     [[nodiscard]] EStatus Initialise() noexcept;
 
     /**********************************************
+    ** \brief Rendering the interface of the DB.
+    ** @return EStatus status code for init.
+    ***********************************************/
+    [[nodiscard]] int Render() noexcept;
+
+    /**********************************************
     ** \brief In control of initialising the log-system
     **        and adding derived instances for consideration
     **        to render.
@@ -34,6 +43,14 @@ namespace graphquery::database
     ***********************************************/
     [[nodiscard]] EStatus Initialise_LogSystem() noexcept;
 
+    /**********************************************
+    ** \brief In control of initialising the interface
+    **        to provide a way of viewing/controlling the db.
+    ** @return EStatus status code for init.
+    ***********************************************/
+    [[nodiscard]] EStatus Initialise_Interface() noexcept;
+
     //~ Internal system functions
-    inline static std::shared_ptr<logger::CLogSystem> _log_system;
+    inline static std::unique_ptr<interact::IInteract *> _interface;
+    inline static std::unique_ptr<logger::CLogSystem> _log_system;
 }

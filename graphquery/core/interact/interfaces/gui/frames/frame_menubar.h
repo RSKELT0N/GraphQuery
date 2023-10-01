@@ -1,8 +1,8 @@
 #pragma once
 
-#include "gui/frame.h"
+#include "interact/interfaces/gui/frame.h"
 
-namespace graphquery::gui
+namespace graphquery::interact
 {
     class CFrameMenuBar : public IFrame
     {

@@ -1,6 +1,6 @@
 #include "frame_dock.h"
 
-graphquery::gui::CFrameDock::CFrameDock(GLFWwindow * window, bool & is_open) : m_window(window), m_viewp(ImGui::GetMainViewport()), m_is_opened(is_open)
+graphquery::interact::CFrameDock::CFrameDock(GLFWwindow * window, bool & is_open) : m_window(window), m_viewp(ImGui::GetMainViewport()), m_is_opened(is_open)
 {
     this->m_flags = (ImGuiWindowFlags_NoCollapse |
                     ImGuiWindowFlags_NoMove |
@@ -12,9 +12,9 @@ graphquery::gui::CFrameDock::CFrameDock(GLFWwindow * window, bool & is_open) : m
 
 }
 
-graphquery::gui::CFrameDock::~CFrameDock() = default;
+graphquery::interact::CFrameDock::~CFrameDock() = default;
 
-void graphquery::gui::CFrameDock::Render_Frame() noexcept
+void graphquery::interact::CFrameDock::Render_Frame() noexcept
 {
     m_viewp = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(m_viewp->Pos);

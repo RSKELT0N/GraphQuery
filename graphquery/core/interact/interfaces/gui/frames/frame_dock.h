@@ -1,8 +1,8 @@
 #pragma once
 
-#include "gui/frame.h"
+#include "interact/interfaces/gui/frame.h"
 
-namespace graphquery::gui
+namespace graphquery::interact
 {
     class CFrameDock : public IFrame
     {
@@ -13,8 +13,8 @@ namespace graphquery::gui
     public:
         void Render_Frame() noexcept override;
     private:
-        [[maybe_unused]] GLFWwindow * m_window;
-        [[maybe_unused]] ImGuiViewport * m_viewp;
-        [[maybe_unused]] bool & m_is_opened;
+        GLFWwindow * m_window;
+        ImGuiViewport * m_viewp;
+        bool & m_is_opened;
     };
 }

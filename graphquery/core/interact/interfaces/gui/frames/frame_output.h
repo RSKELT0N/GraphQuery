@@ -1,15 +1,15 @@
 #pragma once
 
-#include "gui/frame.h"
+#include "interact/interfaces/gui/frame.h"
 #include "log/logger.h"
 
-namespace graphquery::gui
+namespace graphquery::interact
 {
-class CFrameLog : public graphquery::gui::IFrame, public graphquery::logger::ILog
+class CFrameLog : public IFrame, public graphquery::logger::ILog
     {
     public:
         CFrameLog();
-        ~CFrameLog() = default;
+        ~CFrameLog() override = default;
 
     public:
         void Render_Frame() noexcept override;
