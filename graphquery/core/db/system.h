@@ -3,9 +3,6 @@
 #include "lib.h"
 #include "../log/logger.h"
 #include "../interact/interact.h"
-#include "../log/loggers/log_stdo.h"
-#include "../interact/interfaces/gui/interact_gui.h"
-#include "../interact/interfaces/gui/frames/frame_output.h"
 
 #include <memory>
 
@@ -31,7 +28,7 @@ namespace graphquery::database
     EStatus Initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept;
 
     //~ Log system instance for rendering output.
-    const static std::unique_ptr<logger::CLogSystem> _log_system = std::make_unique<graphquery::logger::CLogSystem>();
+    extern std::unique_ptr<logger::CLogSystem> _log_system;
     //~ Interface instance for providing access to the database.
-    const static std::unique_ptr<interact::IInteract> _interface = std::make_unique<graphquery::interact::CInteractGUI>();
+    extern std::unique_ptr<interact::IInteract> _interface;
 }

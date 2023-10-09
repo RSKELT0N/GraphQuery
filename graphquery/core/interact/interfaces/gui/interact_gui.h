@@ -7,7 +7,7 @@
 #define IMGUI_GL_VERSION "#version 130"
 #endif
 
-#include "../../interact.h"
+#include "interact/interact.h"
 #include "frame.h"
 #include "imgui.h"
 #include "GLFW/glfw3.h"

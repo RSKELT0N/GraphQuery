@@ -1,7 +1,7 @@
 #pragma once
 
-#include "interact/interfaces/gui/frame.h"
 #include "log/logger.h"
+#include "interact/interfaces/gui/frame.h"
 
 namespace graphquery::interact
 {
@@ -11,7 +11,6 @@ class CFrameLog : public IFrame, public graphquery::logger::ILog
         CFrameLog();
         ~CFrameLog() override = default;
 
-    public:
         void Render_Frame() noexcept override;
 
 protected:

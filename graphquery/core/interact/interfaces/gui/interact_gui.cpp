@@ -1,13 +1,13 @@
 #include "interact_gui.h"
 
 #include "imnodes.h"
+#include "db/system.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-#include "interact/interfaces/gui/frames/frame_output.h"
 
+#include "interact/interfaces/gui/frames/frame_output.h"
 #include "interact/interfaces/gui/frames/frame_dock.h"
 #include "interact/interfaces/gui/frames/frame_menubar.h"
-#include "../../../db/system.h"
 
 #include <cstdio>
 #include <algorithm>
@@ -62,7 +62,6 @@ void graphquery::interact::CInteractGUI::Initialise_GLFW() noexcept
 
     glfwMakeContextCurrent(*m_window);
     glfwSwapInterval(1); // Enable vsync
-
 }
 
 void graphquery::interact::CInteractGUI::Initialise_IMGUI() noexcept
