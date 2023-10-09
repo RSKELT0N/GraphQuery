@@ -6,7 +6,7 @@ namespace graphquery::database
 {
     template <typename T>
     T operator |(T lhs, T rhs) {
-        using u_t = typename std::underlying_type<T>::type;
+        using u_t = typename std::underlying_type_t<T>;
         return static_cast<T>(static_cast<u_t>(lhs) | static_cast<u_t>(rhs));
     }
 }

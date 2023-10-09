@@ -10,7 +10,7 @@
 #include "../../interact.h"
 #include "frame.h"
 #include "imgui.h"
-#include "./GLFW/glfw3.h"
+#include "GLFW/glfw3.h"
 
 #include <memory>
 #include <vector>
@@ -23,29 +23,24 @@ namespace graphquery::interact
         explicit CInteractGUI();
         ~CInteractGUI() override = default;
 
-    public:
-        int Initialise() noexcept override;
+    private:
         void Render() noexcept override;
 
-    private:
-        [[nodiscard]] static int Initialise_Nodes_Editor() noexcept;
-
-    private:
         void Render_Frames() noexcept;
         void Clean_Up() noexcept;
         void On_Update() noexcept;
 
-        [[nodiscard]] int Initialise_GLFW() noexcept;
-        [[nodiscard]] int Initialise_IMGUI() noexcept;
-        [[nodiscard]] int Initialise_Frames() noexcept;
-
+        static void Initialise_Nodes_Editor() noexcept;
+        void Initialise_GLFW() noexcept;
+        void Initialise_IMGUI() noexcept;
+        void Initialise_Frames() noexcept;
 
     private:
-        std::vector<std::unique_ptr<IFrame *> > m_frames;
+        std::vector<std::unique_ptr<IFrame> > m_frames;
         std::unique_ptr<GLFWwindow *> m_window;
 
-        bool m_frame_dock_open = false;
-        bool m_frame_output_open = true;
+        [[maybe_unused]] bool m_frame_dock_open = false;
+        [[maybe_unused]] bool m_frame_output_open = true;
 
     };
 }

@@ -13,7 +13,7 @@ namespace graphquery::interact
     public:
         void Render_Frame() noexcept override;
     private:
-        GLFWwindow * m_window;
+        [[maybe_unused]] GLFWwindow * m_window;
         ImGuiViewport * m_viewp;
         bool & m_is_opened;
     };

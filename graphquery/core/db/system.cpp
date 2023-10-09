@@ -1,34 +1,23 @@
 #include "system.h"
 
-[[nodiscard]] graphquery::database::EStatus
-graphquery::database::Initialise() noexcept
+#include "../log/loggers/log_stdo.h"
+
+namespace
 {
-    auto is_valid = static_cast<EStatus>(Initialise_LogSystem() |
-                                         Initialise_Interface());
-    return is_valid;
+    void Initialise_Logging() noexcept
+    {
+        graphquery::database::_log_system->Add_Logger(std::make_shared<graphquery::logger::CLogSTDO>());
+    }
 }
 
-int graphquery::database::Render() noexcept
+graphquery::database::EStatus
+graphquery::database::Initialise([[maybe_unused]] int argc,
+                                 [[maybe_unused]] char ** argv) noexcept
 {
-    (*_interface)->Render();
-    return EXIT_SUCCESS;
+    Initialise_Logging();
+    return EStatus::valid;
 }
 
-[[nodiscard]] graphquery::database::EStatus
-graphquery::database::Initialise_LogSystem() noexcept
-{
-    _log_system = std::make_unique<logger::CLogSystem>();
-    _log_system->Add_Logger(std::make_unique<logger::ILog *>(new logger::CLogSTDO()));
-    _log_system->Add_Logger(std::make_unique<logger::ILog *>(new interact::CFrameLog()));
-    return graphquery::database::EStatus::valid;
-}
-
-[[nodiscard]] graphquery::database::EStatus
-graphquery::database::Initialise_Interface() noexcept
-{
-    _interface = std::make_unique<interact::IInteract *>(new interact::CInteractGUI());
-    return graphquery::database::EStatus::valid;
-}
 
 
 

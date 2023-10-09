@@ -24,8 +24,8 @@ namespace graphquery::logger
         virtual ~ILog() = default;
         ILog(ILog &&) = default;
         ILog(const ILog &) = default;
-        virtual ILog &operator=(const ILog &) = default;
-        virtual ILog &operator=(ILog &&) = default;
+        ILog &operator=(const ILog &) = default;
+        ILog &operator=(ILog &&) = default;
 
     protected:
         /****************************************************************

@@ -1,30 +1,23 @@
 #include "interact_gui.h"
 
-#include <cstdio>
-#include <algorithm>
-
 #include "imnodes.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-
 #include "interact/interfaces/gui/frames/frame_output.h"
+
 #include "interact/interfaces/gui/frames/frame_dock.h"
 #include "interact/interfaces/gui/frames/frame_menubar.h"
+#include "../../../db/system.h"
+
+#include <cstdio>
+#include <algorithm>
 
 graphquery::interact::CInteractGUI::CInteractGUI()
 {
-    Initialise();
-}
-
-
-int graphquery::interact::CInteractGUI::Initialise() noexcept
-{
-    int valid = Initialise_GLFW();
-    valid |= Initialise_IMGUI();
-    valid |= Initialise_Nodes_Editor();
-    valid |= Initialise_Frames();
-
-    return valid;
+    Initialise_GLFW();
+    Initialise_IMGUI();
+    Initialise_Nodes_Editor();
+    Initialise_Frames();
 }
 
 void graphquery::interact::CInteractGUI::Render() noexcept
@@ -36,14 +29,15 @@ void graphquery::interact::CInteractGUI::Render() noexcept
     Clean_Up();
 }
 
-int graphquery::interact::CInteractGUI::Initialise_GLFW() noexcept
+void graphquery::interact::CInteractGUI::Initialise_GLFW() noexcept
 {
     glfwSetErrorCallback([](int error, const char* desc)
     {
         fprintf(stderr, "GLFW Error %d: %s\n", error, desc);
     });
 
-    if(glfwInit() == GLFW_FALSE) return 1;
+    if(glfwInit() == GLFW_FALSE)
+        return;
 
 #if defined(__APPLE__)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -63,16 +57,15 @@ int graphquery::interact::CInteractGUI::Initialise_GLFW() noexcept
 
     [[unlikely]] if(m_window == nullptr)
     {
-        return 1;
+        return;
     }
 
     glfwMakeContextCurrent(*m_window);
     glfwSwapInterval(1); // Enable vsync
 
-    return 0;
 }
 
-int graphquery::interact::CInteractGUI::Initialise_IMGUI() noexcept
+void graphquery::interact::CInteractGUI::Initialise_IMGUI() noexcept
 {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -98,12 +91,12 @@ int graphquery::interact::CInteractGUI::Initialise_IMGUI() noexcept
     ImGui_ImplGlfw_InitForOpenGL(*m_window, true);
 
     if(!ImGui_ImplOpenGL3_Init(IMGUI_GL_VERSION)) [[unlikely]]
-        return 1;
+        database::_log_system->Error("Error initialising OpenGl for ImGUI.");
 
-    return 0;
+
 }
 
-int graphquery::interact::CInteractGUI::Initialise_Nodes_Editor() noexcept
+void graphquery::interact::CInteractGUI::Initialise_Nodes_Editor() noexcept
 {
     ImNodes::CreateContext();
     ImNodes::StyleColorsDark();
@@ -115,27 +108,25 @@ int graphquery::interact::CInteractGUI::Initialise_Nodes_Editor() noexcept
 
     ImNodesStyle& style = ImNodes::GetStyle();
     style.Flags |= ImNodesStyleFlags_GridLinesPrimary | ImNodesStyleFlags_GridSnapping;
-
-    return 0;
 }
 
-int graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
+void graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
 {
     // Background dock frame
-    m_frames.emplace_back(std::make_unique<graphquery::interact::IFrame *>(new graphquery::interact::CFrameDock(*m_window, m_frame_dock_open)));
+    m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameDock>(*m_window, m_frame_dock_open));
 
     // Menu bar
-    m_frames.emplace_back(std::make_unique<graphquery::interact::IFrame *>(new graphquery::interact::CFrameMenuBar()));
+    m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameMenuBar>());
 
     // Log output frame
-    m_frames.emplace_back(std::make_unique<graphquery::interact::IFrame *>(new graphquery::interact::CFrameLog()));
-    return 0;
+    m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameLog>());
 }
 
 void graphquery::interact::CInteractGUI::Render_Frames() noexcept
 {
-    std::for_each(m_frames.begin(), m_frames.end(), [] (auto & frame) {
-        (*frame)->Render_Frame();
+    std::ranges::for_each(m_frames.begin(), m_frames.end(), [] (auto & frame)
+    {
+        frame->Render_Frame();
     });
 }
 
@@ -153,7 +144,8 @@ void graphquery::interact::CInteractGUI::On_Update() noexcept
     // Rendering
     ImGui::Render();
 
-    int display_w, display_h;
+    int display_w;
+    int display_h;
     glfwGetFramebufferSize(*m_window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
 

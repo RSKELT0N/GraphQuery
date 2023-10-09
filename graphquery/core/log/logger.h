@@ -16,9 +16,9 @@
 #include <mutex>
 
 #ifndef NDEBUG
-#define LOG_SYSTEM_LEVEL debug
+    #define LOG_SYSTEM_LEVEL debug
 #else
-#define LOG_SYSTEM_LEVEL info
+    #define LOG_SYSTEM_LEVEL info
 #endif
 
 namespace graphquery::logger
@@ -28,7 +28,7 @@ namespace graphquery::logger
     **        Marked with uint8_t to represent output level, which
     **        output will be determined at run-time.
     ***************************************************************/
-    enum ELogType : uint8_t
+    enum class ELogType : uint8_t
     {
         // ~ more information (debugging this program)
         debug = 0,
@@ -57,8 +57,6 @@ namespace graphquery::logger
         ~CLogSystem() = default;
 
     public:
-
-    public:
         /****************************************************************
         ** \brief Deleted special functions
         ***************************************************************/
@@ -73,7 +71,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Debug(std::string &) noexcept;
+        void Debug(const std::string &) noexcept;
 
        /****************************************************************
        ** \brief Virtual info function for the logging system to call
@@ -81,7 +79,7 @@ namespace graphquery::logger
        **
        ** \param const std::string & - Output to be rendered.
        ***************************************************************/
-       void Info(std::string &) noexcept;
+       void Info(const std::string &) noexcept;
 
        /****************************************************************
        ** \brief Virtual warning function for the logging system to call
@@ -89,7 +87,7 @@ namespace graphquery::logger
        **
        ** \param const std::string & - Output to be rendered.
        ***************************************************************/
-       void Warning(std::string &) noexcept;
+       void Warning(const std::string &) noexcept;
 
        /****************************************************************
        ** \brief Virtual error function for the logging system to call
@@ -97,29 +95,29 @@ namespace graphquery::logger
        **
        ** \param const std::string & - Output to be rendered.
        ***************************************************************/
-       void Error(std::string &) noexcept;
+       void Error(const std::string &) noexcept;
 
         /****************************************************************
-        ** \brief Deleted copy constructor
+        ** \brief To add an instance of ILog towards the system logger
+        **
+        ** \param std::unique_ptr<ILog> - Instance of the ILog class
         ***************************************************************/
-        void Add_Logger(std::unique_ptr<ILog *>) noexcept;
+        void Add_Logger(std::shared_ptr<ILog>) noexcept;
 
     private:
-        [[nodiscard]] std::string Format_Output(ELogType, std::string &) const noexcept;
+        [[nodiscard]] std::string Format_Output(ELogType, const std::string &) const noexcept;
 
-    public:
+    private:
         // ~ Log type to string conversion
-        static constexpr const char* log_type_prefix[] = {"DEBUG",
-                                                          "INFO",
-                                                          "WARNING",
-                                                          "ERROR"};
-
-    private:
+        std::vector<std::string> log_type_prefix = {"DEBUG",
+                                                    "INFO",
+                                                    "WARNING",
+                                                    "ERROR"};
         // ~ Log level of the logging system
         ELogType m_level;
         // ~ mutex instance for logging to different derived classes.
         std::mutex m_mtx;
         // ~ array of loggers, which the log system holds and calls (Log).
-        std::unique_ptr<std::vector<std::unique_ptr<ILog *>>> m_loggers;
+        std::unique_ptr<std::vector<std::shared_ptr<ILog>>> m_loggers;
     };
 }

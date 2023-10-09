@@ -27,30 +27,11 @@ namespace graphquery::database
     **        and analytic engine.
     ** @return EStatus status code for init.
     ***********************************************/
-    [[nodiscard]] EStatus Initialise() noexcept;
+    [[nodiscard("Ensure the initialise status is checked.")]]
+    EStatus Initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept;
 
-    /**********************************************
-    ** \brief Rendering the interface of the DB.
-    ** @return EStatus status code for init.
-    ***********************************************/
-    [[nodiscard]] int Render() noexcept;
-
-    /**********************************************
-    ** \brief In control of initialising the log-system
-    **        and adding derived instances for consideration
-    **        to render.
-    ** @return EStatus status code for init.
-    ***********************************************/
-    [[nodiscard]] EStatus Initialise_LogSystem() noexcept;
-
-    /**********************************************
-    ** \brief In control of initialising the interface
-    **        to provide a way of viewing/controlling the db.
-    ** @return EStatus status code for init.
-    ***********************************************/
-    [[nodiscard]] EStatus Initialise_Interface() noexcept;
-
-    //~ Internal system functions
-    inline static std::unique_ptr<interact::IInteract *> _interface;
-    inline static std::unique_ptr<logger::CLogSystem> _log_system;
+    //~ Log system instance for rendering output.
+    const static std::unique_ptr<logger::CLogSystem> _log_system = std::make_unique<graphquery::logger::CLogSystem>();
+    //~ Interface instance for providing access to the database.
+    const static std::unique_ptr<interact::IInteract> _interface = std::make_unique<graphquery::interact::CInteractGUI>();
 }
