@@ -8,7 +8,8 @@ file(GLOB_RECURSE
         *.cpp)
 
 # Set source files to compile for generating executable
-add_executable(${EXECUTABLE_NAME} ${SOURCES})
+add_executable(${EXECUTABLE_NAME} ${SOURCES}
+        db/utils/ring_buffer.h)
 
 target_compile_definitions(${EXECUTABLE_NAME}
         PUBLIC

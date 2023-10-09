@@ -91,8 +91,6 @@ void graphquery::interact::CInteractGUI::Initialise_IMGUI() noexcept
 
     if(!ImGui_ImplOpenGL3_Init(IMGUI_GL_VERSION)) [[unlikely]]
         database::_log_system->Error("Error initialising OpenGl for ImGUI.");
-
-
 }
 
 void graphquery::interact::CInteractGUI::Initialise_Nodes_Editor() noexcept
@@ -118,7 +116,10 @@ void graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
     m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameMenuBar>());
 
     // Log output frame
-    m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameLog>());
+    auto frame_log = std::make_shared<graphquery::interact::CFrameLog>();
+
+    m_frames.emplace_back(frame_log);
+    graphquery::database::_log_system->Add_Logger(frame_log);
 }
 
 void graphquery::interact::CInteractGUI::Render_Frames() noexcept

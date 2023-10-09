@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <mutex>
+#include <iomanip>
+#include <sstream>
 
 graphquery::logger::CLogSystem::CLogSystem()
 {
@@ -71,10 +73,12 @@ void graphquery::logger::CLogSystem::Error(const std::string & out) noexcept
 std::string graphquery::logger::CLogSystem::Format_Output(ELogType type, const std::string & out) const noexcept
 {
     // ~ Get the current time of the log call.
+    std::stringstream ss;
     auto curr_time = std::chrono::system_clock::now();
     auto curr_time_c = std::chrono::system_clock::to_time_t(curr_time);
 
-    std::string formatted_str = fmt::format("[%s (%s)]", curr_time_c, CLogSystem::log_type_prefix[static_cast<uint8_t>(type)], out);
+    ss << std::put_time(std::localtime(&curr_time_c), "%Y-%m-%d %X");
+    std::string formatted_str = fmt::format("[{} {}] {}\n", CLogSystem::log_type_prefix[static_cast<uint8_t>(type)], ss.str(), out);
     return formatted_str;
 }
 

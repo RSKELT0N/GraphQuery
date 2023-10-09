@@ -36,7 +36,7 @@ namespace graphquery::interact
         void Initialise_Frames() noexcept;
 
     private:
-        std::vector<std::unique_ptr<IFrame> > m_frames;
+        std::vector<std::shared_ptr<IFrame> > m_frames;
         std::unique_ptr<GLFWwindow *> m_window;
 
         [[maybe_unused]] bool m_frame_dock_open = false;

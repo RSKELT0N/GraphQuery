@@ -1,12 +1,12 @@
 #pragma once
 
-#include "./log/logger.h"
-#include "./fmt/format.h"
-#include "./fmt/color.h"
+#include "log/logger.h"
+#include "fmt/format.h"
+#include "fmt/color.h"
 
 namespace graphquery::logger
 {
-    class CLogSTDO : public ILog
+    class CLogSTDO final : public ILog
     {
     public:
         CLogSTDO() = default;
@@ -20,7 +20,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Debug(const std::string &) const noexcept override;
+        void Debug(const std::string &) noexcept override;
 
         /****************************************************************
         ** \brief Virtual debug function for the logging system to call
@@ -28,7 +28,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Info(const std::string &) const noexcept override;
+        void Info(const std::string &) noexcept override;
 
         /****************************************************************
         ** \brief Virtual warning function for the logging system to call
@@ -36,7 +36,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Warning(const std::string &) const noexcept override;
+        void Warning(const std::string &) noexcept override;
 
         /****************************************************************
         ** \brief Virtual error function for the logging system to call
@@ -44,7 +44,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Error(const std::string &) const noexcept override;
+        void Error(const std::string &) noexcept override;
 
     private:
         [[nodiscard]] std::string Colourise(ELogType type, const std::string &) const noexcept;
