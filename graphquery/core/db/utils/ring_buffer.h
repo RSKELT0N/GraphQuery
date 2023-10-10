@@ -10,8 +10,9 @@ namespace graphquery::database::utils
     public:
         struct SData
         {
-            std::array<ElemType, BufferSize>::iterator start;
-            std::array<ElemType, BufferSize>::iterator end;
+            std::size_t head;
+            std::size_t current_capacity;
+            std::array<ElemType, BufferSize> * data;
         };
 
         CRingBuffer();
@@ -23,6 +24,7 @@ namespace graphquery::database::utils
 
     private:
         std::size_t m_tail = 0;
+        std::size_t m_curr_capacity = 0;
         std::unique_ptr<std::array<ElemType, BufferSize>> m_data;
     };
 
@@ -37,7 +39,7 @@ namespace graphquery::database::utils
     template<typename ElemType, size_t BufferSize>
     void graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::Clear() noexcept
     {
-        m_tail = 0;
+        m_curr_capacity = 0;
     }
 
     template<typename ElemType, size_t BufferSize>
@@ -45,12 +47,15 @@ namespace graphquery::database::utils
     {
         (*m_data)[m_tail] = elem;
         m_tail = (m_tail + 1) % BufferSize;
+        m_curr_capacity = (m_curr_capacity < BufferSize) ? m_curr_capacity + 1 : BufferSize;
     }
 
     template<typename ElemType, size_t BufferSize>
-    graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::SData
+    typename graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::SData
     graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::Get_Data() const noexcept
     {
-        return {.start = m_data->begin(), .end = m_data->begin() + m_tail};
+        return {.head = ((m_tail - 1) - m_curr_capacity) % BufferSize,
+                .current_capacity = m_curr_capacity,
+                .data = m_data.get()};
     }
 }

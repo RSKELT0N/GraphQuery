@@ -28,7 +28,7 @@ namespace graphquery::interact
         [[nodiscard]] ImVec4 Colourise() const noexcept;
 
     private:
-        static constexpr std::size_t RING_BUFFER = 1<<10;
+        static constexpr std::size_t RING_BUFFER = 5;
         database::utils::CRingBuffer<std::string, RING_BUFFER> m_buffer;
     };
 }

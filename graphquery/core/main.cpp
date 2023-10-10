@@ -11,7 +11,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
         return EXIT_FAILURE;
     }
 
-    graphquery::database::_log_system->Error("Test");
     graphquery::database::_interface->Render();
     return EXIT_SUCCESS;
 }

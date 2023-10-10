@@ -14,6 +14,6 @@ namespace graphquery::interact
         [[maybe_unused]] virtual void Render_Frame() noexcept = 0;
 
     protected:
-        [[maybe_unused]] ImGuiWindowFlags m_flags{};
+       ImGuiWindowFlags m_flags{};
     };
 }

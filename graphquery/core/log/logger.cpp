@@ -25,7 +25,7 @@ void graphquery::logger::CLogSystem::Debug(const std::string & out) noexcept
     if(this->m_level <= ELogType::debug)
     {
        std::string formatted = Format_Output(ELogType::debug, out);
-       std::ranges::for_each(this->m_loggers->begin(), this->m_loggers->end(), [&formatted] (auto & logger) -> void
+       std::for_each(this->m_loggers->begin(), this->m_loggers->end(), [&formatted] (auto & logger) -> void
        {
            logger->Debug(formatted);
        });
@@ -38,7 +38,7 @@ void graphquery::logger::CLogSystem::Info(const std::string & out) noexcept
     if(this->m_level <= ELogType::info)
     {
         std::string formatted = Format_Output(ELogType::info, out);
-        std::ranges::for_each(this->m_loggers->begin(), this->m_loggers->end(), [&formatted] (auto & logger) -> void
+        std::for_each(this->m_loggers->begin(), this->m_loggers->end(), [&formatted] (auto & logger) -> void
         {
             logger->Info(formatted);
         });
@@ -51,7 +51,7 @@ void graphquery::logger::CLogSystem::Warning(const std::string & out) noexcept
     if(this->m_level <= ELogType::warning)
     {
         std::string formatted = Format_Output(ELogType::warning, out);
-        std::ranges::for_each(this->m_loggers->begin(), this->m_loggers->end(), [&formatted] (auto & logger) -> void
+        std::for_each(this->m_loggers->begin(), this->m_loggers->end(), [&formatted] (auto & logger) -> void
         {
             logger->Warning(formatted);
         });
@@ -63,7 +63,7 @@ void graphquery::logger::CLogSystem::Error(const std::string & out) noexcept
     if(this->m_level <= ELogType::error)
     {
         std::string formatted = Format_Output(ELogType::error, out);
-        std::ranges::for_each(this->m_loggers->begin(), this->m_loggers->end(), [&formatted] (auto & logger) -> void
+        std::for_each(this->m_loggers->begin(), this->m_loggers->end(), [&formatted] (auto & logger) -> void
         {
             logger->Error(formatted);
         });

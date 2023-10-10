@@ -1,6 +1,6 @@
 #include "frame_dock.h"
 
-graphquery::interact::CFrameDock::CFrameDock(GLFWwindow * window, bool & is_open) : m_window(window), m_viewp(ImGui::GetMainViewport()), m_is_opened(is_open)
+graphquery::interact::CFrameDock::CFrameDock(bool & is_open) :  m_viewp(ImGui::GetMainViewport()), m_is_opened(is_open)
 {
     this->m_flags = (ImGuiWindowFlags_NoCollapse |
                     ImGuiWindowFlags_NoMove |

@@ -21,6 +21,7 @@ namespace graphquery::database
     graphquery::database::EStatus Initialise([[maybe_unused]] int argc, [[maybe_unused]] char **argv) noexcept
     {
         Initialise_Logging();
+        _log_system->Info("Graph Query");
         return EStatus::valid;
     }
 }

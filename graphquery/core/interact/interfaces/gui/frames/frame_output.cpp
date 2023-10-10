@@ -42,12 +42,16 @@ void graphquery::interact::CFrameLog::Render_Log_Box() noexcept
 void graphquery::interact::CFrameLog::Render_Log_Output() noexcept
 {
     auto buffer_data = m_buffer.Get_Data();
+    std::size_t& size = buffer_data.current_capacity;
+    std::size_t& head = buffer_data.head;
 
-    for(auto i = buffer_data.start; i != buffer_data.end; i++)
+    for(std::size_t i = 0; i < size; i++)
     {
+        std::string ss((*buffer_data.data)[head].c_str(), (*buffer_data.data)[head].c_str() + (*buffer_data.data)[head].length() + 1);
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0,255,0,255));
-        ImGui::TextUnformatted(i->c_str(), i->c_str() + i->length());
+        ImGui::TextUnformatted(ss.c_str());
         ImGui::PopStyleColor();
+        head = (head + 1) % buffer_data.data->size();
     }
 }
 

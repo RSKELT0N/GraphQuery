@@ -24,7 +24,7 @@ namespace graphquery::database
     **        and analytic engine.
     ** @return EStatus status code for init.
     ***********************************************/
-    [[nodiscard("Ensure the initialise status is checked.")]]
+    [[nodiscard]]
     EStatus Initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept;
 
     //~ Log system instance for rendering output.

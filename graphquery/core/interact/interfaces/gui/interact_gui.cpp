@@ -110,7 +110,7 @@ void graphquery::interact::CInteractGUI::Initialise_Nodes_Editor() noexcept
 void graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
 {
     // Background dock frame
-    m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameDock>(*m_window, m_frame_dock_open));
+    m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameDock>(m_frame_dock_open));
 
     // Menu bar
     m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameMenuBar>());
@@ -124,7 +124,7 @@ void graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
 
 void graphquery::interact::CInteractGUI::Render_Frames() noexcept
 {
-    std::ranges::for_each(m_frames.begin(), m_frames.end(), [] (auto & frame)
+    std::for_each(m_frames.begin(), m_frames.end(), [] (auto & frame)
     {
         frame->Render_Frame();
     });

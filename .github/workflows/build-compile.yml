@@ -7,6 +7,7 @@ on:
 jobs:
   build-compile-linux:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         preset: [unix_release_makefile, unix_debug_makefile]
@@ -23,7 +24,8 @@ jobs:
       shell: bash
       run: |
         sudo apt update
-        sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
+        sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev    
+        sudo apt-get install libegl1-mesa-dev
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
     - name: Build
@@ -34,6 +36,7 @@ jobs:
 
   build-compile-windows:
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest]
         preset: [ unix_release_makefile, unix_debug_makefile ]
@@ -59,6 +62,7 @@ jobs:
 
   build-compile-macos:
     strategy:
+      fail-fast: false
       matrix:
         os: [ macos-latest ]
         preset: [ unix_release_makefile, unix_debug_makefile ]
@@ -81,7 +85,3 @@ jobs:
 
       - name: Compile
         run: cmake --build ${{ steps.strings.outputs.build-output-dir }}
-
-#    - name: Test
-#      working-directory: ${{ steps.strings.outputs.build-output-dir }}
-#      run: ctest --build-config ${{ matrix.build_type }}
