@@ -1,0 +1,87 @@
+name: Build & Compile on Multiple platforms
+
+on:
+  push:
+    branches: [ "dev" ]
+
+jobs:
+  build-compile-linux:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        preset: [unix_release_makefile, unix_debug_makefile]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Install Dependencies
+      id: strings
+      shell: bash
+      run: |
+        sudo apt update
+        sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - name: Build
+      run: cmake --preset ${{ matrix.preset }} -B ${{ steps.strings.outputs.build-output-dir }}
+
+    - name: Compile
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }}
+
+  build-compile-windows:
+    strategy:
+      matrix:
+        os: [windows-latest]
+        preset: [ unix_release_makefile, unix_debug_makefile ]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        id: strings
+        shell: bash
+        run: |
+          echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: cmake --preset ${{ matrix.preset }} -B ${{ steps.strings.outputs.build-output-dir }}
+
+      - name: Compile
+        run: cmake --build ${{ steps.strings.outputs.build-output-dir }}
+
+  build-compile-macos:
+    strategy:
+      matrix:
+        os: [ macos-latest ]
+        preset: [ unix_release_makefile, unix_debug_makefile ]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        id: strings
+        shell: bash
+        run: |
+          echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: cmake --preset ${{ matrix.preset }} -B ${{ steps.strings.outputs.build-output-dir }}
+
+      - name: Compile
+        run: cmake --build ${{ steps.strings.outputs.build-output-dir }}
+
+#    - name: Test
+#      working-directory: ${{ steps.strings.outputs.build-output-dir }}
+#      run: ctest --build-config ${{ matrix.build_type }}
