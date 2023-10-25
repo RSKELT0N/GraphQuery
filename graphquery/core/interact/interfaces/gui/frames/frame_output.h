@@ -1,8 +1,10 @@
 #pragma once
 
-#include "log/logger.h"
+#include "log/logsystem.h"
 #include "interact/interfaces/gui/frame.h"
 #include "db/utils/ring_buffer.h"
+
+#include <string_view>
 
 namespace graphquery::interact
 {
@@ -15,20 +17,20 @@ namespace graphquery::interact
         void Render_Frame() noexcept override;
 
     protected:
-        void Debug(const std::string &) noexcept override;
-        void Info(const std::string &) noexcept override;
-        void Warning(const std::string &) noexcept override;
-        void Error(const std::string &)  noexcept override;
+        void Debug(std::string_view) noexcept override;
+        void Info(std::string_view) noexcept override;
+        void Warning(std::string_view) noexcept override;
+        void Error(std::string_view)  noexcept override;
 
     private:
         void Render_Clear_Button() noexcept;
         void Render_Log_Box() noexcept;
-        void Render_Log_Output() noexcept;
+        void Render_Log_Output() const noexcept;
         [[nodiscard]] static bool Is_Scroll_At_End() noexcept;
         [[nodiscard]] ImVec4 Colourise() const noexcept;
 
     private:
-        static constexpr std::size_t RING_BUFFER = 5;
+        static constexpr std::size_t RING_BUFFER = 1024;
         database::utils::CRingBuffer<std::string, RING_BUFFER> m_buffer;
     };
 }

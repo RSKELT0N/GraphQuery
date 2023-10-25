@@ -1,7 +1,7 @@
 #pragma once
 
 #include "db/utils/lib.h"
-#include "../log/logger.h"
+#include "../log/logsystem.h"
 #include "../interact/interact.h"
 
 #include <memory>

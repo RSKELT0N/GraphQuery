@@ -5,9 +5,11 @@
 
 namespace
 {
-    void Initialise_Logging() noexcept
+    graphquery::database::EStatus Initialise_Logging() noexcept
     {
         graphquery::database::_log_system->Add_Logger(std::make_shared<graphquery::logger::CLogSTDO>());
+
+        return graphquery::database::EStatus::valid;
     }
 }
 
@@ -20,9 +22,8 @@ namespace graphquery::database
 
     graphquery::database::EStatus Initialise([[maybe_unused]] int argc, [[maybe_unused]] char **argv) noexcept
     {
-        Initialise_Logging();
-        _log_system->Info("Graph Query");
-        return EStatus::valid;
+        EStatus status = Initialise_Logging();
+        return status;
     }
 }
 

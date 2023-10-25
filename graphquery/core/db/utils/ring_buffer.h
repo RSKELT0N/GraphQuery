@@ -19,8 +19,11 @@ namespace graphquery::database::utils
 
     public:
         void Clear() noexcept;
-        void Add_Element(const ElemType & elem) noexcept;
-        SData Get_Data() const noexcept;
+        void Add(const ElemType & elem) noexcept;
+        ElemType operator[](std::size_t i) const noexcept;
+        std::size_t Get_Head() const noexcept;
+        std::size_t Get_Current_Capacity() const noexcept;
+        std::size_t Get_BufferSize() const noexcept;
 
     private:
         std::size_t m_tail = 0;
@@ -43,19 +46,39 @@ namespace graphquery::database::utils
     }
 
     template<typename ElemType, size_t BufferSize>
-    void graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::Add_Element(const ElemType & elem) noexcept
+    void graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::Add(const ElemType & elem) noexcept
     {
-        (*m_data)[m_tail] = elem;
+        m_data->operator[](m_tail) = elem;
         m_tail = (m_tail + 1) % BufferSize;
         m_curr_capacity = (m_curr_capacity < BufferSize) ? m_curr_capacity + 1 : BufferSize;
     }
 
     template<typename ElemType, size_t BufferSize>
-    typename graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::SData
-    graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::Get_Data() const noexcept
+    ElemType
+    graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::operator[](std::size_t i) const noexcept
     {
-        return {.head = ((m_tail - 1) - m_curr_capacity) % BufferSize,
-                .current_capacity = m_curr_capacity,
-                .data = m_data.get()};
+        assert(0 <= i && BufferSize >= i && "Accessed element is out of range");
+        return m_data->operator[](i);
+    }
+
+    template<typename ElemType, size_t BufferSize>
+    std::size_t
+    graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::Get_Current_Capacity() const noexcept
+    {
+        return this->m_curr_capacity;
+    }
+
+    template<typename ElemType, size_t BufferSize>
+    std::size_t
+    graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::Get_Head() const noexcept
+    {
+        return ((this->m_tail - 1) - this->m_curr_capacity) % BufferSize;
+    }
+
+    template<typename ElemType, size_t BufferSize>
+    std::size_t
+    graphquery::database::utils::CRingBuffer<ElemType, BufferSize>::Get_BufferSize() const noexcept
+    {
+        return BufferSize;
     }
 }

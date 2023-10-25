@@ -1,7 +1,5 @@
 #include "db/system.h"
 
-#include "fmt/format.h"
-
 #include <cassert>
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])

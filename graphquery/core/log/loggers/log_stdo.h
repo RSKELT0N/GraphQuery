@@ -1,6 +1,6 @@
 #pragma once
 
-#include "log/logger.h"
+#include "log/logsystem.h"
 #include "fmt/format.h"
 #include "fmt/color.h"
 
@@ -20,7 +20,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Debug(const std::string &) noexcept override;
+        void Debug(std::string_view) noexcept override;
 
         /****************************************************************
         ** \brief Virtual debug function for the logging system to call
@@ -28,7 +28,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Info(const std::string &) noexcept override;
+        void Info(std::string_view) noexcept override;
 
         /****************************************************************
         ** \brief Virtual warning function for the logging system to call
@@ -36,7 +36,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Warning(const std::string &) noexcept override;
+        void Warning(std::string_view) noexcept override;
 
         /****************************************************************
         ** \brief Virtual error function for the logging system to call
@@ -44,9 +44,10 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Error(const std::string &) noexcept override;
+        void Error(std::string_view) noexcept override;
 
     private:
-        [[nodiscard]] std::string Colourise(ELogType type, const std::string &) const noexcept;
+        [[nodiscard]] std::string Colourise(ELogType type, std::string_view) const noexcept;
     };
 }
+

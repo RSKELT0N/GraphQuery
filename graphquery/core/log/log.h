@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 namespace graphquery::logger
 {
@@ -34,7 +35,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        virtual void Debug(const std::string &) noexcept = 0;
+        virtual void Debug(std::string_view) noexcept = 0;
 
         /****************************************************************
         * \brief Virtual debug function for the logging system to call
@@ -42,7 +43,7 @@ namespace graphquery::logger
         *
         * \param const std::string & - Output to be rendered.
         **************************************************************/
-        virtual void Info(const std::string &) noexcept = 0;
+        virtual void Info(std::string_view) noexcept = 0;
 
         /****************************************************************
         * \brief Virtual warning function for the logging system to call
@@ -50,7 +51,7 @@ namespace graphquery::logger
         *
         aram const std::string & - Output to be rendered.
         ***** \p**********************************************************/
-        virtual void Warning(const std::string &) noexcept = 0;
+        virtual void Warning(std::string_view) noexcept = 0;
 
         /****************************************************************
         * \brief Virtual error function for the logging system to call
@@ -58,7 +59,7 @@ namespace graphquery::logger
         *
         * \param const std::string & - Output to be rendered.
         **************************************************************/
-        virtual void Error(const std::string &) noexcept = 0;
+        virtual void Error(std::string_view) noexcept = 0;
 
     protected:
         // ~ friend reference of the logging system (can call protected/private functionality)
