@@ -1,6 +1,16 @@
+/************************************************************
+* \author Ryan Skelton
+* \date 18/09/2023
+* \file system.h
+* \brief System header file containing the necessary
+*        functionality for the graph db. Central point
+*        to access the core instances.
+************************************************************/
+
 #pragma once
 
 #include "db/utils/lib.h"
+#include "storage.h"
 #include "../log/logsystem.h"
 #include "../interact/interact.h"
 
@@ -31,4 +41,6 @@ namespace graphquery::database
     extern std::unique_ptr<logger::CLogSystem> _log_system;
     //~ Interface instance for providing access to the database.
     extern std::unique_ptr<interact::IInteract> _interface;
+    //~ Instance of the graph data model.
+    extern std::unique_ptr<storage::CStorage> _storage;
 }

@@ -4,12 +4,11 @@ cmake_minimum_required(VERSION 3.17)
 # Retrieve source files, under SOURCE_FOLDER
 file(GLOB_RECURSE
         SOURCES
-        main.cpp
-        *.cpp)
+        *.cpp
+        db/utils/ring_buffer.h)
 
 # Set source files to compile for generating executable
-add_executable(${EXECUTABLE_NAME} ${SOURCES}
-        db/utils/ring_buffer.h)
+add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
 target_compile_definitions(${EXECUTABLE_NAME}
         PUBLIC
@@ -20,6 +19,7 @@ target_compile_options(${EXECUTABLE_NAME}
         -Wall
         -Werror
         -Wpedantic
+        -O2
         -g)
 
 target_link_libraries(${EXECUTABLE_NAME}

@@ -19,8 +19,6 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: crazy-max/ghaction-chocolatey@v3
-
       - name: Install Dependencies
         id: strings
         shell: bash
@@ -35,41 +33,6 @@ jobs:
 
       - name: Compile
         run: cmake --build ${{ steps.strings.outputs.build-output-dir }}
-
-  build-compile-windows:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest]
-        compiler: [clang]
-        preset: [unix_release_makefile, unix_debug_makefile]
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
-
-      - name: choco setup
-        uses: crazy-max/ghaction-chocolatey@v3
-
-      - name: Add clang path to $PATH env
-        shell: bash
-        run: echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
-
-      - name: Install Dependencies
-        id: strings
-        shell: pwsh
-        run: |
-          choco install cmake --pre
-          choco install llvm
-
-      - name: Build
-        run: cmake -G "Visual Studio 17 2022" -A x64 -T clangGL --preset ${{ matrix.preset }} -B ${{ steps.strings.outputs.build-output-dir }}
-
-      - name: Compile
-        run: cmake --build ${{ steps.strings.outputs.build-output-dir }} -T clangCL
 
   build-compile-macos:
     strategy:
@@ -96,3 +59,40 @@ jobs:
 
       - name: Compile
         run: cmake --build ${{ steps.strings.outputs.build-output-dir }}
+
+
+
+#  build-compile-windows:
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os: [windows-latest]
+#        compiler: [clang]
+#        preset: [unix_release_makefile, unix_debug_makefile]
+#
+#    runs-on: ${{ matrix.os }}
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          submodules: recursive
+#
+#      - name: choco setup
+#        uses: crazy-max/ghaction-chocolatey@v3
+#
+#      - name: Add clang path to $PATH env
+#        shell: bash
+#        run: echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
+#
+#      - name: Install Dependencies
+#        id: strings
+#        shell: pwsh
+#        run: |
+#          choco install cmake --pre
+#          choco install llvm
+#
+#      - name: Build
+#        run: cmake -G "Visual Studio 17 2022" -A x64 -T clangGL --preset ${{ matrix.preset }} -B ${{ steps.strings.outputs.build-output-dir }}
+#
+#      - name: Compile
+#        run: cmake --build ${{ steps.strings.outputs.build-output-dir }} -T clangCL

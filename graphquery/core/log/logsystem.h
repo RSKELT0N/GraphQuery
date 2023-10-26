@@ -1,7 +1,7 @@
 /************************************************************
 * \author Ryan Skelton
 * \date 18/09/2023
-* \file log.hpp
+* \file logsystem.h
 * \brief log header file containing symbols to control
 *       output towards to the program in different forms.
 ************************************************************/

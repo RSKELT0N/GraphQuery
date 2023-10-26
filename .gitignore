@@ -1,6 +1,6 @@
 build/
-imgui.ini
 .idea/
 cmake-build-debug/
 .vscode/
+imgui.ini
 .DS_Store

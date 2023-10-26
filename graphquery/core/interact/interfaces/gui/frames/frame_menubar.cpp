@@ -2,8 +2,6 @@
 
 #include "db/system.h"
 
-#include <cstdio>
-
 graphquery::interact::CFrameMenuBar::~CFrameMenuBar() = default;
 
 void graphquery::interact::CFrameMenuBar::Render_Frame() noexcept
@@ -13,7 +11,6 @@ void graphquery::interact::CFrameMenuBar::Render_Frame() noexcept
             if (ImGui::MenuItem("Create")) {
             }
             if (ImGui::MenuItem("Open", "Ctrl+o")) {
-                graphquery::database::_log_system->Info("wow");
             }
             if (ImGui::MenuItem("Save", "Ctrl+S")) {
             }
