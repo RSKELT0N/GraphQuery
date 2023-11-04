@@ -1,5 +1,5 @@
 # CMake version specified
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.9)
 
 # Project declaration of base project.
 project(GraphQuery
@@ -23,7 +23,6 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glfw)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glew)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/dylib)
-
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external)          # imgui
 
 # source

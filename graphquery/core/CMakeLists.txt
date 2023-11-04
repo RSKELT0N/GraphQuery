@@ -1,10 +1,13 @@
 # cmake sub-directory for src specification
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.9)
 
 # Retrieve source files, under SOURCE_FOLDER
 file(GLOB_RECURSE
         SOURCES
-        *.cpp
+        main.cpp
+        db/*.cpp
+        log/*.cpp
+        interact/*.cpp
         db/utils/ring_buffer.h)
 
 # Set source files to compile for generating executable
@@ -32,3 +35,4 @@ target_link_libraries(${EXECUTABLE_NAME}
 target_include_directories(${EXECUTABLE_NAME}
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR})
+

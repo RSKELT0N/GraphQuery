@@ -33,7 +33,8 @@ void graphquery::interact::CFrameLog::Render_Log_Box() noexcept
     {
         Render_Log_Output();
 
-        if(Is_Scroll_At_End()) ImGui::SetScrollHereY(1.0F);
+        if(Is_Scroll_At_End())
+            ImGui::SetScrollHereY(1.0F);
     }
 
     ImGui::EndChild();
@@ -56,7 +57,7 @@ void graphquery::interact::CFrameLog::Render_Log_Output() const noexcept
 bool graphquery::interact::CFrameLog::Is_Scroll_At_End() noexcept
 {
     if (ImGuiWindow const *window = ImGui::GetCurrentWindow()) {
-        return (window->Scroll.y >= window->ScrollMax.y);
+        return ((window->Scroll.y) >= window->ScrollMax.y);
     }
     return false;
 }

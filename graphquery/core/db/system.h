@@ -10,7 +10,7 @@
 #pragma once
 
 #include "db/utils/lib.h"
-#include "storage.h"
+#include "graphstorage.h"
 #include "../log/logsystem.h"
 #include "../interact/interact.h"
 
@@ -42,5 +42,5 @@ namespace graphquery::database
     //~ Interface instance for providing access to the database.
     extern std::unique_ptr<interact::IInteract> _interface;
     //~ Instance of the graph data model.
-    extern std::unique_ptr<storage::CStorage> _storage;
+    extern std::unique_ptr<storage::CGraphStorage> _storage;
 }
