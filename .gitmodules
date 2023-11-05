@@ -16,3 +16,6 @@
 [submodule "graphquery/external/dylib"]
 	path = graphquery/external/dylib
 	url = https://github.com/martin-olivier/dylib.git
+[submodule "graphquery/external/imgui-filebrowser"]
+	path = graphquery/external/imgui-filebrowser
+	url = https://github.com/AirGuanZ/imgui-filebrowser.git
