@@ -47,10 +47,10 @@ void graphquery::interact::CFrameLog::Render_Log_Output() const noexcept
 
     for(std::size_t i = 0; i < size; i++)
     {
+        head = (head + 1) % this->m_buffer.Get_BufferSize();
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0,255,0,255));
         ImGui::TextUnformatted(m_buffer[head].c_str());
         ImGui::PopStyleColor();
-        head = (head + 1) % this->m_buffer.Get_BufferSize();
     }
 }
 

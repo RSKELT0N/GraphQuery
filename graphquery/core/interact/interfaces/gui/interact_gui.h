@@ -39,6 +39,5 @@ namespace graphquery::interact
         std::vector<std::shared_ptr<IFrame> > m_frames;
         std::unique_ptr<GLFWwindow *> m_window;
         bool m_frame_dock_open = false;
-
     };
 }

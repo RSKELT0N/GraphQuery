@@ -41,12 +41,16 @@ namespace graphquery::database::storage
         CGraphStorage();
         ~CGraphStorage();
 
+        [[nodiscard]] bool IsExistingDBLoaded() const noexcept;
         void Initialise(std::string file_path) noexcept;
         void UnInitialise() noexcept;
 
     private:
-        bool m_existing_database_loaded;
+        //~ Bool to check if a current database is loaded.
+        bool m_existing_db_loaded;
+        //~ Instance of the on-disk loader for the graph db.
         std::unique_ptr<graphquery::database::storage::IGraphDiskStorage> m_graph_loader;
+        //~ Instance of the in-memory graph representation for the graph db.
         std::unique_ptr<graphquery::database::storage::IGraphMemory> m_graph_memory;
     };
 }

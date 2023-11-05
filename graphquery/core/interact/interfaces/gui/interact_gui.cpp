@@ -9,6 +9,7 @@
 #include "interact/interfaces/gui/frames/frame_dock.h"
 #include "interact/interfaces/gui/frames/frame_menubar.h"
 #include "interact/interfaces/gui/frames/frame_graph_visual.h"
+#include "interact/interfaces/gui/frames/frame_graph_db.h"
 
 #include <cstdio>
 #include <algorithm>
@@ -120,6 +121,9 @@ void graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
     auto frame_log = std::make_shared<graphquery::interact::CFrameLog>();
     m_frames.emplace_back(frame_log);
     graphquery::database::_log_system->Add_Logger(frame_log);
+
+    // Graph DB
+    m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameGraphDB>());
 
     // Graph visual
     m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameGraphVisual>());
