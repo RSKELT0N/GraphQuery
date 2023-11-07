@@ -1,4 +1,5 @@
 #include "db/system.h"
+#include "db/storage/diskdriver.h"
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
 {

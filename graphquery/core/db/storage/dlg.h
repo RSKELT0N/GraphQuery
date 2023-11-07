@@ -4,11 +4,11 @@
 
 namespace graphquery::database::storage
 {
-    class CLoaderDirectedLabelGraph final : public IGraphDiskStorage
+    class CLoaderPropertyLabelGraph final : public IGraphDiskStorage
     {
     public:
-        CLoaderDirectedLabelGraph();
-        ~CLoaderDirectedLabelGraph() override;
+        CLoaderPropertyLabelGraph();
+        ~CLoaderPropertyLabelGraph() override;
 
         void Load() noexcept override;
 

@@ -14,6 +14,8 @@
 #include <cstdio>
 #include <algorithm>
 
+#include <thread>
+
 graphquery::interact::CInteractGUI::CInteractGUI()
 {
     Initialise_GLFW();
@@ -27,6 +29,7 @@ void graphquery::interact::CInteractGUI::Render() noexcept
     [[likely]] while(glfwWindowShouldClose(*m_window) == 0)
     {
         On_Update();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     Clean_Up();
 }

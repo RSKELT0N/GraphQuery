@@ -1,5 +1,10 @@
 #include "frame_menubar.h"
 
+#include "db/system.h"
+#include "fmt/format.h"
+
+#include "imgui_stdlib.h"
+
 graphquery::interact::CFrameMenuBar::~CFrameMenuBar() = default;
 
 graphquery::interact::CFrameMenuBar::CFrameMenuBar()
@@ -8,13 +13,13 @@ graphquery::interact::CFrameMenuBar::CFrameMenuBar()
                                                | ImGuiFileBrowserFlags_CreateNewDir);
 
     this->m_file_explorer.SetTitle("Open Database");
-    this->m_file_explorer.SetTypeFilters({".plg"});
+    this->m_file_explorer.SetTypeFilters({".gdb"});
 
     this->m_new_db_location = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc
                                                 | ImGuiFileBrowserFlags_CreateNewDir
                                                 | ImGuiFileBrowserFlags_SelectDirectory);
 
-    this->m_file_explorer.SetTitle("Select Location Path");
+    this->m_new_db_location.SetTitle("Select Location Path");
 }
 
 void graphquery::interact::CFrameMenuBar::Render_Frame() noexcept
@@ -31,7 +36,6 @@ void graphquery::interact::CFrameMenuBar::Render_Frame() noexcept
             }
             if (ImGui::MenuItem("Save", "Ctrl+S"))
             {
-                Render_Save();
             }
             ImGui::EndMenu();
         }
@@ -81,11 +85,7 @@ void graphquery::interact::CFrameMenuBar::Render_CreateDBInfo() noexcept
 
         Render_CreateDBLocation();
         Render_CreateDBName();
-
-        if(ImGui::Button("Create"))
-        {
-            SetCreateDBState(false);
-        }
+        Render_CreateDBButton();
     }
     ImGui::EndChild();
 }
@@ -107,6 +107,12 @@ void graphquery::interact::CFrameMenuBar::Render_CreateDBLocation() noexcept
     if(this->m_new_db_location.HasSelected())
     {
         file_path = this->m_new_db_location.GetSelected().string();
+
+        if(file_path.size() > DB_PATH_SIZE)
+        {
+            graphquery::database::_log_system->Warning(fmt::format("Select path for DB creation is greater than specified length ({})", DB_PATH_SIZE));
+        }
+        this->m_created_db_path = file_path;
     }
 
     this->m_new_db_location.Display();
@@ -114,10 +120,24 @@ void graphquery::interact::CFrameMenuBar::Render_CreateDBLocation() noexcept
 
 void graphquery::interact::CFrameMenuBar::Render_CreateDBName() noexcept
 {
-    static char db_name[DB_NAME_SIZE];
     ImGui::Text("Name: ");
     ImGui::SameLine();
-    ImGui::InputText("##", db_name, DB_NAME_SIZE);
+    ImGui::InputText("##", &this->m_created_db_name, DB_NAME_SIZE);
+    ImGui::SameLine();
+    ImGui::Text(".gdb");
 }
 
-void graphquery::interact::CFrameMenuBar::Render_Save() noexcept {}
+void graphquery::interact::CFrameMenuBar::Render_CreateDBButton() noexcept
+{
+    if(ImGui::Button("Create"))
+    {
+        if(this->m_created_db_name.empty() || this->m_created_db_path.empty())
+        {
+            graphquery::database::_log_system->Warning("Either the file path or name cannot be empty to create a database");
+            return;
+        }
+        graphquery::database::_storage->Init(fmt::format("{}/{}.gdb", this->m_created_db_path, this->m_created_db_name));
+        this->m_created_db_name = "";
+        this->m_created_db_path = "";
+        SetCreateDBState(false);
+    }}
