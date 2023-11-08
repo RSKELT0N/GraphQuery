@@ -70,9 +70,9 @@ namespace graphquery::database::storage
         CGraphStorage();
         ~CGraphStorage();
 
-        [[nodiscard]] bool IsExistingDBLoaded() const noexcept;
-        void Init(std::string_view file_path);
         void Load();
+        void Init(std::string_view file_path);
+        [[nodiscard]] bool IsExistingDBLoaded() const noexcept;
 
     private:
         void DefineMasterDBFile() noexcept;

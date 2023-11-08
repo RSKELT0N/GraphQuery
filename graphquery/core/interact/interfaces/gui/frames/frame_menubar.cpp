@@ -24,21 +24,10 @@ graphquery::interact::CFrameMenuBar::CFrameMenuBar()
 
 void graphquery::interact::CFrameMenuBar::Render_Frame() noexcept
 {
-    if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("File")) {
-            if (ImGui::MenuItem("Create"))
-            {
-                SetCreateDBState(true);
-            }
-            if (ImGui::MenuItem("Open", "Ctrl+o"))
-            {
-                this->m_file_explorer.Open();
-            }
-            if (ImGui::MenuItem("Save", "Ctrl+S"))
-            {
-            }
-            ImGui::EndMenu();
-        }
+    if (ImGui::BeginMainMenuBar())
+    {
+        Render_CreateMenu();
+        Render_OpenMenu();
         ImGui::EndMainMenuBar();
     }
 
@@ -46,9 +35,47 @@ void graphquery::interact::CFrameMenuBar::Render_Frame() noexcept
     Render_CreateDB();
 }
 
+void graphquery::interact::CFrameMenuBar::Render_CreateMenu() noexcept
+{
+    if (ImGui::BeginMenu("Create"))
+    {
+        if (ImGui::MenuItem("Database"))
+        {
+            SetCreateDBState(true);
+        }
+        if(graphquery::database::_storage->IsExistingDBLoaded() && ImGui::MenuItem("Graph"))
+        {
+            SetCreateGraphState(true);
+        }
+        ImGui::EndMenu();
+    }
+}
+
+void graphquery::interact::CFrameMenuBar::Render_OpenMenu() noexcept
+{
+    if (ImGui::BeginMenu("Open", "Ctrl+o"))
+    {
+        if(ImGui::MenuItem("Database"))
+        {
+            this->m_file_explorer.Open();
+        }
+
+        if(graphquery::database::_storage->IsExistingDBLoaded() && ImGui::MenuItem("Graph"))
+        {
+            this->m_file_explorer.Open();
+        }
+        ImGui::EndMenu();
+    }
+}
+
 void graphquery::interact::CFrameMenuBar::SetCreateDBState(bool state) noexcept
 {
     this->m_is_create_db_opened = state;
+}
+
+void graphquery::interact::CFrameMenuBar::SetCreateGraphState(bool state) noexcept
+{
+    this->m_is_create_graph_opened = state;
 }
 
 void graphquery::interact::CFrameMenuBar::Render_File_Browser() noexcept
@@ -122,7 +149,7 @@ void graphquery::interact::CFrameMenuBar::Render_CreateDBName() noexcept
 {
     ImGui::Text("Name: ");
     ImGui::SameLine();
-    ImGui::InputText("##", &this->m_created_db_name, DB_NAME_SIZE);
+    ImGui::InputText("##", &this->m_created_db_name, ImGuiInputTextFlags_CharsNoBlank);
     ImGui::SameLine();
     ImGui::Text(".gdb");
 }
