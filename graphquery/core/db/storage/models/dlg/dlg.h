@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphstorage.h"
+#include "db/storage/dbstorage.h"
 
 namespace graphquery::database::storage
 {

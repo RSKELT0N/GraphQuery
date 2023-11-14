@@ -42,7 +42,7 @@ void graphquery::interact::CFrameMenuBar::Render_CreateMenu() noexcept
         if (ImGui::MenuItem("Database"))
             SetCreateDBState(true);
 
-        if(graphquery::database::_storage->IsExistingDBLoaded() && ImGui::MenuItem("Graph"))
+        if(graphquery::database::_db_storage->IsExistingDBLoaded() && ImGui::MenuItem("Graph"))
             SetCreateGraphState(true);
 
         ImGui::EndMenu();
@@ -56,7 +56,7 @@ void graphquery::interact::CFrameMenuBar::Render_OpenMenu() noexcept
         if(ImGui::MenuItem("Database"))
             this->m_db_master_file_explorer.Open();
 
-        if(graphquery::database::_storage->IsExistingDBLoaded() && ImGui::MenuItem("Graph"))
+        if(graphquery::database::_db_storage->IsExistingDBLoaded() && ImGui::MenuItem("Graph"))
             this->m_db_master_file_explorer.Open();
 
         ImGui::EndMenu();
@@ -70,7 +70,7 @@ void graphquery::interact::CFrameMenuBar::Render_File_Browser() noexcept
     if(m_db_master_file_explorer.HasSelected())
     {
         const std::filesystem::path db_master_file_path = m_db_master_file_explorer.GetSelected();
-        graphquery::database::_storage->Init(db_master_file_path.generic_string());
+        graphquery::database::_db_storage->Init(db_master_file_path.generic_string());
         m_db_master_file_explorer.ClearSelected();
     }
 }
@@ -150,7 +150,7 @@ void graphquery::interact::CFrameMenuBar::Render_CreateDBButton() noexcept
             graphquery::database::_log_system->Warning("Either the file path or name cannot be empty to create a database");
             return;
         }
-        graphquery::database::_storage->Init(fmt::format("{}/{}.gdb", this->m_created_db_path, this->m_created_db_name));
+        graphquery::database::_db_storage->Init(fmt::format("{}/{}.gdb", this->m_created_db_path, this->m_created_db_name));
         this->m_created_db_name = "";
         this->m_created_db_path = "";
         SetCreateDBState(false);

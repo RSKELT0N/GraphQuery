@@ -2,8 +2,6 @@
 
 #include <iostream>
 #include <sys/stat.h>
-#include <sys/mman.h>
-#include <fcntl.h>
 
 namespace graphquery::database::storage
 {
@@ -31,8 +29,8 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t Write(const void* ptr, size_t size, uint32_t amt);
         [[maybe_unused]] char operator[](int64_t idx) const;
 
-        [[maybe_unused]] bool CheckIfInitialised() const noexcept;
-        [[maybe_unused]] bool CheckIfFileExists(std::string_view file_path) const noexcept;
+        [[nodiscard]] bool CheckIfInitialised() const noexcept;
+        [[nodiscard]] bool CheckIfFileExists(std::string_view file_path) const noexcept;
 
     private:
         bool m_initialised = {};

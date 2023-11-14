@@ -1,17 +1,19 @@
-#include "graphstorage.h"
+#include "dbstorage.h"
 
 #include "db/system.h"
 
 #include <cassert>
+#include <sys/fcntl.h>
+#include <sys/mman.h>
 
 bool
-graphquery::database::storage::CGraphStorage::IsExistingDBLoaded() const noexcept
+graphquery::database::storage::CDBStorage::IsExistingDBLoaded() const noexcept
 {
     return this->m_existing_db_loaded;
 }
 
 void
-graphquery::database::storage::CGraphStorage::Init(std::string_view file_path)
+graphquery::database::storage::CDBStorage::Init(std::string_view file_path)
 {
     if(!m_db_disk.CheckIfFileExists(file_path))
         SetUp(file_path);
@@ -19,7 +21,7 @@ graphquery::database::storage::CGraphStorage::Init(std::string_view file_path)
 }
 
 void
-graphquery::database::storage::CGraphStorage::SetUp(std::string_view file_path)
+graphquery::database::storage::CDBStorage::SetUp(std::string_view file_path)
 {
     _log_system->Info(fmt::format("Initialising new database file: {}", file_path));
     m_db_disk.Create(file_path, MASTER_DB_FILE_SIZE);
@@ -34,14 +36,14 @@ graphquery::database::storage::CGraphStorage::SetUp(std::string_view file_path)
 }
 
 void
-graphquery::database::storage::CGraphStorage::DefineDBSuperblock() noexcept
+graphquery::database::storage::CDBStorage::DefineDBSuperblock() noexcept
 {
     m_db_superblock = {};
 
     SDBInfo_t metadata = {};
     metadata.graph_entry_size = sizeof(SGraph_Entry_t);
     metadata.graph_table_size = sizeof(SGraph_Entry_t) * GRAPH_ENTRIES_AMT;
-    metadata.graph_table_start_addr = DB_SUPERBLOCK_START_ADDR + sizeof(SMasterDB_Superblock_t);
+    metadata.graph_table_start_addr = DB_SUPERBLOCK_START_ADDR + sizeof(SDB_Superblock_t);
 
     m_db_superblock.version = 1;
     m_db_superblock.db_info = metadata;
@@ -50,21 +52,21 @@ graphquery::database::storage::CGraphStorage::DefineDBSuperblock() noexcept
 }
 
 void
-graphquery::database::storage::CGraphStorage::StoreDBSuperblock() noexcept
+graphquery::database::storage::CDBStorage::StoreDBSuperblock() noexcept
 {
     m_db_disk.Seek(0);
     m_db_disk.Write(static_cast<void *>(&this->m_db_superblock), sizeof(SGraph_Entry_t), 1);
 }
 
 void
-graphquery::database::storage::CGraphStorage::DefineDBGraphTable() noexcept
+graphquery::database::storage::CDBStorage::DefineDBGraphTable() noexcept
 {
     m_db_graph_table = std::make_unique<std::vector<SGraph_Entry_t>>();
     memset(static_cast<void *>(&m_db_graph_table), 0, GRAPH_ENTRIES_AMT);
 }
 
 void
-graphquery::database::storage::CGraphStorage::StoreDBGraphTable() noexcept
+graphquery::database::storage::CDBStorage::StoreDBGraphTable() noexcept
 {
     assert(m_db_graph_table);
     assert(m_db_disk.CheckIfInitialised());
@@ -75,7 +77,7 @@ graphquery::database::storage::CGraphStorage::StoreDBGraphTable() noexcept
     m_db_disk.Write(static_cast<void *>(&m_db_graph_table), m_db_superblock.db_info.graph_entry_size, graph_entry_amt);
 }
 void
-graphquery::database::storage::CGraphStorage::Load(std::string_view file_path)
+graphquery::database::storage::CDBStorage::Load(std::string_view file_path)
 {
     m_db_disk.Open(file_path, O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED);
     LoadDBSuperblock();
@@ -86,16 +88,16 @@ graphquery::database::storage::CGraphStorage::Load(std::string_view file_path)
 }
 
 void
-graphquery::database::storage::CGraphStorage::LoadDBSuperblock() noexcept
+graphquery::database::storage::CDBStorage::LoadDBSuperblock() noexcept
 {
     assert(m_db_disk.CheckIfInitialised() == true);
 
     m_db_disk.Seek(DB_SUPERBLOCK_START_ADDR);
-    m_db_disk.Read(static_cast<void *>(&m_db_superblock), sizeof(SMasterDB_Superblock_t), 1);
+    m_db_disk.Read(static_cast<void *>(&m_db_superblock), sizeof(SDB_Superblock_t), 1);
 }
 
 void
-graphquery::database::storage::CGraphStorage::LoadDBGraphTable() noexcept
+graphquery::database::storage::CDBStorage::LoadDBGraphTable() noexcept
 {
     assert(m_db_disk.CheckIfInitialised() == true);
 
@@ -106,7 +108,7 @@ graphquery::database::storage::CGraphStorage::LoadDBGraphTable() noexcept
 
 }
 
-const std::string graphquery::database::storage::CGraphStorage::GetDBInfo() const noexcept
+const std::string graphquery::database::storage::CDBStorage::GetDBInfo() const noexcept
 {
     assert(m_existing_db_loaded);
 

@@ -22,7 +22,7 @@ namespace graphquery::database::storage
         virtual ~IGraphDiskStorage() = default;
 
         virtual void Load() = 0;
-        friend class CGraphStorage;
+        friend class CDBStorage;
     };
 
     class IGraphMemory
@@ -32,10 +32,10 @@ namespace graphquery::database::storage
         virtual ~IGraphMemory() = default;
 
         virtual void Load() noexcept = 0;
-        friend class CGraphStorage;
+        friend class CDBStorage;
     };
 
-    class CGraphStorage final
+    class CDBStorage final
     {
     private:
         //~ Current configuration of database and graph entry.
@@ -56,7 +56,7 @@ namespace graphquery::database::storage
             uint64_t graph_table_start_addr;
         } __attribute__((packed));
 
-        struct SMasterDB_Superblock_t
+        struct SDB_Superblock_t
         {
             uint64_t magic_check_sum;
             uint64_t version;
@@ -65,8 +65,8 @@ namespace graphquery::database::storage
         } __attribute__((packed));
 
     public:
-        CGraphStorage() = default;
-        ~CGraphStorage() = default;
+        CDBStorage() = default;
+        ~CDBStorage() = default;
 
         void Load(std::string_view file_path);
         void SetUp(std::string_view file_path);
@@ -88,21 +88,21 @@ namespace graphquery::database::storage
         bool m_existing_db_loaded = false;
 
         //~ Instance of the current SDBMaster structure.
-        SMasterDB_Superblock_t m_db_superblock;
+        SDB_Superblock_t m_db_superblock = {};
         //~ Instance of the DiskDriver for the DB master file.
-        graphquery::database::storage::CDiskDriver m_db_disk;
+        graphquery::database::storage::CDiskDriver m_db_disk = {};
         //~ Array of the existing graphs
-        std::unique_ptr<std::vector<SGraph_Entry_t>> m_db_graph_table;
+        std::unique_ptr<std::vector<SGraph_Entry_t>> m_db_graph_table = {};
         //~ Instance of the in-memory graph representation for the graph db.
-        std::unique_ptr<graphquery::database::storage::IGraphMemory> m_graph_memory;
+        std::unique_ptr<graphquery::database::storage::IGraphMemory> m_graph_memory = {};
         //~ Instance of the on-disk loader for the graph db.
-        std::unique_ptr<graphquery::database::storage::IGraphDiskStorage> m_graph_loader;
+        std::unique_ptr<graphquery::database::storage::IGraphDiskStorage> m_graph_loader = {};
 
         //~ Max amount of graph entries
         static constexpr uint8_t GRAPH_ENTRIES_AMT = 5;
         //~ MasterDB struct entry;
         static constexpr uint64_t DB_SUPERBLOCK_START_ADDR = 0x0;
         //~ Storage size MAX for database master file.
-        static constexpr uint32_t MASTER_DB_FILE_SIZE = (sizeof(SMasterDB_Superblock_t) + (sizeof(SGraph_Entry_t) * GRAPH_ENTRIES_AMT));
+        static constexpr uint32_t MASTER_DB_FILE_SIZE = (sizeof(SDB_Superblock_t) + (sizeof(SGraph_Entry_t) * GRAPH_ENTRIES_AMT));
     };
 }

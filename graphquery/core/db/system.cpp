@@ -22,7 +22,7 @@ namespace graphquery::database
     //~ Linked symbol of the interface towards the database.
     std::unique_ptr<interact::IInteract> _interface = std::make_unique<interact::CInteractGUI>();
     //~ Linked symbol of the interface towards the database.
-    std::unique_ptr<storage::CGraphStorage> _storage = std::make_unique<storage::CGraphStorage>();
+    std::unique_ptr<storage::CDBStorage> _db_storage = std::make_unique<storage::CDBStorage>();
 
     graphquery::database::EStatus Initialise([[maybe_unused]] int argc, [[maybe_unused]] char **argv) noexcept
     {

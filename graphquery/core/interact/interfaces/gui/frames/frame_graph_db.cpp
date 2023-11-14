@@ -16,7 +16,7 @@ graphquery::interact::CFrameGraphDB::Render_Frame() noexcept
 void
 graphquery::interact::CFrameGraphDB::Render_State() noexcept
 {
-    if(!graphquery::database::_storage->IsExistingDBLoaded())
+    if(!graphquery::database::_db_storage->IsExistingDBLoaded())
         ImGui::Text("No current database is loaded.");
     else Render_GraphInfo();
 }
@@ -24,5 +24,5 @@ graphquery::interact::CFrameGraphDB::Render_State() noexcept
 void
 graphquery::interact::CFrameGraphDB::Render_GraphInfo() noexcept
 {
-    ImGui::Text("%s", graphquery::database::_storage->GetDBInfo().c_str());
+    ImGui::Text("%s", graphquery::database::_db_storage->GetDBInfo().c_str());
 }
