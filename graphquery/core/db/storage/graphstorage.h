@@ -10,8 +10,6 @@
 
 #include "db/storage/diskdriver.h"
 
-#include <memory>
-#include <string>
 #include <filesystem>
 #include <vector>
 
@@ -58,7 +56,7 @@ namespace graphquery::database::storage
             uint64_t graph_table_start_addr;
         } __attribute__((packed));
 
-        struct SMasterDB_t
+        struct SMasterDB_Superblock_t
         {
             uint64_t magic_check_sum;
             uint64_t version;
@@ -67,37 +65,44 @@ namespace graphquery::database::storage
         } __attribute__((packed));
 
     public:
-        CGraphStorage();
-        ~CGraphStorage();
+        CGraphStorage() = default;
+        ~CGraphStorage() = default;
 
-        void Load();
+        void Load(std::string_view file_path);
+        void SetUp(std::string_view file_path);
         void Init(std::string_view file_path);
         [[nodiscard]] bool IsExistingDBLoaded() const noexcept;
+        [[nodiscard]] const std::string GetDBInfo() const noexcept;
 
     private:
-        void DefineMasterDBFile() noexcept;
-        void DefineGraphTable() noexcept;
-        void StoreMasterDBFile() noexcept;
-        void StoreGraphTable() noexcept;
+        void StoreDBGraphTable() noexcept;
+        void LoadDBGraphTable() noexcept;
+        void DefineDBGraphTable() noexcept;
 
-    private:
+        void StoreDBSuperblock() noexcept;
+        void LoadDBSuperblock() noexcept;
+        void DefineDBSuperblock() noexcept;
+
+
+        //~ Bool to check if a current database is loaded.
+        bool m_existing_db_loaded = false;
 
         //~ Instance of the current SDBMaster structure.
-        SMasterDB_t m_db_master;
+        SMasterDB_Superblock_t m_db_superblock;
+        //~ Instance of the DiskDriver for the DB master file.
+        graphquery::database::storage::CDiskDriver m_db_disk;
         //~ Array of the existing graphs
-        std::unique_ptr<std::vector<SGraph_Entry_t>> m_graph_table;
-        //~ Instance of the on-disk loader for the graph db.
-        std::unique_ptr<graphquery::database::storage::IGraphDiskStorage> m_graph_loader;
+        std::unique_ptr<std::vector<SGraph_Entry_t>> m_db_graph_table;
         //~ Instance of the in-memory graph representation for the graph db.
         std::unique_ptr<graphquery::database::storage::IGraphMemory> m_graph_memory;
-        //~ Instance of the DiskDriver for the DB master file.
-        graphquery::database::storage::CDiskDriver m_disk;
-        //~ Bool to check if a current database is loaded.
-        bool m_existing_db_loaded;
+        //~ Instance of the on-disk loader for the graph db.
+        std::unique_ptr<graphquery::database::storage::IGraphDiskStorage> m_graph_loader;
 
         //~ Max amount of graph entries
         static constexpr uint8_t GRAPH_ENTRIES_AMT = 5;
+        //~ MasterDB struct entry;
+        static constexpr uint64_t DB_SUPERBLOCK_START_ADDR = 0x0;
         //~ Storage size MAX for database master file.
-        static constexpr uint32_t GRAPH_MASTER_FILE_SIZE = (sizeof(SMasterDB_t) + (sizeof(SGraph_Entry_t) * GRAPH_ENTRIES_AMT));
+        static constexpr uint32_t MASTER_DB_FILE_SIZE = (sizeof(SMasterDB_Superblock_t) + (sizeof(SGraph_Entry_t) * GRAPH_ENTRIES_AMT));
     };
 }

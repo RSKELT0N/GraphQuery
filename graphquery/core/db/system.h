@@ -9,14 +9,13 @@
 
 #pragma once
 
-#include "db/utils/lib.h"
 #include "db/storage/graphstorage.h"
 #include "../log/logsystem.h"
 #include "../interact/interact.h"
 
 #include "fmt/format.h"
-#include <memory>
 
+#include <cstdint>
 
 namespace graphquery::database
 {

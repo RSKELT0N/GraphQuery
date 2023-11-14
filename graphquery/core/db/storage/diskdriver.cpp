@@ -17,10 +17,26 @@ graphquery::database::storage::CDiskDriver::~CDiskDriver()
     }
 }
 
+bool
+graphquery::database::storage::CDiskDriver::CheckIfFileExists(std::string_view file_path) const noexcept
+{
+    if(access(file_path.cbegin(), F_OK) == -1)
+    {
+        return false;
+    }
+    return true;
+}
+
+bool
+graphquery::database::storage::CDiskDriver::CheckIfInitialised() const noexcept
+{
+    return this->m_initialised;
+}
+
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::Create(std::string_view file_path, size_t file_size)
 {
-    if(access(file_path.cbegin(), F_OK) != -1)
+    if(CheckIfFileExists(file_path))
     {
         graphquery::database::_log_system->Warning("Cannot create file that already exists");
         return SRet_t::ERROR;
@@ -49,7 +65,7 @@ graphquery::database::storage::CDiskDriver::Create(std::string_view file_path, s
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::Open(std::string_view file_path, int file_mode, int map_mode_prot, int map_mode_flags)
 {
-    if(access(file_path.cbegin(), F_OK) == -1)
+    if(!CheckIfFileExists(file_path))
     {
         graphquery::database::_log_system->Warning("Could not open a file that doesn't exist");
         return SRet_t::ERROR;

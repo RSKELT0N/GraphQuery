@@ -3,7 +3,8 @@
 
 graphquery::interact::CFrameGraphDB::~CFrameGraphDB() = default;
 
-void graphquery::interact::CFrameGraphDB::Render_Frame() noexcept
+void
+graphquery::interact::CFrameGraphDB::Render_Frame() noexcept
 {
     if(ImGui::Begin("Graph Database"))
     {
@@ -12,16 +13,16 @@ void graphquery::interact::CFrameGraphDB::Render_Frame() noexcept
     ImGui::End();
 }
 
-void graphquery::interact::CFrameGraphDB::Render_State() noexcept
+void
+graphquery::interact::CFrameGraphDB::Render_State() noexcept
 {
     if(!graphquery::database::_storage->IsExistingDBLoaded())
-    {
         ImGui::Text("No current database is loaded.");
-    }
-    Render_GraphInfo();
+    else Render_GraphInfo();
 }
 
-void graphquery::interact::CFrameGraphDB::Render_GraphInfo() noexcept
+void
+graphquery::interact::CFrameGraphDB::Render_GraphInfo() noexcept
 {
-
+    ImGui::Text("%s", graphquery::database::_storage->GetDBInfo().c_str());
 }

@@ -9,17 +9,17 @@ graphquery::interact::CFrameMenuBar::~CFrameMenuBar() = default;
 
 graphquery::interact::CFrameMenuBar::CFrameMenuBar()
 {
-    this->m_file_explorer = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc
+    this->m_db_master_file_explorer = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc
                                                | ImGuiFileBrowserFlags_CreateNewDir);
 
-    this->m_file_explorer.SetTitle("Open Database");
-    this->m_file_explorer.SetTypeFilters({".gdb"});
+    this->m_db_master_file_explorer.SetTitle("Open Database");
+    this->m_db_master_file_explorer.SetTypeFilters({".gdb"});
 
-    this->m_new_db_location = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc
+    this->m_db_folder_location_explorer = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc
                                                 | ImGuiFileBrowserFlags_CreateNewDir
                                                 | ImGuiFileBrowserFlags_SelectDirectory);
 
-    this->m_new_db_location.SetTitle("Select Location Path");
+    this->m_db_folder_location_explorer.SetTitle("Select Location Path");
 }
 
 void graphquery::interact::CFrameMenuBar::Render_Frame() noexcept
@@ -40,13 +40,11 @@ void graphquery::interact::CFrameMenuBar::Render_CreateMenu() noexcept
     if (ImGui::BeginMenu("Create"))
     {
         if (ImGui::MenuItem("Database"))
-        {
             SetCreateDBState(true);
-        }
+
         if(graphquery::database::_storage->IsExistingDBLoaded() && ImGui::MenuItem("Graph"))
-        {
             SetCreateGraphState(true);
-        }
+
         ImGui::EndMenu();
     }
 }
@@ -56,35 +54,24 @@ void graphquery::interact::CFrameMenuBar::Render_OpenMenu() noexcept
     if (ImGui::BeginMenu("Open", "Ctrl+o"))
     {
         if(ImGui::MenuItem("Database"))
-        {
-            this->m_file_explorer.Open();
-        }
+            this->m_db_master_file_explorer.Open();
 
         if(graphquery::database::_storage->IsExistingDBLoaded() && ImGui::MenuItem("Graph"))
-        {
-            this->m_file_explorer.Open();
-        }
+            this->m_db_master_file_explorer.Open();
+
         ImGui::EndMenu();
     }
 }
 
-void graphquery::interact::CFrameMenuBar::SetCreateDBState(bool state) noexcept
-{
-    this->m_is_create_db_opened = state;
-}
-
-void graphquery::interact::CFrameMenuBar::SetCreateGraphState(bool state) noexcept
-{
-    this->m_is_create_graph_opened = state;
-}
-
 void graphquery::interact::CFrameMenuBar::Render_File_Browser() noexcept
 {
-    this->m_file_explorer.Display();
+    m_db_master_file_explorer.Display();
 
-    if(this->m_file_explorer.HasSelected())
+    if(m_db_master_file_explorer.HasSelected())
     {
-        this->m_file_explorer.ClearSelected();
+        const std::filesystem::path db_master_file_path = m_db_master_file_explorer.GetSelected();
+        graphquery::database::_storage->Init(db_master_file_path.generic_string());
+        m_db_master_file_explorer.ClearSelected();
     }
 }
 
@@ -128,12 +115,12 @@ void graphquery::interact::CFrameMenuBar::Render_CreateDBLocation() noexcept
 
     if(ImGui::Button("Select path"))
     {
-        this->m_new_db_location.Open();
+        this->m_db_folder_location_explorer.Open();
     }
 
-    if(this->m_new_db_location.HasSelected())
+    if(this->m_db_folder_location_explorer.HasSelected())
     {
-        file_path = this->m_new_db_location.GetSelected().string();
+        file_path = this->m_db_folder_location_explorer.GetSelected().string();
 
         if(file_path.size() > DB_PATH_SIZE)
         {
@@ -142,7 +129,7 @@ void graphquery::interact::CFrameMenuBar::Render_CreateDBLocation() noexcept
         this->m_created_db_path = file_path;
     }
 
-    this->m_new_db_location.Display();
+    this->m_db_folder_location_explorer.Display();
 }
 
 void graphquery::interact::CFrameMenuBar::Render_CreateDBName() noexcept
@@ -168,3 +155,15 @@ void graphquery::interact::CFrameMenuBar::Render_CreateDBButton() noexcept
         this->m_created_db_path = "";
         SetCreateDBState(false);
     }}
+
+void
+graphquery::interact::CFrameMenuBar::SetCreateDBState(bool state) noexcept
+{
+    this->m_is_create_db_opened = state;
+}
+
+void
+graphquery::interact::CFrameMenuBar::SetCreateGraphState(bool state) noexcept
+{
+    this->m_is_create_graph_opened = state;
+}

@@ -20,8 +20,8 @@ namespace graphquery::database::storage
         CDiskDriver() = default;
         ~CDiskDriver();
 
-        CDiskDriver(const CDiskDriver&) = delete;
         CDiskDriver(CDiskDriver&&) = delete;
+        CDiskDriver(const CDiskDriver&) = delete;
 
         [[maybe_unused]] SRet_t Close();
         [[maybe_unused]] SRet_t Seek(int64_t offset);
@@ -30,6 +30,9 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t Read(void* ptr, size_t size, uint32_t amt) const;
         [[maybe_unused]] SRet_t Write(const void* ptr, size_t size, uint32_t amt);
         [[maybe_unused]] char operator[](int64_t idx) const;
+
+        [[maybe_unused]] bool CheckIfInitialised() const noexcept;
+        [[maybe_unused]] bool CheckIfFileExists(std::string_view file_path) const noexcept;
 
     private:
         bool m_initialised = {};
