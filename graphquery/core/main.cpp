@@ -1,7 +1,4 @@
 #include "db/system.h"
-#include "db/storage/diskdriver.h"
-
-#include "dylib.hpp"
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
 {
