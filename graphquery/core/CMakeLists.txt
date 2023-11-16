@@ -2,8 +2,7 @@
 cmake_minimum_required(VERSION 3.9)
 
 set(GRAPH_QUERY_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/db/storage/models)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/models)
 
 # Retrieve source files, under SOURCE_FOLDER
 file(GLOB_RECURSE
@@ -25,9 +24,7 @@ target_compile_options(${EXECUTABLE_NAME}
         PUBLIC
         -Wall
         -Werror
-        -Wpedantic
-        -O2
-        -g)
+        -Wpedantic)
 
 target_link_libraries(${EXECUTABLE_NAME}
         PRIVATE

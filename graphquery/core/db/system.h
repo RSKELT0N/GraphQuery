@@ -12,7 +12,7 @@
 #include "db/storage/dbstorage.h"
 #include "../log/logsystem.h"
 #include "../interact/interact.h"
-
+#include "interact/interfaces/gui/interact_gui.h"
 #include "fmt/format.h"
 
 #include <cstdint>

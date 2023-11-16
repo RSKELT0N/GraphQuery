@@ -6,6 +6,23 @@
 #include <sys/fcntl.h>
 #include <sys/mman.h>
 
+graphquery::database::storage::CDBStorage::~CDBStorage()
+{
+    if(m_existing_db_loaded)
+        Close();
+}
+
+
+void
+graphquery::database::storage::CDBStorage::Close() noexcept
+{
+    m_existing_db_loaded = false;
+    m_db_superblock = {};
+    m_db_graph_table.clear();
+    m_db_disk.Close();
+    _log_system->Info("Database file has been closed and memory has been flushed");
+}
+
 bool
 graphquery::database::storage::CDBStorage::IsExistingDBLoaded() const noexcept
 {
@@ -15,6 +32,9 @@ graphquery::database::storage::CDBStorage::IsExistingDBLoaded() const noexcept
 void
 graphquery::database::storage::CDBStorage::Init(std::string_view file_path)
 {
+    if(m_existing_db_loaded)
+        Close();
+
     if(!m_db_disk.CheckIfFileExists(file_path))
         SetUp(file_path);
     else Load(file_path);
@@ -39,8 +59,8 @@ void
 graphquery::database::storage::CDBStorage::DefineDBSuperblock() noexcept
 {
     m_db_superblock = {};
-
     SDBInfo_t metadata = {};
+
     metadata.graph_entry_size = sizeof(SGraph_Entry_t);
     metadata.graph_table_size = sizeof(SGraph_Entry_t) * GRAPH_ENTRIES_AMT;
     metadata.graph_table_start_addr = DB_SUPERBLOCK_START_ADDR + sizeof(SDB_Superblock_t);
@@ -61,14 +81,12 @@ graphquery::database::storage::CDBStorage::StoreDBSuperblock() noexcept
 void
 graphquery::database::storage::CDBStorage::DefineDBGraphTable() noexcept
 {
-    m_db_graph_table = std::make_unique<std::vector<SGraph_Entry_t>>();
-    memset(static_cast<void *>(&m_db_graph_table), 0, GRAPH_ENTRIES_AMT);
+    m_db_graph_table.clear();
 }
 
 void
 graphquery::database::storage::CDBStorage::StoreDBGraphTable() noexcept
 {
-    assert(m_db_graph_table);
     assert(m_db_disk.CheckIfInitialised());
 
     const auto graph_entry_amt = m_db_superblock.db_info.graph_table_size / m_db_superblock.db_info.graph_entry_size;

@@ -14,11 +14,14 @@ namespace graphquery::interact
         void Render_Frame() noexcept override;
 
     private:
+        void Render_DBMenu() noexcept;
+
         void Render_CreateMenu() noexcept;
         void Render_OpenMenu() noexcept;
         void Render_File_Browser() noexcept;
 
         void SetCreateGraphState(bool) noexcept;
+        void Render_CreateGraph() noexcept;
 
         void SetCreateDBState(bool) noexcept;
         void Render_CreateDB() noexcept;
