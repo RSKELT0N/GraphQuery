@@ -1,3 +1,18 @@
+/************************************************************
+* \author Ryan Skelton
+* \date 18/09/2023
+* \file diskdriver.h
+* \brief Header of the disk driver which interacts with
+*        creating and mapping actioned files to memory,
+<<<<<<< HEAD
+*        which allows easy access to write and read
+*        efficiently to the host filesystem.
+=======
+*        which allows easy access to write and read efficiently
+*        to the host filesystem.
+>>>>>>> 4158259 (Add graph table.)
+************************************************************/
+
 #pragma once
 
 #include <cstdint>
@@ -31,6 +46,7 @@ namespace graphquery::database::storage
         [[maybe_unused]] char operator[](int64_t idx) const;
 
         void SetFilePath(std::string file_path) noexcept;
+        [[nodiscard]] const std::string & GetFilePath() const noexcept;
         [[nodiscard]] bool CheckIfInitialised() const noexcept;
         [[nodiscard]] bool CheckIfFileExists(std::string_view file_path) const noexcept;
 
@@ -43,15 +59,15 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t Truncate(int64_t ) noexcept;
         [[maybe_unused]] SRet_t CreateFile(int64_t file_size) noexcept;
 
-        bool m_initialised = {};
-        struct stat m_fd_info = {};
-        int m_file_descriptor = {};
-        char * m_memory_mapped_file = {};
-        int64_t m_seek_offset = {};
-        std::string m_file_path;
+        bool m_initialised = {};                //~ Wether the fd descriptor is opened.
+        struct stat m_fd_info = {};             //~ Structure info on the currently opened file.
+        int m_file_descriptor = {};             //~ integer of the pointed file.
+        char * m_memory_mapped_file = {};       //~ buffer address of the memory mapped file.
+        int64_t m_seek_offset = {};             //~ Current offset within the memory map.
+        std::string m_file_path;                //~ Set file path of the file that is opened/closed.
 
-        int m_file_mode = {};
-        int m_map_mode_prot = {};
-        int m_map_mode_flags = {};
+        int m_file_mode = {};                   //~ Set file mode of the descriptor when opened.
+        int m_map_mode_prot = {};               //~ Set map mode (protection) of the file when mapped.
+        int m_map_mode_flags = {};              //~ Set map mode (flags) of the file when mapped.
     };
 }

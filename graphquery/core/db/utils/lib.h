@@ -1,3 +1,12 @@
+/************************************************************
+* \author Ryan Skelton
+* \date 18/09/2023
+* \file lib.h
+* \brief Header of commonly used functions within the core
+*        segment of the program, which can be included and
+*        utilised by other translation units.
+************************************************************/
+
 #pragma once
 
 #include <type_traits>

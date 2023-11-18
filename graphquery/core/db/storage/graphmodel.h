@@ -2,20 +2,63 @@
 * \author Ryan Skelton
 * \date 18/09/2023
 * \file graphmodel.h
-* \brief
+* \brief Header of the Graph data model API for shared libraries
+*        to include to define an appropiate implementation.
+*        Such as the Labelled directed graph, will be instantiated
+*        and linked at run-time to read a graph of this type.
 ************************************************************/
 
 #pragma once
 
+#include <string_view>
+#include <unistd.h>
+<<<<<<< HEAD
+=======
+#include <sys/stat.h>
+>>>>>>> 4158259 (Add graph table.)
+
 namespace graphquery::database::storage
 {
-class IGraphModel
+    class IGraphModel
     {
     public:
         IGraphModel() = default;
-        virtual ~IGraphModel() = default;
+        virtual ~IGraphModel() {};
 
-        virtual void Load() = 0;
+        virtual void
+        Init(const std::string_view graph) final
+        {
+            if(access(graph.cbegin(), F_OK) == -1)
+                CreateGraph(graph);
+            else LoadGraph(graph);
+        }
+
+        virtual void LoadGraph(std::string_view graph) noexcept = 0;
+        virtual void CreateGraph(std::string_view graph) noexcept = 0;
+        virtual void Close() noexcept = 0;
+
+<<<<<<< HEAD
+        virtual void
+        Init(const std::string_view graph) final
+        {
+            if(access(graph.cbegin(), F_OK) == -1)
+                CreateGraph(graph);
+            else LoadGraph(graph);
+        };
+
+        virtual void LoadGraph(std::string_view graph) noexcept = 0;
+        virtual void CreateGraph(std::string_view graph) noexcept = 0;
+
         friend class CDBStorage;
     };
 }
+=======
+        friend class CDBStorage;
+    };
+}
+
+extern "C"
+{
+    void CreateGraphModel(std::unique_ptr<graphquery::database::storage::IGraphModel> & graph_model);
+}
+>>>>>>> 4158259 (Add graph table.)

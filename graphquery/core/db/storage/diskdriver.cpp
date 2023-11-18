@@ -133,11 +133,17 @@ graphquery::database::storage::CDiskDriver::CreateFile(int64_t file_size) noexce
 }
 
 
-void graphquery::database::storage::CDiskDriver::SetFilePath(std::string file_path) noexcept
+void
+graphquery::database::storage::CDiskDriver::SetFilePath(std::string file_path) noexcept
 {
     this->m_file_path = std::move(file_path);
 }
 
+const std::string &
+graphquery::database::storage::CDiskDriver::GetFilePath() const noexcept
+{
+    return m_file_path;
+}
 
 bool
 graphquery::database::storage::CDiskDriver::CheckIfFileExists(std::string_view file_path) const noexcept
@@ -214,10 +220,12 @@ graphquery::database::storage::CDiskDriver::Write(const void *ptr, const int64_t
     {
         if(m_fd_info.st_size < (size * amt + m_seek_offset))
         {
-            Resize(m_fd_info.st_size + (size * amt * 10));
+            static constexpr uint8_t scale = 10;
+            Resize(m_fd_info.st_size + (size * amt * scale));
         }
         memcpy(&this->m_memory_mapped_file[this->m_seek_offset], ptr, size * amt);
     } else _log_system->Warning("File has not been initialised");
+
     return SRet_t::VALID;
 }
 

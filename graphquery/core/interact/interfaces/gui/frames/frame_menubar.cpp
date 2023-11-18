@@ -7,7 +7,11 @@
 
 graphquery::interact::CFrameMenuBar::~CFrameMenuBar() = default;
 
-graphquery::interact::CFrameMenuBar::CFrameMenuBar()
+<<<<<<< HEAD
+graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded) : m_is_db_loaded(is_db_loaded)
+=======
+graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table) : m_is_db_loaded(is_db_loaded), m_graph_table(graph_table)
+>>>>>>> 4158259 (Add graph table.)
 {
     this->m_db_master_file_explorer = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc |
                                                          ImGuiFileBrowserFlags_CreateNewDir);
@@ -33,15 +37,16 @@ graphquery::interact::CFrameMenuBar::Render_Frame() noexcept
         ImGui::EndMainMenuBar();
     }
 
-    Render_File_Browser();
     Render_CreateDB();
     Render_CreateGraph();
+    Render_OpenDB();
+    Render_OpenGraph();
 }
 
 void
 graphquery::interact::CFrameMenuBar::Render_DBMenu() noexcept
 {
-    if(database::_db_storage->IsExistingDBLoaded() && ImGui::BeginMenu("Database"))
+    if(m_is_db_loaded && ImGui::BeginMenu("Database"))
     {
         if(ImGui::MenuItem("Close"))
             database::_db_storage->Close();
@@ -58,7 +63,7 @@ graphquery::interact::CFrameMenuBar::Render_CreateMenu() noexcept
         if (ImGui::MenuItem("Database"))
             SetCreateDBState(true);
 
-        if(database::_db_storage->IsExistingDBLoaded() && ImGui::MenuItem("Graph"))
+        if(m_is_db_loaded && ImGui::MenuItem("Graph"))
             SetCreateGraphState(true);
 
         ImGui::EndMenu();
@@ -73,22 +78,26 @@ graphquery::interact::CFrameMenuBar::Render_OpenMenu() noexcept
         if(ImGui::MenuItem("Database"))
             this->m_db_master_file_explorer.Open();
 
-        if(database::_db_storage->IsExistingDBLoaded() && ImGui::MenuItem("Graph"))
+        if(m_is_db_loaded && ImGui::MenuItem("Graph"))
+<<<<<<< HEAD
             this->m_db_master_file_explorer.Open();
+=======
+            SetOpenGraphState(true);
+>>>>>>> 4158259 (Add graph table.)
 
         ImGui::EndMenu();
     }
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_File_Browser() noexcept
+graphquery::interact::CFrameMenuBar::Render_OpenDB() noexcept
 {
     m_db_master_file_explorer.Display();
 
     if(m_db_master_file_explorer.HasSelected())
     {
         const std::filesystem::path db_master_file_path = m_db_master_file_explorer.GetSelected();
-        graphquery::database::_db_storage->Init(db_master_file_path.generic_string());
+        database::_db_storage->Init(db_master_file_path.generic_string());
         m_db_master_file_explorer.ClearSelected();
     }
 }
@@ -97,21 +106,20 @@ void
 graphquery::interact::CFrameMenuBar::Render_CreateGraph() noexcept
 {
     if(this->m_is_create_graph_opened)
+        ImGui::OpenPopup("Create Graph");
+
+    ImGui::SetNextWindowSize(ImVec2{CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
+    if (ImGui::BeginPopupModal("Create Graph", &this->m_is_create_graph_opened, ImGuiWindowFlags_NoResize))
     {
-        ImGui::SetNextWindowSize(ImVec2{CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
-        if (ImGui::Begin("Create Graph", &this->m_is_create_graph_opened, ImGuiWindowFlags_NoResize   |
-                                                                               ImGuiWindowFlags_NoScrollbar))
-        {
-            Render_CreateGraphInfo();
-        }
-        ImGui::End();
+        Render_CreateGraphInfo();
+        ImGui::EndPopup();
     }
 }
 
 void
 graphquery::interact::CFrameMenuBar::Render_CreateGraphInfo() noexcept
 {
-    if(ImGui::BeginChild("Graph Info", ImVec2{CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT}))
+    if(ImGui::BeginChild("Graph Info"))
     {
         ImGui::Text("Complete all fields:");
         ImGui::Separator();
@@ -127,17 +135,13 @@ void
 graphquery::interact::CFrameMenuBar::Render_CreateGraphName() noexcept
 {
     ImGui::Text("Name: ");
-    ImGui::SameLine();
     ImGui::InputText("##", &this->m_created_graph_name, ImGuiInputTextFlags_CharsNoBlank);
 }
 
 void
 graphquery::interact::CFrameMenuBar::Render_CreateGraphType() noexcept
 {
-    constexpr auto left_aligned_offset = -100.0f;
     ImGui::Text("Model Type (shared library): ");
-    ImGui::SameLine();
-    ImGui::PushItemWidth(left_aligned_offset);
     ImGui::InputText("###", &this->m_created_graph_type, ImGuiInputTextFlags_CharsNoBlank);
 }
 
@@ -165,21 +169,20 @@ void
 graphquery::interact::CFrameMenuBar::Render_CreateDB() noexcept
 {
     if(this->m_is_create_db_opened)
+        ImGui::OpenPopup("Create Database");
+
+    ImGui::SetNextWindowSize(ImVec2{CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
+    if(ImGui::BeginPopupModal("Create Database", &m_is_create_db_opened, ImGuiWindowFlags_NoResize))
     {
-        ImGui::SetNextWindowSize(ImVec2{CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
-        if (ImGui::Begin("Create Database", &this->m_is_create_db_opened, ImGuiWindowFlags_NoResize |
-                                                                               ImGuiWindowFlags_NoScrollbar))
-        {
-            Render_CreateDBInfo();
-        }
-        ImGui::End();
+        Render_CreateDBInfo();
+        ImGui::EndPopup();
     }
 }
 
 void
 graphquery::interact::CFrameMenuBar::Render_CreateDBInfo() noexcept
 {
-    if(ImGui::BeginChild("DB Info", ImVec2{CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT}))
+    if(ImGui::BeginChild("DB Info"))
     {
         ImGui::Text("Complete all fields:");
         ImGui::Separator();
@@ -194,17 +197,15 @@ graphquery::interact::CFrameMenuBar::Render_CreateDBInfo() noexcept
 void
 graphquery::interact::CFrameMenuBar::Render_CreateDBLocation() noexcept
 {
-    static std::string file_path;
+    static std::string file_path = {};
 
     ImGui::Text("Location: ");
-    ImGui::SameLine();
-    ImGui::Text("%s", file_path.c_str());
-    ImGui::SameLine();
 
     if(ImGui::Button("Select path"))
-    {
         this->m_db_folder_location_explorer.Open();
-    }
+
+    ImGui::SameLine();
+    ImGui::Text("%s", file_path.c_str());
 
     if(this->m_db_folder_location_explorer.HasSelected())
     {
@@ -224,7 +225,6 @@ void
 graphquery::interact::CFrameMenuBar::Render_CreateDBName() noexcept
 {
     ImGui::Text("Name: ");
-    ImGui::SameLine();
     ImGui::InputText("##", &this->m_created_db_name, ImGuiInputTextFlags_CharsNoBlank);
     ImGui::SameLine();
     ImGui::Text(".gdb");
@@ -248,6 +248,51 @@ graphquery::interact::CFrameMenuBar::Render_CreateDBButton() noexcept
 }
 
 void
+graphquery::interact::CFrameMenuBar::Render_OpenGraph() noexcept
+{
+    if(m_is_open_graph_opened)
+        ImGui::OpenPopup("Open Graph");
+
+    if (ImGui::BeginPopupModal("Open Graph", &m_is_open_graph_opened))
+    {
+        ImGui::Text("Select a graph to open");
+        ImGui::Separator();
+        Render_OpenGraphList();
+        Render_OpenGraphButton();
+
+        ImGui::EndPopup();
+    }
+}
+
+void
+graphquery::interact::CFrameMenuBar::Render_OpenGraphList() noexcept
+{
+    std::string graphs = {};
+
+    std::for_each(m_graph_table.begin(), m_graph_table.end(), [&graphs](const auto & graph) -> void
+    {
+        graphs += fmt::format("{}{}", graph.graph_name, '\0');
+    });
+    graphs += fmt::format("\0");
+
+    ImGui::Combo("##", &m_open_graph_choice, graphs.c_str());
+}
+
+void
+graphquery::interact::CFrameMenuBar::Render_OpenGraphButton() noexcept
+{
+    if (ImGui::Button("Open"))
+    {
+        assert(m_open_graph_choice >= 0 && m_open_graph_choice < m_graph_table.size());
+
+        database::_db_storage->OpenGraph(m_graph_table.at(m_open_graph_choice).graph_name, m_graph_table.at(m_open_graph_choice).graph_type);
+
+        ImGui::CloseCurrentPopup();
+        SetOpenGraphState(false);
+    }
+}
+
+void
 graphquery::interact::CFrameMenuBar::SetCreateDBState(const bool state) noexcept
 {
     this->m_is_create_db_opened = state;
@@ -257,4 +302,10 @@ void
 graphquery::interact::CFrameMenuBar::SetCreateGraphState(const bool state) noexcept
 {
     this->m_is_create_graph_opened = state;
+}
+
+void
+graphquery::interact::CFrameMenuBar::SetOpenGraphState(const bool state) noexcept
+{
+    this->m_is_open_graph_opened = state;
 }

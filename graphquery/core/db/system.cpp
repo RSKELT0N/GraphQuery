@@ -26,6 +26,13 @@ namespace graphquery::database
 
     graphquery::database::EStatus Initialise([[maybe_unused]] int argc, [[maybe_unused]] char **argv) noexcept
     {
+        signal(SIGINT | SIGTERM, [](int param) -> void
+        {
+            _db_storage->Close();
+            _interface->Clean_Up();
+            exit(0);
+        });
+
         EStatus status = Initialise_Logging();
         return status;
     }

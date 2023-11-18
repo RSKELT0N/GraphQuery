@@ -14,22 +14,19 @@
 #include <cstdio>
 #include <algorithm>
 
-#include <thread>
-
 graphquery::interact::CInteractGUI::CInteractGUI()
 {
     Initialise_GLFW();
     Initialise_IMGUI();
     Initialise_Nodes_Editor();
-    Initialise_Frames();
 }
 
 void graphquery::interact::CInteractGUI::Render() noexcept
 {
+    Initialise_Frames();
     [[likely]] while(glfwWindowShouldClose(*m_window) == 0)
     {
         On_Update();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     Clean_Up();
 }
@@ -102,7 +99,7 @@ void graphquery::interact::CInteractGUI::Initialise_Nodes_Editor() noexcept
 {
     ImNodes::CreateContext();
     ImNodes::StyleColorsDark();
-    ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
+    ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkCreationOnSnap);
 
     ImNodesIO& io = ImNodes::GetIO();
     io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
@@ -115,21 +112,25 @@ void graphquery::interact::CInteractGUI::Initialise_Nodes_Editor() noexcept
 void graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
 {
     // Background dock frame
-    m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameDock>(m_frame_dock_open));
+    m_frames.emplace_back(std::make_unique<CFrameDock>(m_frame_dock_open));
 
     // Menu bar
-    m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameMenuBar>());
+<<<<<<< HEAD
+    m_frames.emplace_back(std::make_unique<CFrameMenuBar>(database::_db_storage->GetIsDBLoaded()));
+=======
+    m_frames.emplace_back(std::make_unique<CFrameMenuBar>(database::_db_storage->GetIsDBLoaded(), database::_db_storage->GetGraphTable()));
+>>>>>>> 4158259 (Add graph table.)
 
     // Log output frame
-    auto frame_log = std::make_shared<graphquery::interact::CFrameLog>();
+    auto frame_log = std::make_shared<CFrameLog>();
     m_frames.emplace_back(frame_log);
     graphquery::database::_log_system->Add_Logger(frame_log);
 
     // Graph DB
-    m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameGraphDB>());
+    m_frames.emplace_back(std::make_unique<CFrameGraphDB>(database::_db_storage->GetIsDBLoaded(), database::_db_storage->GetGraphTable()));
 
     // Graph visual
-    m_frames.emplace_back(std::make_unique<graphquery::interact::CFrameGraphVisual>());
+    m_frames.emplace_back(std::make_unique<CFrameGraphVisual>());
 }
 
 void graphquery::interact::CInteractGUI::Render_Frames() noexcept
@@ -182,6 +183,7 @@ void graphquery::interact::CInteractGUI::Clean_Up() noexcept
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    ImNodes::DestroyContext();
 
     glfwDestroyWindow(*m_window);
     glfwTerminate();

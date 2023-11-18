@@ -5,7 +5,7 @@ add_library(dlg SHARED)
 target_include_directories(
         dlg
         PUBLIC
-        ${GRAPH_QUERY_ROOT_DIR}/)
+        ${PROJECT_SOURCE_DIR}/graphquery/core)
 
 target_sources(
         dlg
@@ -14,8 +14,7 @@ target_sources(
 
 target_link_libraries(dlg
         PRIVATE
-        fmt
-        imgui)
+        fmt)
 
 # Copy the shared library into the output/peripherals directory
 set(output_directory ${PROJECT_SOURCE_DIR}/lib/models)

@@ -9,7 +9,6 @@
 
 #include "interact/interact.h"
 #include "frame.h"
-#include "imgui.h"
 #include "GLFW/glfw3.h"
 
 #include <memory>
@@ -23,11 +22,12 @@ namespace graphquery::interact
         explicit CInteractGUI();
         ~CInteractGUI() override = default;
 
+        void Clean_Up() noexcept override;
+
     private:
         void Render() noexcept override;
 
         void Render_Frames() noexcept;
-        void Clean_Up() noexcept;
         void On_Update() noexcept;
 
         static void Initialise_Nodes_Editor() noexcept;

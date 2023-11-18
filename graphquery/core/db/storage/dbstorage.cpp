@@ -1,11 +1,11 @@
 #include "dbstorage.h"
 
 #include "db/system.h"
+#include "dylib.hpp"
 
 #include <cassert>
 #include <sys/fcntl.h>
 #include <sys/mman.h>
-#include <algorithm>
 
 graphquery::database::storage::CDBStorage::CDBStorage() : m_db_disk(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED) {}
 
@@ -15,21 +15,18 @@ graphquery::database::storage::CDBStorage::~CDBStorage()
         Close();
 }
 
-
 void
 graphquery::database::storage::CDBStorage::Close() noexcept
 {
-    m_existing_db_loaded = false;
     m_db_superblock = {};
-    m_db_graph_table.clear();
-    m_db_disk.Close();
-    _log_system->Info("Database file has been closed and memory has been flushed");
-}
 
-bool
-graphquery::database::storage::CDBStorage::IsExistingDBLoaded() const noexcept
-{
-    return this->m_existing_db_loaded;
+    if(m_existing_db_loaded)
+    {
+        m_db_graph_table.clear();
+        m_db_disk.Close();
+        _log_system->Info("Database file has been closed and memory has been flushed");
+        m_existing_db_loaded = false;
+    }
 }
 
 void
@@ -78,6 +75,8 @@ graphquery::database::storage::CDBStorage::DefineDBSuperblock() noexcept
 void
 graphquery::database::storage::CDBStorage::StoreDBSuperblock() noexcept
 {
+    assert(m_db_disk.CheckIfInitialised());
+
     m_db_disk.Seek(0);
     m_db_disk.Write(&this->m_db_superblock, sizeof(SDB_Superblock_t), 1);
 }
@@ -95,9 +94,10 @@ graphquery::database::storage::CDBStorage::StoreDBGraphTable() noexcept
 
     const auto graph_entry_amt = m_db_superblock.db_info.graph_table_size / m_db_superblock.db_info.graph_entry_size;
 
-    m_db_disk.Seek(static_cast<int64_t>(m_db_superblock.db_info.graph_table_start_addr));
+    m_db_disk.Seek(m_db_superblock.db_info.graph_table_start_addr);
     m_db_disk.Write(&m_db_graph_table[0], m_db_superblock.db_info.graph_entry_size, graph_entry_amt);
 }
+
 void
 graphquery::database::storage::CDBStorage::Load(std::string file_path)
 {
@@ -135,16 +135,18 @@ const std::string
 graphquery::database::storage::CDBStorage::GetDBInfo() const noexcept
 {
     assert(m_existing_db_loaded);
+    static const auto time = static_cast<time_t>(m_db_superblock.timestamp);
+    static const auto time_formatted = ctime(&time);
 
-    return fmt::format("Version: {}\nDate Created: {}\nCheckSum: {}\nGraphs: {}\n",
+    return fmt::format("Version: {}\nDate Created: {}CheckSum: {}\nGraphs: {}\n",
                            m_db_superblock.version,
-                           m_db_superblock.timestamp,
+                           time_formatted,
                            m_db_superblock.magic_check_sum,
                            m_db_superblock.db_info.graph_table_size / m_db_superblock.db_info.graph_entry_size);
 }
 
 graphquery::database::storage::CDBStorage::SGraph_Entry_t
-graphquery::database::storage::CDBStorage::DefineGraph(std::string name, std::string type) noexcept
+graphquery::database::storage::CDBStorage::DefineGraphEntry(const std::string & name, const std::string & type) noexcept
 {
     SGraph_Entry_t entry;
     memcpy(entry.graph_name, name.c_str(), GRAPH_NAME_LENGTH);
@@ -153,22 +155,98 @@ graphquery::database::storage::CDBStorage::DefineGraph(std::string name, std::st
     return entry;
 }
 
+bool
+graphquery::database::storage::CDBStorage::DefineGraphModel(const std::string & name, const std::string & type) noexcept
+{
+    try
+    {
+        m_data_model_lib = std::make_unique<dylib>(dylib(fmt::format("{}/{}", PROJECT_ROOT, "lib/models"), type));
+        m_data_model_lib->get_function<void(std::unique_ptr<IGraphModel> &)>("CreateGraphModel")(m_loaded_graph);
+        m_loaded_graph->Init(name);
+    }
+    catch(std::runtime_error & e)
+    {
+        _log_system->Error(fmt::format("Issue linking library and creating graph model of type ({}) Error: {}", type, e.what()));
+        return false;
+    }
+
+    return true;
+}
 
 void
-graphquery::database::storage::CDBStorage::CreateGraph(const std::string name, const std::string type) noexcept
+graphquery::database::storage::CDBStorage::CloseGraph() noexcept
+{
+    m_loaded_graph->Close();
+    m_loaded_graph.reset();
+    m_data_model_lib.reset();
+    _log_system->Info(fmt::format("Graph has been unloaded from memory and changes have been flushed"));
+}
+
+void
+graphquery::database::storage::CDBStorage::CreateGraph(const std::string & name, const std::string & type) noexcept
 {
     if(m_existing_db_loaded)
     {
-        m_db_graph_table.emplace_back(DefineGraph(name, type));
+        if(m_loaded_graph)
+            CloseGraph();
 
-        m_db_superblock.db_info.graph_table_size += m_db_superblock.db_info.graph_entry_size;
+        if(DefineGraphModel(name, type))
+        {
+            CreateGraphEntry(name, type);
+            _log_system->Info(fmt::format("Graph [{}] of model type [{}] has been added and opened", name, type));
+        }
 
-        StoreDBSuperblock();
-        StoreDBGraphTable();
-
-        _log_system->Info(fmt::format("Graph [{}] of model type [{}] has been added", name, type));
     } else _log_system->Warning("Database has not been loaded for a graph to added");
+}
+
+<<<<<<< HEAD
+const std::vector<graphquery::database::storage::CDBStorage::SGraph_Entry_t> &
+graphquery::database::storage::CDBStorage::GetGraphTable() const noexcept
+{
+    return m_db_graph_table;
+}
+
+const bool&
+graphquery::database::storage::CDBStorage::GetIsDBLoaded() const noexcept
+{
+    return m_existing_db_loaded;
 }
 
 
 
+=======
+void
+graphquery::database::storage::CDBStorage::OpenGraph(std::string name, std::string type) noexcept
+{
+    if(m_existing_db_loaded)
+    {
+        if(m_loaded_graph)
+            CloseGraph();
+>>>>>>> 4158259 (Add graph table.)
+
+        if(DefineGraphModel(name, type))
+            _log_system->Info(fmt::format("Opening Graph [{}] of model type [{}] as the current context", name, type));
+    } else _log_system->Warning("Database has not been loaded for a graph to opened");
+}
+
+void
+graphquery::database::storage::CDBStorage::CreateGraphEntry(const std::string & name, const std::string & type) noexcept
+{
+    m_db_graph_table.emplace_back(DefineGraphEntry(name, type));
+    m_db_superblock.db_info.graph_table_size += m_db_superblock.db_info.graph_entry_size;
+
+    StoreDBSuperblock();
+    StoreDBGraphTable();
+}
+
+const std::vector<graphquery::database::storage::CDBStorage::SGraph_Entry_t> &
+graphquery::database::storage::CDBStorage::GetGraphTable() const noexcept
+{
+    return m_db_graph_table;
+}
+
+const bool&
+graphquery::database::storage::CDBStorage::GetIsDBLoaded() const noexcept
+{
+    return m_existing_db_loaded;
+}
