@@ -12,7 +12,6 @@
 
 #include <string_view>
 #include <unistd.h>
-#include <sys/stat.h>
 
 namespace graphquery::database::storage
 {

@@ -10,14 +10,13 @@
 #pragma once
 
 #include "db/storage/dbstorage.h"
-#include "log/logsystem.h"
+#include "log/logsystem/logsystem.h"
 #include "interact/interact.h"
 #include "interact/interfaces/gui/interact_gui.h"
 
 #include "fmt/format.h"
 
 #include <cstdint>
-#include <csignal>
 
 namespace graphquery::database
 {
@@ -41,7 +40,7 @@ namespace graphquery::database
     EStatus Initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept;
 
     //~ Log system instance for rendering output.
-    extern std::unique_ptr<logger::CLogSystem> _log_system;
+    extern std::shared_ptr<logger::CLogSystem> _log_system;
     //~ Interface instance for providing access to the database.
     extern std::unique_ptr<interact::IInteract> _interface;
     //~ Instance of the graph data model.

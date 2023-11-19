@@ -1,7 +1,6 @@
 #include "frame_graph_visual.h"
 
 #include "db/utils/ring_buffer.h"
-#include "fmt/xchar.h"
 
 graphquery::interact::CFrameGraphVisual::~CFrameGraphVisual() = default;
 

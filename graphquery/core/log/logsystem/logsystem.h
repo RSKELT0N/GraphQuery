@@ -10,6 +10,8 @@
 
 #include "log.h"
 
+#include "fmt/format.h"
+
 #include <vector>
 #include <string>
 #include <memory>
@@ -50,14 +52,16 @@ namespace graphquery::logger
     class CLogSystem final
     {
 
-    public:
+    private:
         /****************************************************************
         ** \brief Creates an instance of the class (for derived classes).
         ***************************************************************/
         explicit CLogSystem();
-        ~CLogSystem() = default;
 
     public:
+        static std::shared_ptr<CLogSystem> GetInstance() noexcept;
+        ~CLogSystem() = default;
+
         /****************************************************************
         ** \brief Deleted special functions
         ***************************************************************/
@@ -106,19 +110,15 @@ namespace graphquery::logger
         void Add_Logger(std::shared_ptr<ILog>) noexcept;
 
     private:
+        static std::shared_ptr<CLogSystem> m_log_system;
         [[nodiscard]] std::string Format_Output(ELogType, std::string_view) const noexcept;
 
-    private:
-        // ~ Log type to string conversion
-        std::vector<std::string> log_type_prefix = {"DEBUG",
+        std::vector<std::string> log_type_prefix = {"DEBUG",              // ~ Log type to string conversion
                                                     "INFO",
                                                     "WARNING",
                                                     "ERROR"};
-        // ~ Log level of the logging system
-        ELogType m_level;
-        // ~ mutex instance for logging to different derived classes.
-        std::mutex m_mtx;
-        // ~ array of loggers, which the log system holds and calls (Log).
-        std::unique_ptr<std::vector<std::shared_ptr<ILog>>> m_loggers;
+        ELogType m_level;                                                   // ~ Log level of the logging system
+        std::mutex m_mtx;                                                   // ~ mutex instance for logging to different derived classes.
+        std::unique_ptr<std::vector<std::shared_ptr<ILog>>> m_loggers;      // ~ array of loggers, which the log system holds and calls (Log).
     };
 }

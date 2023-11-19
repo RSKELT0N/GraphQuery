@@ -1,16 +1,27 @@
 #include "logsystem.h"
 
-#include "fmt/format.h"
-
 #include <algorithm>
 #include <mutex>
 #include <iomanip>
 #include <sstream>
 
+//~ static symbol link
+std::shared_ptr<graphquery::logger::CLogSystem> graphquery::logger::CLogSystem::m_log_system;
+
 graphquery::logger::CLogSystem::CLogSystem()
 {
     this->m_level = ELogType::LOG_SYSTEM_LEVEL;
     this->m_loggers = std::make_unique<std::vector<std::shared_ptr<ILog>>>();
+}
+
+std::shared_ptr<graphquery::logger::CLogSystem>
+graphquery::logger::CLogSystem::GetInstance() noexcept
+{
+    if(!m_log_system)
+    {
+        m_log_system = std::shared_ptr<CLogSystem>(new CLogSystem());
+    }
+    return m_log_system;
 }
 
 void

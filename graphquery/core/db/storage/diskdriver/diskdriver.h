@@ -4,20 +4,21 @@
 * \file diskdriver.h
 * \brief Header of the disk driver which interacts with
 *        creating and mapping actioned files to memory,
-<<<<<<< HEAD
 *        which allows easy access to write and read
 *        efficiently to the host filesystem.
-=======
-*        which allows easy access to write and read efficiently
-*        to the host filesystem.
->>>>>>> 4158259 (Add graph table.)
 ************************************************************/
 
 #pragma once
 
+#include "log/logsystem/logsystem.h"
+
 #include <cstdint>
 #include <iostream>
 #include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <cassert>
+#include <unistd.h>
 
 namespace graphquery::database::storage
 {
@@ -59,12 +60,14 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t Truncate(int64_t ) noexcept;
         [[maybe_unused]] SRet_t CreateFile(int64_t file_size) noexcept;
 
+        std::shared_ptr<logger::CLogSystem> m_log_system;
+
         bool m_initialised = {};                //~ Wether the fd descriptor is opened.
         struct stat m_fd_info = {};             //~ Structure info on the currently opened file.
         int m_file_descriptor = {};             //~ integer of the pointed file.
-        char * m_memory_mapped_file = {};       //~ buffer address of the memory mapped file.
         int64_t m_seek_offset = {};             //~ Current offset within the memory map.
-        std::string m_file_path;                //~ Set file path of the file that is opened/closed.
+        std::string m_file_path = {};           //~ Set file path of the file that is opened/closed.
+        char * m_memory_mapped_file = {};       //~ buffer address of the memory mapped file.
 
         int m_file_mode = {};                   //~ Set file mode of the descriptor when opened.
         int m_map_mode_prot = {};               //~ Set map mode (protection) of the file when mapped.

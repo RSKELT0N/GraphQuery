@@ -1,5 +1,4 @@
 #include "db/system.h"
-#include "dylib.hpp"
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "log/logsystem.h"
+#include "log/logsystem/logsystem.h"
 #include "fmt/format.h"
 #include "fmt/color.h"
 

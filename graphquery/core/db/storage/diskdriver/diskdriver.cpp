@@ -1,15 +1,8 @@
-#include "db/storage/diskdriver.h"
-
-#include "db/system.h"
-#include "fmt/format.h"
-
-#include <sys/mman.h>
-#include <fcntl.h>
-#include <cassert>
-#include <unistd.h>
+#include "diskdriver.h"
 
 graphquery::database::storage::CDiskDriver::CDiskDriver(int file_mode, int map_mode_prot, int map_mode_flags)
 {
+    this->m_log_system = logger::CLogSystem::GetInstance();
     this->m_file_mode = file_mode;
     this->m_map_mode_prot = map_mode_prot;
     this->m_map_mode_flags = map_mode_flags;
@@ -31,13 +24,13 @@ graphquery::database::storage::CDiskDriver::OpenFD() noexcept
 
     if(this->m_file_descriptor == -1)
     {
-        _log_system->Error(fmt::format("File descriptor ({}) could not be created to open file (Error: {})", m_file_path, errno));
+        m_log_system->Error(fmt::format("File descriptor ({}) could not be created to open file (Error: {})", m_file_path, errno));
         return SRet_t::ERROR;
     }
 
     if(fstat(this->m_file_descriptor, &this->m_fd_info) == -1)
     {
-        _log_system->Error(fmt::format("Issue getting file descriptor ({}) info", m_file_path));
+        m_log_system->Error(fmt::format("Issue getting file descriptor ({}) info", m_file_path));
         return SRet_t::ERROR;
     }
     return SRet_t::VALID;
@@ -48,7 +41,7 @@ graphquery::database::storage::CDiskDriver::CloseFD() noexcept
 {
     if(close(this->m_file_descriptor) == -1)
     {
-        _log_system->Error(fmt::format("Issue closing file descriptor ({}) (Error: {})", m_file_path, errno));
+        m_log_system->Error(fmt::format("Issue closing file descriptor ({}) (Error: {})", m_file_path, errno));
         return SRet_t::ERROR;
     }
     return SRet_t::VALID;
@@ -67,20 +60,20 @@ graphquery::database::storage::CDiskDriver::Truncate(int64_t file_size) noexcept
 {
     if(this->m_file_descriptor == -1)
     {
-        _log_system->Error(fmt::format("File descriptor ({}) could not be created to create file", m_file_path));
+        m_log_system->Error(fmt::format("File descriptor ({}) could not be created to create file", m_file_path));
         return SRet_t::ERROR;
     }
 
     if(ftruncate(this->m_file_descriptor, file_size) == -1)
     {
-        _log_system->Warning(fmt::format("Issue truncating the file to the specified size {}", errno));
+        m_log_system->Warning(fmt::format("Issue truncating the file to the specified size {}", errno));
         close(this->m_file_descriptor);
         return SRet_t::ERROR;
     }
 
     if(fstat(this->m_file_descriptor, &this->m_fd_info) == -1)
     {
-        _log_system->Error(fmt::format("Issue getting file descriptor ({}) info", m_file_path));
+        m_log_system->Error(fmt::format("Issue getting file descriptor ({}) info", m_file_path));
         return SRet_t::ERROR;
     }
 
@@ -92,7 +85,7 @@ graphquery::database::storage::CDiskDriver::Map() noexcept
 {
     this->m_memory_mapped_file = static_cast<char*>(mmap(nullptr, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
     if (this->m_memory_mapped_file == MAP_FAILED) {
-        _log_system->Error(fmt::format("Error mapping file to memory"));
+        m_log_system->Error(fmt::format("Error mapping file to memory"));
         return SRet_t::ERROR;
     }
 
@@ -103,7 +96,7 @@ graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::Unmap() noexcept
 {
     if (munmap(this->m_memory_mapped_file, this->m_fd_info.st_size) == -1) {
-        _log_system->Error(fmt::format("Error unmapping file from memory"));
+        m_log_system->Error(fmt::format("Error unmapping file from memory"));
         return SRet_t::ERROR;
     }
 
@@ -117,13 +110,13 @@ graphquery::database::storage::CDiskDriver::CreateFile(int64_t file_size) noexce
 
     if(this->m_file_descriptor == -1)
     {
-        _log_system->Error(fmt::format("File descriptor ({}) could not be created to create file", m_file_path));
+        m_log_system->Error(fmt::format("File descriptor ({}) could not be created to create file", m_file_path));
         return SRet_t::ERROR;
     }
 
     if(ftruncate(this->m_file_descriptor, file_size) == -1)
     {
-        _log_system->Warning(fmt::format("Issue truncating the file to the specified size {}", errno));
+        m_log_system->Warning(fmt::format("Issue truncating the file to the specified size {}", errno));
         close(this->m_file_descriptor);
         return SRet_t::ERROR;
     }
@@ -166,7 +159,7 @@ graphquery::database::storage::CDiskDriver::Create(int64_t file_size)
 {
     if(CheckIfFileExists(m_file_path))
     {
-        _log_system->Warning("Cannot create file that already exists");
+        m_log_system->Warning("Cannot create file that already exists");
         return SRet_t::ERROR;
     }
 
@@ -179,7 +172,7 @@ graphquery::database::storage::CDiskDriver::Open()
 {
     if(!CheckIfFileExists(m_file_path))
     {
-        _log_system->Warning("Could not open a file that doesn't exist");
+        m_log_system->Warning("Could not open a file that doesn't exist");
         return SRet_t::ERROR;
     }
 
@@ -198,7 +191,7 @@ graphquery::database::storage::CDiskDriver::Close()
         Unmap();
         CloseFD();
         this->m_initialised = false;
-    } else _log_system->Warning("File has not been initialised");
+    } else m_log_system->Warning("File has not been initialised");
 
     return SRet_t::VALID;
 }
@@ -209,7 +202,7 @@ graphquery::database::storage::CDiskDriver::Read(void *ptr, const int64_t size, 
     if(this->m_initialised)
     {
         memcpy(ptr, &this->m_memory_mapped_file[this->m_seek_offset], size * amt);
-    } else _log_system->Warning("File has not been initialised");
+    } else m_log_system->Warning("File has not been initialised");
     return SRet_t::VALID;
 }
 
@@ -224,7 +217,7 @@ graphquery::database::storage::CDiskDriver::Write(const void *ptr, const int64_t
             Resize(m_fd_info.st_size + (size * amt * scale));
         }
         memcpy(&this->m_memory_mapped_file[this->m_seek_offset], ptr, size * amt);
-    } else _log_system->Warning("File has not been initialised");
+    } else m_log_system->Warning("File has not been initialised");
 
     return SRet_t::VALID;
 }
@@ -237,7 +230,7 @@ graphquery::database::storage::CDiskDriver::operator[](int64_t idx) const
     {
         assert(idx >= 0L && idx <= this->m_fd_info.st_size);
         ret = this->m_memory_mapped_file[idx];
-    } else _log_system->Warning("File has not been initialised");
+    } else m_log_system->Warning("File has not been initialised");
 
     return ret;
 }
@@ -249,7 +242,7 @@ graphquery::database::storage::CDiskDriver::Seek(int64_t offset)
     {
         assert(offset >= 0L && offset <= this->m_fd_info.st_size);
         this->m_seek_offset = offset;
-    } else _log_system->Warning("File has not been initialised");
+    } else m_log_system->Warning("File has not been initialised");
 
     return SRet_t::VALID;
 }

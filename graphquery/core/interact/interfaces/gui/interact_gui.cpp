@@ -21,7 +21,8 @@ graphquery::interact::CInteractGUI::CInteractGUI()
     Initialise_Nodes_Editor();
 }
 
-void graphquery::interact::CInteractGUI::Render() noexcept
+void
+graphquery::interact::CInteractGUI::Render() noexcept
 {
     Initialise_Frames();
     [[likely]] while(glfwWindowShouldClose(*m_window) == 0)
@@ -31,7 +32,8 @@ void graphquery::interact::CInteractGUI::Render() noexcept
     Clean_Up();
 }
 
-void graphquery::interact::CInteractGUI::Initialise_GLFW() noexcept
+void
+graphquery::interact::CInteractGUI::Initialise_GLFW() noexcept
 {
     glfwSetErrorCallback([](int error, const char* desc)
     {
@@ -66,7 +68,8 @@ void graphquery::interact::CInteractGUI::Initialise_GLFW() noexcept
     glfwSwapInterval(1); // Enable vsync
 }
 
-void graphquery::interact::CInteractGUI::Initialise_IMGUI() noexcept
+void
+graphquery::interact::CInteractGUI::Initialise_IMGUI() noexcept
 {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -95,7 +98,8 @@ void graphquery::interact::CInteractGUI::Initialise_IMGUI() noexcept
         database::_log_system->Error("Error initialising OpenGl for ImGUI.");
 }
 
-void graphquery::interact::CInteractGUI::Initialise_Nodes_Editor() noexcept
+void
+graphquery::interact::CInteractGUI::Initialise_Nodes_Editor() noexcept
 {
     ImNodes::CreateContext();
     ImNodes::StyleColorsDark();
@@ -109,7 +113,8 @@ void graphquery::interact::CInteractGUI::Initialise_Nodes_Editor() noexcept
     style.Flags |= ImNodesStyleFlags_GridLinesPrimary | ImNodesStyleFlags_GridSnapping;
 }
 
-void graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
+void
+graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
 {
     // Background dock frame
     m_frames.emplace_back(std::make_unique<CFrameDock>(m_frame_dock_open));
@@ -120,7 +125,7 @@ void graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
     // Log output frame
     auto frame_log = std::make_shared<CFrameLog>();
     m_frames.emplace_back(frame_log);
-    graphquery::database::_log_system->Add_Logger(frame_log);
+    database::_log_system->Add_Logger(frame_log);
 
     // Graph DB
     m_frames.emplace_back(std::make_unique<CFrameGraphDB>(database::_db_storage->GetIsDBLoaded(), database::_db_storage->GetGraphTable()));
@@ -129,7 +134,8 @@ void graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
     m_frames.emplace_back(std::make_unique<CFrameGraphVisual>());
 }
 
-void graphquery::interact::CInteractGUI::Render_Frames() noexcept
+void
+graphquery::interact::CInteractGUI::Render_Frames() noexcept
 {
     std::for_each(m_frames.begin(), m_frames.end(), [] (auto & frame)
     {
@@ -137,7 +143,8 @@ void graphquery::interact::CInteractGUI::Render_Frames() noexcept
     });
 }
 
-void graphquery::interact::CInteractGUI::On_Update() noexcept
+void
+graphquery::interact::CInteractGUI::On_Update() noexcept
 {
     glfwPollEvents();
 
@@ -173,7 +180,8 @@ void graphquery::interact::CInteractGUI::On_Update() noexcept
     glfwSwapBuffers(*m_window);
 }
 
-void graphquery::interact::CInteractGUI::Clean_Up() noexcept
+void
+graphquery::interact::CInteractGUI::Clean_Up() noexcept
 {
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();

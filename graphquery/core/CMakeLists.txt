@@ -2,15 +2,14 @@
 cmake_minimum_required(VERSION 3.9)
 
 add_compile_definitions(PROJECT_ROOT="${PROJECT_SOURCE_DIR}")
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/models)
 
 # Retrieve source files, under SOURCE_FOLDER
 file(GLOB_RECURSE
         SOURCES
         main.cpp
         db/*.cpp
-        log/*.cpp
         interact/*.cpp
+        log/loggers/*.cpp
         db/utils/ring_buffer.h)
 
 # Set source files to compile for generating executable
@@ -29,7 +28,7 @@ target_compile_options(${EXECUTABLE_NAME}
 
 target_link_libraries(${EXECUTABLE_NAME}
         PRIVATE
-        fmt
+        diskdriver
         imgui
         dylib)
 

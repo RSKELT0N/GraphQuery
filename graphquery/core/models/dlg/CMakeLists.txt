@@ -13,7 +13,9 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/dlg.cpp)
 
 target_link_libraries(dlg
-        PRIVATE
+        PUBLIC
+        diskdriver
+        logsystem
         fmt)
 
 # Copy the shared library into the output/peripherals directory
