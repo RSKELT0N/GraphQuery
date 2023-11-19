@@ -18,14 +18,9 @@ namespace graphquery::database::storage
 
         void LoadGraph(std::string_view graph) noexcept override;
         void CreateGraph(std::string_view graph) noexcept override;
-<<<<<<< HEAD
-=======
         void Close() noexcept override;
->>>>>>> 4158259 (Add graph table.)
 
     private:
         void CheckIfMainFileExists() noexcept;
-
-        int a = 10;
     };
 }

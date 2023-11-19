@@ -115,11 +115,7 @@ void graphquery::interact::CInteractGUI::Initialise_Frames() noexcept
     m_frames.emplace_back(std::make_unique<CFrameDock>(m_frame_dock_open));
 
     // Menu bar
-<<<<<<< HEAD
-    m_frames.emplace_back(std::make_unique<CFrameMenuBar>(database::_db_storage->GetIsDBLoaded()));
-=======
     m_frames.emplace_back(std::make_unique<CFrameMenuBar>(database::_db_storage->GetIsDBLoaded(), database::_db_storage->GetGraphTable()));
->>>>>>> 4158259 (Add graph table.)
 
     // Log output frame
     auto frame_log = std::make_shared<CFrameLog>();

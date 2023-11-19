@@ -12,10 +12,7 @@
 
 #include <string_view>
 #include <unistd.h>
-<<<<<<< HEAD
-=======
 #include <sys/stat.h>
->>>>>>> 4158259 (Add graph table.)
 
 namespace graphquery::database::storage
 {
@@ -37,22 +34,6 @@ namespace graphquery::database::storage
         virtual void CreateGraph(std::string_view graph) noexcept = 0;
         virtual void Close() noexcept = 0;
 
-<<<<<<< HEAD
-        virtual void
-        Init(const std::string_view graph) final
-        {
-            if(access(graph.cbegin(), F_OK) == -1)
-                CreateGraph(graph);
-            else LoadGraph(graph);
-        };
-
-        virtual void LoadGraph(std::string_view graph) noexcept = 0;
-        virtual void CreateGraph(std::string_view graph) noexcept = 0;
-
-        friend class CDBStorage;
-    };
-}
-=======
         friend class CDBStorage;
     };
 }
@@ -61,4 +42,3 @@ extern "C"
 {
     void CreateGraphModel(std::unique_ptr<graphquery::database::storage::IGraphModel> & graph_model);
 }
->>>>>>> 4158259 (Add graph table.)

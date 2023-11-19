@@ -10,11 +10,7 @@ namespace graphquery::interact
     class CFrameMenuBar : public IFrame
     {
     public:
-<<<<<<< HEAD
-        CFrameMenuBar(const bool & is_db_loaded);
-=======
         CFrameMenuBar(const bool & is_db_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table);
->>>>>>> 4158259 (Add graph table.)
         ~CFrameMenuBar() override;
 
         void Render_Frame() noexcept override;
@@ -40,9 +36,6 @@ namespace graphquery::interact
         void Render_CreateDBName() noexcept;
         void Render_CreateDBButton() noexcept;
 
-<<<<<<< HEAD
-        const bool & m_is_db_loaded;
-=======
         void SetOpenGraphState(bool) noexcept;
         void Render_OpenGraph() noexcept;
         void Render_OpenGraphList() noexcept;
@@ -50,7 +43,6 @@ namespace graphquery::interact
 
         const bool & m_is_db_loaded;
         [[maybe_unused]] const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & m_graph_table;
->>>>>>> 4158259 (Add graph table.)
 
         ImGui::FileBrowser m_db_master_file_explorer;
         ImGui::FileBrowser m_db_folder_location_explorer;
@@ -69,7 +61,4 @@ namespace graphquery::interact
         static constexpr size_t CREATE_WINDOW_WIDTH = 400;
         static constexpr size_t CREATE_WINDOW_HEIGHT = 200;
     };
-
-
-
 }

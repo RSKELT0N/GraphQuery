@@ -7,11 +7,7 @@
 
 graphquery::interact::CFrameMenuBar::~CFrameMenuBar() = default;
 
-<<<<<<< HEAD
-graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded) : m_is_db_loaded(is_db_loaded)
-=======
 graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table) : m_is_db_loaded(is_db_loaded), m_graph_table(graph_table)
->>>>>>> 4158259 (Add graph table.)
 {
     this->m_db_master_file_explorer = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc |
                                                          ImGuiFileBrowserFlags_CreateNewDir);
@@ -79,11 +75,7 @@ graphquery::interact::CFrameMenuBar::Render_OpenMenu() noexcept
             this->m_db_master_file_explorer.Open();
 
         if(m_is_db_loaded && ImGui::MenuItem("Graph"))
-<<<<<<< HEAD
-            this->m_db_master_file_explorer.Open();
-=======
             SetOpenGraphState(true);
->>>>>>> 4158259 (Add graph table.)
 
         ImGui::EndMenu();
     }

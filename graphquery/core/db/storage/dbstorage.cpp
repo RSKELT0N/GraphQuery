@@ -199,7 +199,6 @@ graphquery::database::storage::CDBStorage::CreateGraph(const std::string & name,
     } else _log_system->Warning("Database has not been loaded for a graph to added");
 }
 
-<<<<<<< HEAD
 const std::vector<graphquery::database::storage::CDBStorage::SGraph_Entry_t> &
 graphquery::database::storage::CDBStorage::GetGraphTable() const noexcept
 {
@@ -212,9 +211,6 @@ graphquery::database::storage::CDBStorage::GetIsDBLoaded() const noexcept
     return m_existing_db_loaded;
 }
 
-
-
-=======
 void
 graphquery::database::storage::CDBStorage::OpenGraph(std::string name, std::string type) noexcept
 {
@@ -222,7 +218,6 @@ graphquery::database::storage::CDBStorage::OpenGraph(std::string name, std::stri
     {
         if(m_loaded_graph)
             CloseGraph();
->>>>>>> 4158259 (Add graph table.)
 
         if(DefineGraphModel(name, type))
             _log_system->Info(fmt::format("Opening Graph [{}] of model type [{}] as the current context", name, type));
@@ -237,16 +232,4 @@ graphquery::database::storage::CDBStorage::CreateGraphEntry(const std::string & 
 
     StoreDBSuperblock();
     StoreDBGraphTable();
-}
-
-const std::vector<graphquery::database::storage::CDBStorage::SGraph_Entry_t> &
-graphquery::database::storage::CDBStorage::GetGraphTable() const noexcept
-{
-    return m_db_graph_table;
-}
-
-const bool&
-graphquery::database::storage::CDBStorage::GetIsDBLoaded() const noexcept
-{
-    return m_existing_db_loaded;
 }
