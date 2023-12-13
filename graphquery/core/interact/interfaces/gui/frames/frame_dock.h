@@ -11,7 +11,7 @@ namespace graphquery::interact
         ~CFrameDock() override;
 
     public:
-        void Render_Frame() noexcept override;
+        void render_frame() noexcept override;
     private:
         ImGuiViewport * m_viewp;
         bool & m_is_opened;

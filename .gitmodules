@@ -19,3 +19,6 @@
 [submodule "graphquery/external/imgui-filebrowser"]
 	path = graphquery/external/imgui-filebrowser
 	url = https://github.com/AirGuanZ/imgui-filebrowser.git
+[submodule "graphquery/external/libcypher-parser"]
+	path = graphquery/external/libcypher-parser
+	url = https://github.com/cleishm/libcypher-parser.git

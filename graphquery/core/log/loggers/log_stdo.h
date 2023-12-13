@@ -20,7 +20,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Debug(std::string_view) noexcept override;
+        void debug(std::string_view) noexcept override;
 
         /****************************************************************
         ** \brief Virtual debug function for the logging system to call
@@ -28,7 +28,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Info(std::string_view) noexcept override;
+        void info(std::string_view) noexcept override;
 
         /****************************************************************
         ** \brief Virtual warning function for the logging system to call
@@ -36,7 +36,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Warning(std::string_view) noexcept override;
+        void warning(std::string_view) noexcept override;
 
         /****************************************************************
         ** \brief Virtual error function for the logging system to call
@@ -44,10 +44,10 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Error(std::string_view) noexcept override;
+        void error(std::string_view) noexcept override;
 
     private:
-        [[nodiscard]] std::string Colourise(ELogType type, std::string_view) const noexcept;
+        [[nodiscard]] std::string colourise(ELogType type, std::string_view) const noexcept;
     };
 }
 

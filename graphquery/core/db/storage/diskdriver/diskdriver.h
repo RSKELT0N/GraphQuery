@@ -13,7 +13,6 @@
 #include "log/logsystem/logsystem.h"
 
 #include <cstdint>
-#include <iostream>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <fcntl.h>
@@ -38,27 +37,27 @@ namespace graphquery::database::storage
         CDiskDriver(CDiskDriver&&) = delete;
         CDiskDriver(const CDiskDriver&) = delete;
 
-        [[maybe_unused]] SRet_t Close();
-        [[maybe_unused]] SRet_t Open();
-        [[maybe_unused]] SRet_t Seek(int64_t offset);
-        [[maybe_unused]] SRet_t Create(int64_t file_size);
-        [[maybe_unused]] SRet_t Read(void* ptr, int64_t size, uint32_t amt) const;
-        [[maybe_unused]] SRet_t Write(const void* ptr, int64_t size, uint32_t amt);
+        [[maybe_unused]] SRet_t close();
+        [[maybe_unused]] SRet_t open();
+        [[maybe_unused]] SRet_t seek(int64_t offset);
+        [[maybe_unused]] SRet_t create(int64_t file_size);
+        [[maybe_unused]] SRet_t read(void* ptr, int64_t size, uint32_t amt) const;
+        [[maybe_unused]] SRet_t write(const void* ptr, int64_t size, uint32_t amt);
         [[maybe_unused]] char operator[](int64_t idx) const;
 
-        void SetFilePath(std::string file_path) noexcept;
-        [[nodiscard]] const std::string & GetFilePath() const noexcept;
-        [[nodiscard]] bool CheckIfInitialised() const noexcept;
-        [[nodiscard]] bool CheckIfFileExists(std::string_view file_path) const noexcept;
+        void set_file_path(std::string file_path) noexcept;
+        [[nodiscard]] const std::string & get_file_path() const noexcept;
+        [[nodiscard]] bool check_if_initialised() const noexcept;
+        [[nodiscard]] bool check_if_file_exists(std::string_view file_path) const noexcept;
 
     private:
-        void Resize(int64_t file_size) noexcept;
-        [[maybe_unused]] SRet_t Unmap() noexcept;
-        [[maybe_unused]] SRet_t OpenFD() noexcept;
-        [[maybe_unused]] SRet_t CloseFD() noexcept;
-        [[maybe_unused]] SRet_t Map() noexcept;
-        [[maybe_unused]] SRet_t Truncate(int64_t ) noexcept;
-        [[maybe_unused]] SRet_t CreateFile(int64_t file_size) noexcept;
+        void resize(int64_t file_size) noexcept;
+        [[maybe_unused]] SRet_t unmap() const noexcept;
+        [[maybe_unused]] SRet_t open_fd() noexcept;
+        [[maybe_unused]] SRet_t close_fd() noexcept;
+        [[maybe_unused]] SRet_t map() noexcept;
+        [[maybe_unused]] SRet_t truncate(int64_t ) noexcept;
+        [[maybe_unused]] SRet_t create_file(int64_t file_size) noexcept;
 
         std::shared_ptr<logger::CLogSystem> m_log_system;
 

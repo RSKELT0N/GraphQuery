@@ -14,10 +14,10 @@ namespace graphquery::interact
         ~CFrameGraphVisual() override;
 
     public:
-        void Render_Frame() noexcept override;
+        void render_frame() noexcept override;
     private:
-        void Render_Grid() noexcept;
-        void Render_Nodes() noexcept;
-        void Render_Edges() noexcept;
+        void render_grid() noexcept;
+        void render_nodes() noexcept;
+        void render_edges() noexcept;
     };
 }

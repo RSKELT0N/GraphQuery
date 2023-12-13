@@ -76,7 +76,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        void Debug(std::string_view) noexcept;
+        void debug(std::string_view) noexcept;
 
        /****************************************************************
        ** \brief Virtual info function for the logging system to call
@@ -84,7 +84,7 @@ namespace graphquery::logger
        **
        ** \param const std::string & - Output to be rendered.
        ***************************************************************/
-       void Info(std::string_view) noexcept;
+       void info(std::string_view) noexcept;
 
        /****************************************************************
        ** \brief Virtual warning function for the logging system to call
@@ -92,7 +92,7 @@ namespace graphquery::logger
        **
        ** \param const std::string & - Output to be rendered.
        ***************************************************************/
-       void Warning(std::string_view) noexcept;
+       void warning(std::string_view) noexcept;
 
        /****************************************************************
        ** \brief Virtual error function for the logging system to call
@@ -100,18 +100,18 @@ namespace graphquery::logger
        **
        ** \param const std::string & - Output to be rendered.
        ***************************************************************/
-       void Error(std::string_view) noexcept;
+       void error(std::string_view) noexcept;
 
         /****************************************************************
         ** \brief To add an instance of ILog towards the system logger
         **
         ** \param std::unique_ptr<ILog> - Instance of the ILog class
         ***************************************************************/
-        void Add_Logger(std::shared_ptr<ILog>) noexcept;
+        void add_logger(std::shared_ptr<ILog>) noexcept;
 
     private:
         static std::shared_ptr<CLogSystem> m_log_system;
-        [[nodiscard]] std::string Format_Output(ELogType, std::string_view) const noexcept;
+        [[nodiscard]] std::string format_output(ELogType, std::string_view) const noexcept;
 
         std::vector<std::string> log_type_prefix = {"DEBUG",              // ~ Log type to string conversion
                                                     "INFO",

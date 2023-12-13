@@ -25,7 +25,7 @@ namespace graphquery::interact
         *
          * \return void
         **************************************************************/
-        virtual void Render() noexcept = 0;
-        virtual void Clean_Up() {};
+        virtual void render() noexcept = 0;
+        virtual void clean_up() {};
     };
 }

@@ -23,51 +23,51 @@ graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded, co
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_Frame() noexcept
+graphquery::interact::CFrameMenuBar::render_frame() noexcept
 {
     if (ImGui::BeginMainMenuBar())
     {
-        Render_CreateMenu();
-        Render_OpenMenu();
-        Render_DBMenu();
+        render_create_menu();
+        render_open_menu();
+        render_db_menu();
         ImGui::EndMainMenuBar();
     }
 
-    Render_CreateDB();
-    Render_CreateGraph();
-    Render_OpenDB();
-    Render_OpenGraph();
+    render_create_db();
+    render_create_graph();
+    render_open_db();
+    render_open_graph();
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_DBMenu() noexcept
+graphquery::interact::CFrameMenuBar::render_db_menu() noexcept
 {
     if(m_is_db_loaded && ImGui::BeginMenu("Database"))
     {
         if(ImGui::MenuItem("Close"))
-            database::_db_storage->Close();
+            database::_db_storage->close();
 
         ImGui::EndMenu();
     }
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_CreateMenu() noexcept
+graphquery::interact::CFrameMenuBar::render_create_menu() noexcept
 {
     if (ImGui::BeginMenu("Create"))
     {
         if (ImGui::MenuItem("Database"))
-            SetCreateDBState(true);
+            set_create_db_state(true);
 
         if(m_is_db_loaded && ImGui::MenuItem("Graph"))
-            SetCreateGraphState(true);
+            set_create_graph_state(true);
 
         ImGui::EndMenu();
     }
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_OpenMenu() noexcept
+graphquery::interact::CFrameMenuBar::render_open_menu() noexcept
 {
     if (ImGui::BeginMenu("Open", "Ctrl+o"))
     {
@@ -75,27 +75,27 @@ graphquery::interact::CFrameMenuBar::Render_OpenMenu() noexcept
             this->m_db_master_file_explorer.Open();
 
         if(m_is_db_loaded && ImGui::MenuItem("Graph"))
-            SetOpenGraphState(true);
+            set_open_graph_state(true);
 
         ImGui::EndMenu();
     }
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_OpenDB() noexcept
+graphquery::interact::CFrameMenuBar::render_open_db() noexcept
 {
     m_db_master_file_explorer.Display();
 
     if(m_db_master_file_explorer.HasSelected())
     {
         const std::filesystem::path db_master_file_path = m_db_master_file_explorer.GetSelected();
-        database::_db_storage->Init(db_master_file_path.generic_string());
+        database::_db_storage->init(db_master_file_path.generic_string());
         m_db_master_file_explorer.ClearSelected();
     }
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_CreateGraph() noexcept
+graphquery::interact::CFrameMenuBar::render_create_graph() noexcept
 {
     if(this->m_is_create_graph_opened)
         ImGui::OpenPopup("Create Graph");
@@ -103,62 +103,62 @@ graphquery::interact::CFrameMenuBar::Render_CreateGraph() noexcept
     ImGui::SetNextWindowSize(ImVec2{CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
     if (ImGui::BeginPopupModal("Create Graph", &this->m_is_create_graph_opened, ImGuiWindowFlags_NoResize))
     {
-        Render_CreateGraphInfo();
+        render_create_graph_info();
         ImGui::EndPopup();
     }
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_CreateGraphInfo() noexcept
+graphquery::interact::CFrameMenuBar::render_create_graph_info() noexcept
 {
     if(ImGui::BeginChild("Graph Info"))
     {
         ImGui::Text("Complete all fields:");
         ImGui::Separator();
 
-        Render_CreateGraphName();
-        Render_CreateGraphType();
-        Render_CreateGraphButton();
+        render_create_graph_name();
+        render_create_graph_type();
+        render_create_graph_button();
     }
     ImGui::EndChild();
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_CreateGraphName() noexcept
+graphquery::interact::CFrameMenuBar::render_create_graph_name() noexcept
 {
     ImGui::Text("Name: ");
-    ImGui::InputText("##", &this->m_created_graph_name, ImGuiInputTextFlags_CharsNoBlank);
+    ImGui::InputText("##_graphName", &this->m_created_graph_name, ImGuiInputTextFlags_CharsNoBlank);
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_CreateGraphType() noexcept
+graphquery::interact::CFrameMenuBar::render_create_graph_type() noexcept
 {
     ImGui::Text("Model Type (shared library): ");
-    ImGui::InputText("###", &this->m_created_graph_type, ImGuiInputTextFlags_CharsNoBlank);
+    ImGui::InputText("##_modelType", &this->m_created_graph_type, ImGuiInputTextFlags_CharsNoBlank);
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_CreateGraphButton() noexcept
+graphquery::interact::CFrameMenuBar::render_create_graph_button() noexcept
 {
     if(ImGui::Button("Create Graph"))
     {
         if((m_created_graph_name.empty() || m_created_graph_name.length() > database::storage::GRAPH_NAME_LENGTH)
             || (m_created_graph_type.empty() || m_created_graph_type.length() > database::storage::GRAPH_MODEL_TYPE_LENGTH))
         {
-            database::_log_system->Warning(fmt::format("Either the name or type cannot be empty or larger than configured size (Name: {}, Type: {}) to create a graph",
+            database::_log_system->warning(fmt::format("Either the name or type cannot be empty or larger than configured size (Name: {}, Type: {}) to create a graph",
                                                          database::storage::GRAPH_NAME_LENGTH,
                                                          database::storage::GRAPH_MODEL_TYPE_LENGTH));
             return;
         }
-        database::_db_storage->CreateGraph(this->m_created_graph_name, this->m_created_graph_type);
+        database::_db_storage->create_graph(this->m_created_graph_name, this->m_created_graph_type);
         m_created_graph_name = "";
         m_created_graph_type = "";
-        SetCreateGraphState(false);
+        set_create_graph_state(false);
     }
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_CreateDB() noexcept
+graphquery::interact::CFrameMenuBar::render_create_db() noexcept
 {
     if(this->m_is_create_db_opened)
         ImGui::OpenPopup("Create Database");
@@ -166,28 +166,28 @@ graphquery::interact::CFrameMenuBar::Render_CreateDB() noexcept
     ImGui::SetNextWindowSize(ImVec2{CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
     if(ImGui::BeginPopupModal("Create Database", &m_is_create_db_opened, ImGuiWindowFlags_NoResize))
     {
-        Render_CreateDBInfo();
+        render_create_db_info();
         ImGui::EndPopup();
     }
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_CreateDBInfo() noexcept
+graphquery::interact::CFrameMenuBar::render_create_db_info() noexcept
 {
     if(ImGui::BeginChild("DB Info"))
     {
         ImGui::Text("Complete all fields:");
         ImGui::Separator();
 
-        Render_CreateDBLocation();
-        Render_CreateDBName();
-        Render_CreateDBButton();
+        render_create_db_location();
+        render_create_db_name();
+        render_create_db_button();
     }
     ImGui::EndChild();
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_CreateDBLocation() noexcept
+graphquery::interact::CFrameMenuBar::render_create_db_location() noexcept
 {
     static std::string file_path = {};
 
@@ -205,7 +205,7 @@ graphquery::interact::CFrameMenuBar::Render_CreateDBLocation() noexcept
 
         if(file_path.size() > DB_PATH_SIZE)
         {
-            database::_log_system->Warning(fmt::format("Select path for DB creation is greater than specified length ({})", DB_PATH_SIZE));
+            database::_log_system->warning(fmt::format("Select path for DB creation is greater than specified length ({})", DB_PATH_SIZE));
         }
         this->m_created_db_path = file_path;
     }
@@ -214,7 +214,7 @@ graphquery::interact::CFrameMenuBar::Render_CreateDBLocation() noexcept
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_CreateDBName() noexcept
+graphquery::interact::CFrameMenuBar::render_create_db_name() noexcept
 {
     ImGui::Text("Name: ");
     ImGui::InputText("##", &this->m_created_db_name, ImGuiInputTextFlags_CharsNoBlank);
@@ -223,24 +223,24 @@ graphquery::interact::CFrameMenuBar::Render_CreateDBName() noexcept
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_CreateDBButton() noexcept
+graphquery::interact::CFrameMenuBar::render_create_db_button() noexcept
 {
     if(ImGui::Button("Create Database"))
     {
         if(this->m_created_db_name.empty() || this->m_created_db_path.empty())
         {
-            database::_log_system->Warning("Either the file path or name cannot be empty to create a database");
+            database::_log_system->warning("Either the file path or name cannot be empty to create a database");
             return;
         }
-        database::_db_storage->Init(fmt::format("{}/{}.gdb", this->m_created_db_path, this->m_created_db_name));
+        database::_db_storage->init(fmt::format("{}/{}.gdb", this->m_created_db_path, this->m_created_db_name));
         this->m_created_db_name = "";
         this->m_created_db_path = "";
-        SetCreateDBState(false);
+        set_create_db_state(false);
     }
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_OpenGraph() noexcept
+graphquery::interact::CFrameMenuBar::render_open_graph() noexcept
 {
     if(m_is_open_graph_opened)
         ImGui::OpenPopup("Open Graph");
@@ -249,15 +249,15 @@ graphquery::interact::CFrameMenuBar::Render_OpenGraph() noexcept
     {
         ImGui::Text("Select a graph to open");
         ImGui::Separator();
-        Render_OpenGraphList();
-        Render_OpenGraphButton();
+        render_open_graph_list();
+        render_open_graph_button();
 
         ImGui::EndPopup();
     }
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_OpenGraphList() noexcept
+graphquery::interact::CFrameMenuBar::render_open_graph_list() noexcept
 {
     std::string graphs = {};
 
@@ -271,33 +271,33 @@ graphquery::interact::CFrameMenuBar::Render_OpenGraphList() noexcept
 }
 
 void
-graphquery::interact::CFrameMenuBar::Render_OpenGraphButton() noexcept
+graphquery::interact::CFrameMenuBar::render_open_graph_button() noexcept
 {
     if (ImGui::Button("Open"))
     {
-        assert(m_open_graph_choice >= 0 && m_open_graph_choice < m_graph_table.size());
+        assert(m_open_graph_choice >= 0 && static_cast<size_t>(m_open_graph_choice) < m_graph_table.size());
 
-        database::_db_storage->OpenGraph(m_graph_table.at(m_open_graph_choice).graph_name, m_graph_table.at(m_open_graph_choice).graph_type);
+        database::_db_storage->open_graph(m_graph_table.at(m_open_graph_choice).graph_name, m_graph_table.at(m_open_graph_choice).graph_type);
 
         ImGui::CloseCurrentPopup();
-        SetOpenGraphState(false);
+        set_open_graph_state(false);
     }
 }
 
 void
-graphquery::interact::CFrameMenuBar::SetCreateDBState(const bool state) noexcept
+graphquery::interact::CFrameMenuBar::set_create_db_state(const bool state) noexcept
 {
     this->m_is_create_db_opened = state;
 }
 
 void
-graphquery::interact::CFrameMenuBar::SetCreateGraphState(const bool state) noexcept
+graphquery::interact::CFrameMenuBar::set_create_graph_state(const bool state) noexcept
 {
     this->m_is_create_graph_opened = state;
 }
 
 void
-graphquery::interact::CFrameMenuBar::SetOpenGraphState(const bool state) noexcept
+graphquery::interact::CFrameMenuBar::set_open_graph_state(const bool state) noexcept
 {
     this->m_is_open_graph_opened = state;
 }

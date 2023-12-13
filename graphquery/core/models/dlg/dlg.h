@@ -29,8 +29,8 @@ namespace graphquery::database::storage
         CGraphModelPropertyLabel();
         ~CGraphModelPropertyLabel() override;
 
-        void LoadGraph(std::string_view graph) noexcept override;
-        void CreateGraph(std::string_view graph) noexcept override;
+        void load_graph(std::string_view graph) noexcept override;
+        void create_graph(std::string_view graph) noexcept override;
         void Close() noexcept override;
 
     private:

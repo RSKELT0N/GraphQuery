@@ -14,20 +14,20 @@ namespace graphquery::interact
         CFrameLog();
         ~CFrameLog() override = default;
 
-        void Render_Frame() noexcept override;
+        void render_frame() noexcept override;
 
     protected:
-        void Debug(std::string_view) noexcept override;
-        void Info(std::string_view) noexcept override;
-        void Warning(std::string_view) noexcept override;
-        void Error(std::string_view)  noexcept override;
+        void debug(std::string_view) noexcept override;
+        void info(std::string_view) noexcept override;
+        void warning(std::string_view) noexcept override;
+        void error(std::string_view)  noexcept override;
 
     private:
-        void Render_Clear_Button() noexcept;
-        void Render_Log_Box() noexcept;
-        void Render_Log_Output() const noexcept;
-        [[nodiscard]] static bool Is_Scroll_At_End() noexcept;
-        [[nodiscard]] ImVec4 Colourise() const noexcept;
+        void render_clear_button() noexcept;
+        void render_log_box() noexcept;
+        void render_log_output() const noexcept;
+        [[nodiscard]] static bool is_scroll_at_end() noexcept;
+        [[nodiscard]] ImVec4 colourise() const noexcept;
 
     private:
         static constexpr std::size_t RING_BUFFER = 1024;

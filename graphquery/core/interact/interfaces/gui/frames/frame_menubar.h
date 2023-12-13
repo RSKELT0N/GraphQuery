@@ -13,33 +13,33 @@ namespace graphquery::interact
         CFrameMenuBar(const bool & is_db_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table);
         ~CFrameMenuBar() override;
 
-        void Render_Frame() noexcept override;
+        void render_frame() noexcept override;
 
     private:
-        void Render_DBMenu() noexcept;
+        void render_db_menu() noexcept;
 
-        void Render_CreateMenu() noexcept;
-        void Render_OpenMenu() noexcept;
-        void Render_OpenDB() noexcept;
+        void render_create_menu() noexcept;
+        void render_open_menu() noexcept;
+        void render_open_db() noexcept;
 
-        void SetCreateGraphState(bool) noexcept;
-        void Render_CreateGraph() noexcept;
-        void Render_CreateGraphInfo() noexcept;
-        void Render_CreateGraphName() noexcept;
-        void Render_CreateGraphType() noexcept;
-        void Render_CreateGraphButton() noexcept;
+        void set_create_graph_state(bool) noexcept;
+        void render_create_graph() noexcept;
+        void render_create_graph_info() noexcept;
+        void render_create_graph_name() noexcept;
+        void render_create_graph_type() noexcept;
+        void render_create_graph_button() noexcept;
 
-        void SetCreateDBState(bool) noexcept;
-        void Render_CreateDB() noexcept;
-        void Render_CreateDBInfo() noexcept;
-        void Render_CreateDBLocation() noexcept;
-        void Render_CreateDBName() noexcept;
-        void Render_CreateDBButton() noexcept;
+        void set_create_db_state(bool) noexcept;
+        void render_create_db() noexcept;
+        void render_create_db_info() noexcept;
+        void render_create_db_location() noexcept;
+        void render_create_db_name() noexcept;
+        void render_create_db_button() noexcept;
 
-        void SetOpenGraphState(bool) noexcept;
-        void Render_OpenGraph() noexcept;
-        void Render_OpenGraphList() noexcept;
-        void Render_OpenGraphButton() noexcept;
+        void set_open_graph_state(bool) noexcept;
+        void render_open_graph() noexcept;
+        void render_open_graph_list() noexcept;
+        void render_open_graph_button() noexcept;
 
         const bool & m_is_db_loaded;
         [[maybe_unused]] const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & m_graph_table;

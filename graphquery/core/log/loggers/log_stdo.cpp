@@ -2,31 +2,31 @@
 
 #include "fmt/format.h"
 
-void graphquery::logger::CLogSTDO::Debug(std::string_view out) noexcept
+void graphquery::logger::CLogSTDO::debug(std::string_view out) noexcept
 {
-    std::string formatted = Colourise(ELogType::debug, out);
+    std::string formatted = colourise(ELogType::debug, out);
     fmt::print("{}", formatted);
 }
 
-void graphquery::logger::CLogSTDO::Info(std::string_view out) noexcept
+void graphquery::logger::CLogSTDO::info(std::string_view out) noexcept
 {
-    std::string formatted = Colourise(ELogType::info, out);
+    std::string formatted = colourise(ELogType::info, out);
     fmt::print("{}", formatted);
 }
 
-void graphquery::logger::CLogSTDO::Warning(std::string_view out) noexcept
+void graphquery::logger::CLogSTDO::warning(std::string_view out) noexcept
 {
-    std::string formatted = Colourise(ELogType::warning, out);
+    std::string formatted = colourise(ELogType::warning, out);
     fmt::print("{}", formatted);
 }
 
-void graphquery::logger::CLogSTDO::Error(std::string_view out) noexcept
+void graphquery::logger::CLogSTDO::error(std::string_view out) noexcept
 {
-    std::string formatted = Colourise(ELogType::error, out);
+    std::string formatted = colourise(ELogType::error, out);
     fmt::print("{}", formatted);
 }
 
-std::string graphquery::logger::CLogSTDO::Colourise(graphquery::logger::ELogType type, std::string_view out) const noexcept
+std::string graphquery::logger::CLogSTDO::colourise(graphquery::logger::ELogType type, std::string_view out) const noexcept
 {
     std::string formatted = {};
     switch(type)

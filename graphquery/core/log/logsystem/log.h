@@ -35,7 +35,7 @@ namespace graphquery::logger
         **
         ** \param const std::string & - Output to be rendered.
         ***************************************************************/
-        virtual void Debug(std::string_view) noexcept = 0;
+        virtual void debug(std::string_view) noexcept = 0;
 
         /****************************************************************
         * \brief Virtual debug function for the logging system to call
@@ -43,7 +43,7 @@ namespace graphquery::logger
         *
         * \param const std::string & - Output to be rendered.
         **************************************************************/
-        virtual void Info(std::string_view) noexcept = 0;
+        virtual void info(std::string_view) noexcept = 0;
 
         /****************************************************************
         * \brief Virtual warning function for the logging system to call
@@ -51,7 +51,7 @@ namespace graphquery::logger
         *
         aram const std::string & - Output to be rendered.
         ***** \p**********************************************************/
-        virtual void Warning(std::string_view) noexcept = 0;
+        virtual void warning(std::string_view) noexcept = 0;
 
         /****************************************************************
         * \brief Virtual error function for the logging system to call
@@ -59,7 +59,7 @@ namespace graphquery::logger
         *
         * \param const std::string & - Output to be rendered.
         **************************************************************/
-        virtual void Error(std::string_view) noexcept = 0;
+        virtual void error(std::string_view) noexcept = 0;
 
     protected:
         // ~ friend reference of the logging system (can call protected/private functionality)

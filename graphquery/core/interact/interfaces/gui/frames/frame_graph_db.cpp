@@ -10,37 +10,37 @@ graphquery::interact::CFrameGraphDB::CFrameGraphDB(const bool & is_db_loaded, co
 graphquery::interact::CFrameGraphDB::~CFrameGraphDB() = default;
 
 void
-graphquery::interact::CFrameGraphDB::Render_Frame() noexcept
+graphquery::interact::CFrameGraphDB::render_frame() noexcept
 {
     if(ImGui::Begin("Graph Database"))
     {
-        Render_State();
+        render_state();
     }
     ImGui::End();
 }
 
 void
-graphquery::interact::CFrameGraphDB::Render_State() noexcept
+graphquery::interact::CFrameGraphDB::render_state() noexcept
 {
     if(m_is_db_loaded)
     {
-        Render_DBInfo();
+        render_db_info();
         ImGui::NewLine();
-        Render_GraphTable();
+        render_graph_table();
     } else ImGui::Text("No current database is loaded.");
 
 }
 
 void
-graphquery::interact::CFrameGraphDB::Render_DBInfo() noexcept
+graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 {
     ImGui::Text("Database Info");
     ImGui::Separator();
-    ImGui::Text("%s", database::_db_storage->GetDBInfo().c_str());
+    ImGui::Text("%s", database::_db_storage->get_db_info().c_str());
 }
 
 void
-graphquery::interact::CFrameGraphDB::Render_GraphTable() noexcept
+graphquery::interact::CFrameGraphDB::render_graph_table() noexcept
 {
     ImGui::Text("Graph Info");
     ImGui::Separator();

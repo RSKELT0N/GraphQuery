@@ -7,13 +7,13 @@ graphquery::database::storage::CGraphModelPropertyLabel::~CGraphModelPropertyLab
 }
 
 void
-graphquery::database::storage::CGraphModelPropertyLabel::CreateGraph(std::string_view graph) noexcept
+graphquery::database::storage::CGraphModelPropertyLabel::create_graph(std::string_view graph) noexcept
 {
 }
 
 
 void
-graphquery::database::storage::CGraphModelPropertyLabel::LoadGraph(std::string_view graph) noexcept
+graphquery::database::storage::CGraphModelPropertyLabel::load_graph(std::string_view graph) noexcept
 {
 
 }
@@ -26,7 +26,7 @@ graphquery::database::storage::CGraphModelPropertyLabel::Close() noexcept
 
 extern "C"
 {
-    LIB_EXPORT void CreateGraphModel(std::unique_ptr<graphquery::database::storage::IGraphModel> & model)
+    LIB_EXPORT void create_graph_model(std::unique_ptr<graphquery::database::storage::IGraphModel> & model)
     {
         model = std::make_unique<graphquery::database::storage::CGraphModelPropertyLabel>();
     }

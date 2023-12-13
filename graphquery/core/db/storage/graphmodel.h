@@ -22,15 +22,15 @@ namespace graphquery::database::storage
         virtual ~IGraphModel() {};
 
         virtual void
-        Init(const std::string_view graph) final
+        init(const std::string_view graph) final
         {
             if(access(graph.cbegin(), F_OK) == -1)
-                CreateGraph(graph);
-            else LoadGraph(graph);
+                create_graph(graph);
+            else load_graph(graph);
         }
 
-        virtual void LoadGraph(std::string_view graph) noexcept = 0;
-        virtual void CreateGraph(std::string_view graph) noexcept = 0;
+        virtual void load_graph(std::string_view graph) noexcept = 0;
+        virtual void create_graph(std::string_view graph) noexcept = 0;
         virtual void Close() noexcept = 0;
 
         friend class CDBStorage;
@@ -39,5 +39,5 @@ namespace graphquery::database::storage
 
 extern "C"
 {
-    void CreateGraphModel(std::unique_ptr<graphquery::database::storage::IGraphModel> & graph_model);
+    void create_graph_model(std::unique_ptr<graphquery::database::storage::IGraphModel> & graph_model);
 }

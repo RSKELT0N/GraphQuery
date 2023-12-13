@@ -3,11 +3,13 @@
 #include "log/loggers/log_stdo.h"
 #include "interact/interfaces/gui/interact_gui.h"
 
+#include <csignal>
+
 namespace
 {
     graphquery::database::EStatus Initialise_Logging() noexcept
     {
-        graphquery::database::_log_system->Add_Logger(std::make_shared<graphquery::logger::CLogSTDO>());
+        graphquery::database::_log_system->add_logger(std::make_shared<graphquery::logger::CLogSTDO>());
 
         return graphquery::database::EStatus::valid;
     }
@@ -24,12 +26,12 @@ namespace graphquery::database
     //~ Linked symbol of the interface towards the database.
     std::unique_ptr<storage::CDBStorage> _db_storage = std::make_unique<storage::CDBStorage>();
 
-    graphquery::database::EStatus Initialise([[maybe_unused]] int argc, [[maybe_unused]] char **argv) noexcept
+    graphquery::database::EStatus initialise([[maybe_unused]] int argc, [[maybe_unused]] char **argv) noexcept
     {
         signal(SIGINT | SIGTERM, [](int param) -> void
         {
-            _db_storage->Close();
-            _interface->Clean_Up();
+            _db_storage->close();
+            _interface->clean_up();
             exit(0);
         });
 

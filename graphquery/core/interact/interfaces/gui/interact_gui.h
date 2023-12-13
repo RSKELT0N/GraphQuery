@@ -22,18 +22,18 @@ namespace graphquery::interact
         explicit CInteractGUI();
         ~CInteractGUI() override = default;
 
-        void Clean_Up() noexcept override;
+        void clean_up() noexcept override;
 
     private:
-        void Render() noexcept override;
+        void render() noexcept override;
 
-        void Render_Frames() noexcept;
-        void On_Update() noexcept;
+        void render_frames() noexcept;
+        void on_update() noexcept;
 
-        static void Initialise_Nodes_Editor() noexcept;
-        void Initialise_GLFW() noexcept;
-        void Initialise_IMGUI() noexcept;
-        void Initialise_Frames() noexcept;
+        static void initialise_nodes_editor() noexcept;
+        void initialise_glfw() noexcept;
+        void initialise_imgui() noexcept;
+        void initialise_frames() noexcept;
 
     private:
         std::vector<std::shared_ptr<IFrame> > m_frames;

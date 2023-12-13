@@ -3,6 +3,5 @@ build/
 cmake-build-debug/
 .vscode/
 lib/
-imgui.ini
 .DS_Store
 *.gdb

@@ -26,12 +26,12 @@ namespace graphquery::database::utils
         };
 
         CRingBuffer();
-        void Clear() noexcept;
-        void Add(const ElemType & elem) noexcept;
+        void clear() noexcept;
+        void add(const ElemType & elem) noexcept;
         ElemType operator[](std::size_t i) const noexcept;
-        std::size_t Get_Head() const noexcept;
-        std::size_t Get_Current_Capacity() const noexcept;
-        std::size_t Get_BufferSize() const noexcept;
+        std::size_t get_head() const noexcept;
+        std::size_t get_current_capacity() const noexcept;
+        std::size_t get_buffer_size() const noexcept;
 
     private:
         std::size_t m_tail = 0;
@@ -48,13 +48,13 @@ namespace graphquery::database::utils
     }
 
     template<typename ElemType, size_t BufferSize>
-    void CRingBuffer<ElemType, BufferSize>::Clear() noexcept
+    void CRingBuffer<ElemType, BufferSize>::clear() noexcept
     {
         m_curr_capacity = 0;
     }
 
     template<typename ElemType, size_t BufferSize>
-    void CRingBuffer<ElemType, BufferSize>::Add(const ElemType & elem) noexcept
+    void CRingBuffer<ElemType, BufferSize>::add(const ElemType & elem) noexcept
     {
         m_data->operator[](m_tail) = elem;
         m_tail = (m_tail + 1) % BufferSize;
@@ -71,21 +71,21 @@ namespace graphquery::database::utils
 
     template<typename ElemType, size_t BufferSize>
     std::size_t
-    CRingBuffer<ElemType, BufferSize>::Get_Current_Capacity() const noexcept
+    CRingBuffer<ElemType, BufferSize>::get_current_capacity() const noexcept
     {
         return this->m_curr_capacity;
     }
 
     template<typename ElemType, size_t BufferSize>
     std::size_t
-    CRingBuffer<ElemType, BufferSize>::Get_Head() const noexcept
+    CRingBuffer<ElemType, BufferSize>::get_head() const noexcept
     {
         return ((this->m_tail - 1) - this->m_curr_capacity) % BufferSize;
     }
 
     template<typename ElemType, size_t BufferSize>
     std::size_t
-    CRingBuffer<ElemType, BufferSize>::Get_BufferSize() const noexcept
+    CRingBuffer<ElemType, BufferSize>::get_buffer_size() const noexcept
     {
         return BufferSize;
     }

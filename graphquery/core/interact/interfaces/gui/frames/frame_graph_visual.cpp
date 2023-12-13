@@ -5,33 +5,33 @@
 graphquery::interact::CFrameGraphVisual::~CFrameGraphVisual() = default;
 
 void
-graphquery::interact::CFrameGraphVisual::Render_Frame() noexcept
+graphquery::interact::CFrameGraphVisual::render_frame() noexcept
 {
     if(ImGui::Begin("Graph Visual"))
     {
-        Render_Grid();
+        render_grid();
     }
     ImGui::End();
 }
 
 void
-graphquery::interact::CFrameGraphVisual::Render_Grid() noexcept
+graphquery::interact::CFrameGraphVisual::render_grid() noexcept
 {
     ImNodes::BeginNodeEditor();
-    Render_Nodes();
-    Render_Edges();
+    render_nodes();
+    render_edges();
     ImNodes::MiniMap(0.15, ImNodesMiniMapLocation_BottomRight);
     ImNodes::EndNodeEditor();
 }
 
 void
-graphquery::interact::CFrameGraphVisual::Render_Nodes() noexcept
+graphquery::interact::CFrameGraphVisual::render_nodes() noexcept
 {
 
 }
 
 void
-graphquery::interact::CFrameGraphVisual::Render_Edges() noexcept
+graphquery::interact::CFrameGraphVisual::render_edges() noexcept
 {
 
 }

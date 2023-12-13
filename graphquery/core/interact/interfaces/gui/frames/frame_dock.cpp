@@ -14,7 +14,7 @@ graphquery::interact::CFrameDock::CFrameDock(bool & is_open) :  m_viewp(ImGui::G
 
 graphquery::interact::CFrameDock::~CFrameDock() = default;
 
-void graphquery::interact::CFrameDock::Render_Frame() noexcept
+void graphquery::interact::CFrameDock::render_frame() noexcept
 {
     m_viewp = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(m_viewp->Pos);

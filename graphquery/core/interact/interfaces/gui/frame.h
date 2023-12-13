@@ -11,7 +11,7 @@ namespace graphquery::interact
         explicit IFrame() = default;
         virtual ~IFrame() = default;
 
-        [[maybe_unused]] virtual void Render_Frame() noexcept = 0;
+        [[maybe_unused]] virtual void render_frame() noexcept = 0;
 
     protected:
        ImGuiWindowFlags m_flags{};

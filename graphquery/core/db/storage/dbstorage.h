@@ -45,30 +45,30 @@ namespace graphquery::database::storage
 
         CDBStorage();
         ~CDBStorage();
-        void Close() noexcept;
-        void Load(std::string file_path);
-        void SetUp(std::string file_path);
-        void Init(std::string_view file_path);
-        void CreateGraph(const std::string & name, const std::string & type) noexcept;
-        void OpenGraph(std::string name, std::string type) noexcept;
+        void close() noexcept;
+        void load(std::string file_path);
+        void setUp(std::string file_path);
+        void init(std::string_view file_path);
+        void create_graph(const std::string & name, const std::string & type) noexcept;
+        void open_graph(std::string name, std::string type) noexcept;
 
-        void CloseGraph() noexcept;
-        [[nodiscard]] const std::vector<SGraph_Entry_t> & GetGraphTable() const noexcept;
-        [[nodiscard]] const bool & GetIsDBLoaded() const noexcept;
-        [[nodiscard]] const std::string GetDBInfo() const noexcept;
+        void close_graph() noexcept;
+        [[nodiscard]] const std::vector<SGraph_Entry_t> & get_graph_table() const noexcept;
+        [[nodiscard]] const bool & get_is_db_loaded() const noexcept;
+        [[nodiscard]] const std::string get_db_info() const noexcept;
 
     private:
-        void StoreDBGraphTable() noexcept;
-        void LoadDBGraphTable() noexcept;
-        void DefineDBGraphTable() noexcept;
-        void StoreDBSuperblock() noexcept;
-        void LoadDBSuperblock() noexcept;
-        void DefineDBSuperblock() noexcept;
+        void store_db_graph_table() noexcept;
+        void load_db_graph_table() noexcept;
+        void define_db_graph_table() noexcept;
+        void store_db_superblock() noexcept;
+        void load_db_superblock() noexcept;
+        void define_db_superblock() noexcept;
 
-        SGraph_Entry_t DefineGraph(std::string name, std::string type) noexcept;
-        [[nodiscard]] SGraph_Entry_t DefineGraphEntry(const std::string & name, const std::string & type) noexcept;
-        [[nodiscard]] bool DefineGraphModel(const std::string & name, const std::string & type) noexcept;
-        void CreateGraphEntry(const std::string & name, const std::string & type) noexcept;
+        SGraph_Entry_t define_graph(std::string name, std::string type) noexcept;
+        [[nodiscard]] SGraph_Entry_t define_graph_entry(const std::string & name, const std::string & type) noexcept;
+        [[nodiscard]] bool define_graph_model(const std::string & name, const std::string & type) noexcept;
+        void create_graph_entry(const std::string & name, const std::string & type) noexcept;
 
         CDiskDriver m_db_disk;                                      //~ Instance of the DiskDriver for the DB master file.
         SDB_Superblock_t m_db_superblock = {};                      //~ Instance of the current SDBMaster structure.

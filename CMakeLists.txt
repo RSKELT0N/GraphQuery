@@ -16,6 +16,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   message("-- C++ standard is set to -std=c++${CMAKE_CXX_STANDARD}")
 
   set(EXECUTABLE_NAME graph-query)			              # Define executable name for project
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # add submodules
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/googletest)
