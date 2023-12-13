@@ -53,7 +53,7 @@ graphquery::interact::CFrameGraphDB::render_graph_table() noexcept
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("Name: %s", graph.graph_name);
             ImGui::TableSetColumnIndex(1);
-            ImGui::Text("Type: %s", graph.graph_type);
+            ImGui::Text("Memory-model: %s", graph.graph_type);
         });
     }
     ImGui::EndTable();

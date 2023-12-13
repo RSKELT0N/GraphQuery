@@ -42,7 +42,7 @@ namespace graphquery::interact
         void render_open_graph_button() noexcept;
 
         const bool & m_is_db_loaded;
-        [[maybe_unused]] const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & m_graph_table;
+        const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & m_graph_table;
 
         ImGui::FileBrowser m_db_master_file_explorer;
         ImGui::FileBrowser m_db_folder_location_explorer;

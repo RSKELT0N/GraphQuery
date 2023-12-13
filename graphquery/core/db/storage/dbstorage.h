@@ -10,7 +10,7 @@
 
 #include "db/storage/diskdriver/diskdriver.h"
 #include "db/storage/config.h"
-#include "graphmodel.h"
+#include "memory_model.h"
 
 #include "dylib.hpp"
 #include <filesystem>
@@ -73,8 +73,8 @@ namespace graphquery::database::storage
         CDiskDriver m_db_disk;                                      //~ Instance of the DiskDriver for the DB master file.
         SDB_Superblock_t m_db_superblock = {};                      //~ Instance of the current SDBMaster structure.
         std::vector<SGraph_Entry_t> m_db_graph_table = {};          //~ Array of the existing graphs
-        std::unique_ptr<IGraphModel> m_loaded_graph;                //~ Instance of the currently linked graph model.
-        std::unique_ptr<dylib> m_data_model_lib;                    //~ Library of the currently loaded graph model.
+        std::unique_ptr<IMemoryModel> m_loaded_graph;                //~ Instance of the currently linked graph model.
+        std::unique_ptr<dylib> m_graph_model_lib;                   //~ Library of the currently loaded graph model.
 
         bool m_existing_db_loaded = false;                          //~ Bool to check if a current database is loaded.
         static constexpr uint8_t GRAPH_ENTRIES_AMT = 0;             //~ Max amount of graph entries

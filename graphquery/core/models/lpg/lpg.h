@@ -6,13 +6,15 @@
 #define LIB_EXPORT
 #endif
 
+#include <db/storage/memory_model.h>
+
 #include "db/storage/diskdriver/diskdriver.h"
-#include "db/storage/graphmodel.h"
+#include "db/storage/graph_model.h"
 #include "db/storage/config.h"
 
 namespace graphquery::database::storage
 {
-    class CGraphModelPropertyLabel final : public IGraphModel
+    class CMemoryModelLPG final : public IMemoryModel, CLPGModel
     {
     private:
         struct SGraphHead_t
@@ -26,12 +28,12 @@ namespace graphquery::database::storage
         } __attribute__((packed));
 
     public:
-        CGraphModelPropertyLabel();
-        ~CGraphModelPropertyLabel() override;
+        CMemoryModelLPG();
+        ~CMemoryModelLPG() override;
 
         void load_graph(std::string_view graph) noexcept override;
         void create_graph(std::string_view graph) noexcept override;
-        void Close() noexcept override;
+        void close() noexcept override;
 
     private:
         void CheckIfMainFileExists() noexcept;

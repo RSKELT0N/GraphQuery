@@ -1,1 +1,1 @@
-add_subdirectory(dlg)
+add_subdirectory(lpg)

@@ -12,19 +12,20 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   set(PROJECT graphquery)
 
-  set(CMAKE_CXX_STANDARD 20)                          # Define the C++ standard
+  set(CMAKE_CXX_STANDARD 20)
   message("-- C++ standard is set to -std=c++${CMAKE_CXX_STANDARD}")
 
-  set(EXECUTABLE_NAME graph-query)			              # Define executable name for project
+  set(EXECUTABLE_NAME graph-query)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # add submodules
+#  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/libcypher-parser)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/googletest)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/fmt)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/dylib)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glfw)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glew)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/dylib)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external)          # imgui
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/fmt)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external) # imgui/imnodes/imfile_browser
 
 # source
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core/db/storage/diskdriver)

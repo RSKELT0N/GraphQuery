@@ -50,7 +50,7 @@ graphquery::database::storage::CDiskDriver::close_fd() noexcept
 void
 graphquery::database::storage::CDiskDriver::resize(const int64_t file_size) noexcept
 {
-    assert(Unmap() == SRet_t::VALID);
+    assert(unmap() == SRet_t::VALID);
 
     truncate(file_size);
     map();
@@ -189,7 +189,7 @@ graphquery::database::storage::CDiskDriver::close()
 {
     if(this->m_initialised)
     {
-        assert(Unmap() == SRet_t::VALID);
+        assert(unmap() == SRet_t::VALID);
         close_fd();
         this->m_initialised = false;
     } else m_log_system->warning("File has not been initialised");

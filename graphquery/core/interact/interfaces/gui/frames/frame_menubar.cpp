@@ -133,8 +133,8 @@ graphquery::interact::CFrameMenuBar::render_create_graph_name() noexcept
 void
 graphquery::interact::CFrameMenuBar::render_create_graph_type() noexcept
 {
-    ImGui::Text("Model Type (shared library): ");
-    ImGui::InputText("##_modelType", &this->m_created_graph_type, ImGuiInputTextFlags_CharsNoBlank);
+    ImGui::Text("Model Type (shared library in lib/): ");
+    ImGui::InputText("##_memorymodel", &this->m_created_graph_type, ImGuiInputTextFlags_CharsNoBlank);
 }
 
 void
@@ -145,7 +145,7 @@ graphquery::interact::CFrameMenuBar::render_create_graph_button() noexcept
         if((m_created_graph_name.empty() || m_created_graph_name.length() > database::storage::GRAPH_NAME_LENGTH)
             || (m_created_graph_type.empty() || m_created_graph_type.length() > database::storage::GRAPH_MODEL_TYPE_LENGTH))
         {
-            database::_log_system->warning(fmt::format("Either the name or type cannot be empty or larger than configured size (Name: {}, Type: {}) to create a graph",
+            database::_log_system->warning(fmt::format("Either the name or type cannot be empty or larger than configured size (Name: {}, Memory Model: {}) to create a graph",
                                                          database::storage::GRAPH_NAME_LENGTH,
                                                          database::storage::GRAPH_MODEL_TYPE_LENGTH));
             return;

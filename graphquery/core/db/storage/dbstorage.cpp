@@ -74,7 +74,7 @@ graphquery::database::storage::CDBStorage::define_db_superblock() noexcept
 void
 graphquery::database::storage::CDBStorage::store_db_superblock() noexcept
 {
-    assert(m_db_disk.CheckIfInitialised());
+    assert(m_db_disk.check_if_initialised());
 
     m_db_disk.seek(0);
     m_db_disk.write(&this->m_db_superblock, sizeof(SDB_Superblock_t), 1);
@@ -89,7 +89,7 @@ graphquery::database::storage::CDBStorage::define_db_graph_table() noexcept
 void
 graphquery::database::storage::CDBStorage::store_db_graph_table() noexcept
 {
-    assert(m_db_disk.CheckIfInitialised());
+    assert(m_db_disk.check_if_initialised());
 
     const auto graph_entry_amt = m_db_superblock.db_info.graph_table_size / m_db_superblock.db_info.graph_entry_size;
 
@@ -112,7 +112,7 @@ graphquery::database::storage::CDBStorage::load(std::string file_path)
 void
 graphquery::database::storage::CDBStorage::load_db_superblock() noexcept
 {
-    assert(m_db_disk.CheckIfInitialised() == true);
+    assert(m_db_disk.check_if_initialised() == true);
 
     m_db_disk.seek(DB_SUPERBLOCK_START_ADDR);
     m_db_disk.read(&m_db_superblock, sizeof(SDB_Superblock_t), 1);
@@ -121,7 +121,7 @@ graphquery::database::storage::CDBStorage::load_db_superblock() noexcept
 void
 graphquery::database::storage::CDBStorage::load_db_graph_table() noexcept
 {
-    assert(m_db_disk.CheckIfInitialised() == true);
+    assert(m_db_disk.check_if_initialised() == true);
 
     const auto graph_entry_amt = m_db_superblock.db_info.graph_table_size / m_db_superblock.db_info.graph_entry_size;
     m_db_graph_table.resize(graph_entry_amt);
@@ -159,13 +159,13 @@ graphquery::database::storage::CDBStorage::define_graph_model(const std::string 
 {
     try
     {
-        m_data_model_lib = std::make_unique<dylib>(dylib(fmt::format("{}/{}", PROJECT_ROOT, "lib/models"), type));
-        m_data_model_lib->get_function<void(std::unique_ptr<IGraphModel> &)>("create_graph_model")(m_loaded_graph);
+        m_graph_model_lib = std::make_unique<dylib>(dylib(fmt::format("{}/{}", PROJECT_ROOT, "lib/models"), type));
+        m_graph_model_lib->get_function<void(std::unique_ptr<IMemoryModel> &)>("create_graph_model")(m_loaded_graph);
         m_loaded_graph->init(name);
     }
     catch(std::runtime_error & e)
     {
-        _log_system->error(fmt::format("Issue linking library and creating graph model of type ({}) Error: {}", type, e.what()));
+        _log_system->error(fmt::format("Issue linking library and creating memory model of type ({}) Error: {}", type, e.what()));
         return false;
     }
 
@@ -175,9 +175,9 @@ graphquery::database::storage::CDBStorage::define_graph_model(const std::string 
 void
 graphquery::database::storage::CDBStorage::close_graph() noexcept
 {
-    m_loaded_graph->Close();
+    m_loaded_graph->close();
     m_loaded_graph.reset();
-    m_data_model_lib.reset();
+    m_graph_model_lib.reset();
     _log_system->info(fmt::format("Graph has been unloaded from memory and changes have been flushed"));
 }
 
@@ -192,7 +192,7 @@ graphquery::database::storage::CDBStorage::create_graph(const std::string & name
         if(define_graph_model(name, type))
         {
             create_graph_entry(name, type);
-            _log_system->info(fmt::format("Graph [{}] of model type [{}] has been added and opened", name, type));
+            _log_system->info(fmt::format("Graph [{}] of memory model type [{}] has been created and opened", name, type));
         }
 
     } else _log_system->warning("Database has not been loaded for a graph to added");
@@ -219,7 +219,7 @@ graphquery::database::storage::CDBStorage::open_graph(std::string name, std::str
             close_graph();
 
         if(define_graph_model(name, type))
-            _log_system->info(fmt::format("Opening Graph [{}] of model type [{}] as the current context", name, type));
+            _log_system->info(fmt::format("Opening Graph [{}] of memory model type [{}] as the current context", name, type));
     } else _log_system->warning("Database has not been loaded for a graph to opened");
 }
 
