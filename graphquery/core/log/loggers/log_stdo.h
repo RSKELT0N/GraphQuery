@@ -1,7 +1,6 @@
 #pragma once
 
 #include "log/logsystem/logsystem.h"
-#include "fmt/format.h"
 #include "fmt/color.h"
 
 namespace graphquery::logger

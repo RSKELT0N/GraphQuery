@@ -1,6 +1,6 @@
 # GraphQuery #
 *A graph database to represent edges between nodes
-that hold properties and information renered through a GUI application..*
+that hold properties and information rendered through a GUI application..*
 
 ## Build and compile project
 
