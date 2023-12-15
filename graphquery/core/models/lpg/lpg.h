@@ -1,3 +1,13 @@
+/************************************************************
+* \author Ryan Skelton
+* \date 18/09/2023
+* \file lpg.h
+* \brief Dervied instance of a memory model, supporting
+*        the labelled property graph functionality.
+*
+*        (under development)
+************************************************************/
+
 #pragma once
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -29,18 +39,36 @@ namespace graphquery::database::storage
 
     public:
         CMemoryModelLPG();
-        ~CMemoryModelLPG() override;
+        ~CMemoryModelLPG() override = default;
 
         void load_graph(std::string_view graph) noexcept override;
         void create_graph(std::string_view graph) noexcept override;
         void close() noexcept override;
+
+        void add_node(const SProperty & properties) override;
+        void add_edge(int64_t src, int64_t dst, const SProperty & properties) override;
+        void delete_node(int64_t node_id) override;
+        void delete_edge(int64_t src, int64_t dst) override;
+        void update_node(int64_t node_id, const SProperty & properties) override;
+        void update_edge(int64_t edge_id, const SProperty & properties) override;
+
+        SNode get_node(int64_t node_id) override;
+        SNode get_edge(int64_t edge_id) override;
+        std::vector<SNode> get_nodes_by_label(int64_t label_id) override;
+        std::vector<SNode> get_edges_by_label(int64_t label_id) override;
 
     private:
         void CheckIfMainFileExists() noexcept;
         void StoreGraphHead() noexcept;
         void LoadGraphHead() noexcept;
 
-        CDiskDriver m_graph_head;
         SGraphHead_t m_graph_header = {};
+        CDiskDriver m_master_file;
+        CDiskDriver m_connections;
+
+        static constexpr uint16_t MASTER_FILE_SIZE = 1<<10;
+        static constexpr uint16_t CONNECTIONS_FILE_SIZE = 1<<10;
+        static constexpr const char * MASTER_FILE_NAME = "master";
+        static constexpr const char * CONNECTIONS_FILE_NAME = "connections";
     };
 }

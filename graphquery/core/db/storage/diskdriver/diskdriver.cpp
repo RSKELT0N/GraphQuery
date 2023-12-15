@@ -6,12 +6,14 @@ graphquery::database::storage::CDiskDriver::CDiskDriver(int file_mode, int map_m
     this->m_file_mode = file_mode;
     this->m_map_mode_prot = map_mode_prot;
     this->m_map_mode_flags = map_mode_flags;
+    this->m_current_bytes_written = 0;
 }
 
 graphquery::database::storage::CDiskDriver::~CDiskDriver()
 {
     if(this->m_initialised)
     {
+        sync();
         close();
         this->m_initialised = false;
     }
@@ -185,6 +187,25 @@ graphquery::database::storage::CDiskDriver::open()
 }
 
 graphquery::database::storage::CDiskDriver::SRet_t
+graphquery::database::storage::CDiskDriver::sync() noexcept
+{
+    if(this->m_initialised)
+    {
+        if(msync(m_memory_mapped_file, m_fd_info.st_size, MS_SYNC) == -1)
+        {
+            m_log_system->warning("Issue syncing the buffer");
+            return SRet_t::ERROR;
+        }
+
+        m_current_bytes_written ^= m_current_bytes_written;
+        return SRet_t::VALID;
+    }
+
+    m_log_system->warning("File has not been initialised");
+    return SRet_t::ERROR;
+}
+
+graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::close()
 {
     if(this->m_initialised)
@@ -192,9 +213,11 @@ graphquery::database::storage::CDiskDriver::close()
         assert(unmap() == SRet_t::VALID);
         close_fd();
         this->m_initialised = false;
-    } else m_log_system->warning("File has not been initialised");
+        return SRet_t::VALID;
+    }
 
-    return SRet_t::VALID;
+    m_log_system->warning("File has not been initialised");
+    return SRet_t::ERROR;
 }
 
 graphquery::database::storage::CDiskDriver::SRet_t
@@ -212,25 +235,34 @@ graphquery::database::storage::CDiskDriver::write(const void *ptr, const int64_t
 {
     if(this->m_initialised)
     {
+        if(m_current_bytes_written >= MAX_WRITE_SIZE)
+            sync();
+
         if(m_fd_info.st_size < (size * amt + m_seek_offset))
         {
             static constexpr uint8_t scale = 10;
             resize(m_fd_info.st_size + (size * amt * scale));
         }
         memcpy(&this->m_memory_mapped_file[this->m_seek_offset], ptr, size * amt);
+        m_current_bytes_written += size * amt;
     } else m_log_system->warning("File has not been initialised");
 
     return SRet_t::VALID;
 }
 
 char
-graphquery::database::storage::CDiskDriver::operator[](const int64_t idx) const
+graphquery::database::storage::CDiskDriver::operator[](const int64_t idx)
 {
     char ret = {};
     if(this->m_initialised)
     {
         assert(idx >= 0L && idx <= this->m_fd_info.st_size);
+
+        if(m_current_bytes_written >= MAX_WRITE_SIZE)
+            sync();
+
         ret = this->m_memory_mapped_file[idx];
+        m_current_bytes_written += 1;
     } else m_log_system->warning("File has not been initialised");
 
     return ret;
