@@ -1,0 +1,98 @@
+name: Build & Compile on Multiple platforms
+
+on:
+  push:
+    branches: [ "dev" ]
+
+jobs:
+  build-compile-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        preset: [unix_release_makefile, unix_debug_makefile]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        id: strings
+        shell: bash
+        run: |
+          sudo apt update
+          sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev    
+          sudo apt-get install libegl1-mesa-dev
+          echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: cmake --preset ${{ matrix.preset }} -B ${{ steps.strings.outputs.build-output-dir }}
+
+      - name: Compile
+        run: cmake --build ${{ steps.strings.outputs.build-output-dir }}
+
+  build-compile-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+        preset: [unix_release_makefile, unix_debug_makefile]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install Dependencies
+        id: strings
+        shell: bash
+        run: |
+          echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: cmake --preset ${{ matrix.preset }} -B ${{ steps.strings.outputs.build-output-dir }}
+
+      - name: Compile
+        run: cmake --build ${{ steps.strings.outputs.build-output-dir }}
+
+
+
+#  build-compile-windows:
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        os: [windows-latest]
+#        compiler: [clang]
+#        preset: [unix_release_makefile, unix_debug_makefile]
+#
+#    runs-on: ${{ matrix.os }}
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          submodules: recursive
+#
+#      - name: choco setup
+#        uses: crazy-max/ghaction-chocolatey@v3
+#
+#      - name: Add clang path to $PATH env
+#        shell: bash
+#        run: echo "PATH=$PATH:C:\msys64\mingw64\bin" >> $GITHUB_ENV
+#
+#      - name: Install Dependencies
+#        id: strings
+#        shell: pwsh
+#        run: |
+#          choco install cmake --pre
+#          choco install llvm
+#
+#      - name: Build
+#        run: cmake -G "Visual Studio 17 2022" -A x64 -T clangGL --preset ${{ matrix.preset }} -B ${{ steps.strings.outputs.build-output-dir }}
+#
+#      - name: Compile
+#        run: cmake --build ${{ steps.strings.outputs.build-output-dir }} -T clangCL

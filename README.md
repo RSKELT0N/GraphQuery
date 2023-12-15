@@ -18,3 +18,16 @@ cmake --build [build_directory]
 ```
 rm -rf [build_directory]
 ```
+
+## TODO
+* Comment codebase
+* Structure core subdirectory
+* Complete gui output class.
+* Complete menu bar (reading file of certain format).
+* Start common API for storage methods.
+* Start common API for graph analytics for storage methods (edges, all vertices, connections).
+* Move log system to shared lib.
+* Build CYPHER language ontop of system.
+* Build algorithms ontop of systems, interacting with CYPHER.
+* Display nodes in visualiser.
+* Create analytics frame.

@@ -1,6 +1,7 @@
 build/
-imgui.ini
 .idea/
 cmake-build-debug/
 .vscode/
+lib/
 .DS_Store
+*.gdb

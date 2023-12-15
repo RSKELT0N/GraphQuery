@@ -1,11 +1,12 @@
-#include <stdlib.h>
-#include <gui.hpp>
+#include "db/system.h"
 
-int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[])
+int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[])
 {
-    if(graphquery::gui::Initialise("Graph Query") != 0)
-        return 1;
+    if (graphquery::database::initialise(argc, argv) == graphquery::database::EStatus::invalid)
+    {
+        return EXIT_FAILURE;
+    }
 
-    graphquery::gui::Render();
+    graphquery::database::_interface->render();
     return EXIT_SUCCESS;
 }

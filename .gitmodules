@@ -13,3 +13,12 @@
 [submodule "graphquery/external/glfw"]
 	path = graphquery/external/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "graphquery/external/dylib"]
+	path = graphquery/external/dylib
+	url = https://github.com/martin-olivier/dylib.git
+[submodule "graphquery/external/imgui-filebrowser"]
+	path = graphquery/external/imgui-filebrowser
+	url = https://github.com/AirGuanZ/imgui-filebrowser.git
+[submodule "graphquery/external/libcypher-parser"]
+	path = graphquery/external/libcypher-parser
+	url = https://github.com/cleishm/libcypher-parser.git
