@@ -5,15 +5,15 @@
 
 namespace graphquery::interact
 {
-	class IFrame
-	{
-	  public:
-		explicit IFrame() = default;
-		virtual ~IFrame() = default;
+    class IFrame
+    {
+      public:
+        explicit IFrame() = default;
+        virtual ~IFrame() = default;
 
-		[[maybe_unused]] virtual void render_frame() noexcept = 0;
+        [[maybe_unused]] virtual void render_frame() noexcept = 0;
 
-	  protected:
-		ImGuiWindowFlags m_flags {};
-	};
+      protected:
+        ImGuiWindowFlags m_flags {};
+    };
 } // namespace graphquery::interact

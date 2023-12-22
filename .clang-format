@@ -42,7 +42,7 @@ KeepEmptyLinesAtTheStartOfBlocks: 'false'
 Language: Cpp
 NamespaceIndentation: All
 PointerAlignment: Middle
-SortIncludes: 'true'
+SortIncludes: 'false'
 SortUsingDeclarations: 'true'
 SpaceAfterCStyleCast: 'true'
 SpaceAfterLogicalNot: 'false'
@@ -51,6 +51,5 @@ SpaceBeforeCpp11BracedList: 'true'
 SpaceBeforeCtorInitializerColon: 'false'
 Standard: Auto
 TabWidth: '4'
-UseTab: Always
 
 ...

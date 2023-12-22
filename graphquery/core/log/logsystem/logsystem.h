@@ -26,98 +26,98 @@
 
 namespace graphquery::logger
 {
-	/****************************************************************
-	** \brief Log types available towards the logging system.
-	**        Marked with uint8_t to represent output level, which
-	**        output will be determined at run-time.
-	***************************************************************/
-	enum class ELogType : uint8_t
-	{
-		// ~ more information (debugging this program)
-		debug = 0,
-		// ~ standard logging level
-		info = 1,
-		// ~ logging for occurring issue that can be resolved.
-		warning = 2,
-		// ~ error has occurred within the system.
-		error = 3
-	};
+    /****************************************************************
+    ** \brief Log types available towards the logging system.
+    **        Marked with uint8_t to represent output level, which
+    **        output will be determined at run-time.
+    ***************************************************************/
+    enum class ELogType : uint8_t
+    {
+        // ~ more information (debugging this program)
+        debug = 0,
+        // ~ standard logging level
+        info = 1,
+        // ~ logging for occurring issue that can be resolved.
+        warning = 2,
+        // ~ error has occurred within the system.
+        error = 3
+    };
 
-	/****************************************************************
-	** \class CLogSystem
-	** \brief Final logging system which handles a vector of derived
-	**        ILog pointers to render with different functionality.
-	***************************************************************/
-	class CLogSystem final
-	{
-	  private:
-		/****************************************************************
-		** \brief Creates an instance of the class (for derived classes).
-		***************************************************************/
-		explicit CLogSystem();
+    /****************************************************************
+    ** \class CLogSystem
+    ** \brief Final logging system which handles a vector of derived
+    **        ILog pointers to render with different functionality.
+    ***************************************************************/
+    class CLogSystem final
+    {
+      private:
+        /****************************************************************
+        ** \brief Creates an instance of the class (for derived classes).
+        ***************************************************************/
+        explicit CLogSystem();
 
-	  public:
-		static std::shared_ptr<CLogSystem> GetInstance() noexcept;
-		~CLogSystem() = default;
+      public:
+        static std::shared_ptr<CLogSystem> GetInstance() noexcept;
+        ~CLogSystem() = default;
 
-		/****************************************************************
-		** \brief Deleted special functions
-		***************************************************************/
-		CLogSystem(CLogSystem &&)				   = delete;
-		CLogSystem & operator=(CLogSystem &&)	   = delete;
-		CLogSystem & operator=(const CLogSystem &) = delete;
-		CLogSystem(const CLogSystem &)			   = delete;
+        /****************************************************************
+        ** \brief Deleted special functions
+        ***************************************************************/
+        CLogSystem(CLogSystem &&)                  = delete;
+        CLogSystem & operator=(CLogSystem &&)      = delete;
+        CLogSystem & operator=(const CLogSystem &) = delete;
+        CLogSystem(const CLogSystem &)             = delete;
 
-		/****************************************************************
-		** \brief Virtual debug function for the logging system to call
-		**        to render output towards the derived class.
-		**
-		** \param const std::string & - Output to be rendered.
-		***************************************************************/
-		void debug(std::string_view) noexcept;
+        /****************************************************************
+        ** \brief Virtual debug function for the logging system to call
+        **        to render output towards the derived class.
+        **
+        ** \param const std::string & - Output to be rendered.
+        ***************************************************************/
+        void debug(std::string_view) noexcept;
 
-		/****************************************************************
-		** \brief Virtual info function for the logging system to call
-		**        to render output towards the derived class.
-		**
-		** \param const std::string & - Output to be rendered.
-		***************************************************************/
-		void info(std::string_view) noexcept;
+        /****************************************************************
+        ** \brief Virtual info function for the logging system to call
+        **        to render output towards the derived class.
+        **
+        ** \param const std::string & - Output to be rendered.
+        ***************************************************************/
+        void info(std::string_view) noexcept;
 
-		/****************************************************************
-		** \brief Virtual warning function for the logging system to call
-		**        to render output towards the derived class.
-		**
-		** \param const std::string & - Output to be rendered.
-		***************************************************************/
-		void warning(std::string_view) noexcept;
+        /****************************************************************
+        ** \brief Virtual warning function for the logging system to call
+        **        to render output towards the derived class.
+        **
+        ** \param const std::string & - Output to be rendered.
+        ***************************************************************/
+        void warning(std::string_view) noexcept;
 
-		/****************************************************************
-		** \brief Virtual error function for the logging system to call
-		**        to render output towards the derived class.
-		**
-		** \param const std::string & - Output to be rendered.
-		***************************************************************/
-		void error(std::string_view) noexcept;
+        /****************************************************************
+        ** \brief Virtual error function for the logging system to call
+        **        to render output towards the derived class.
+        **
+        ** \param const std::string & - Output to be rendered.
+        ***************************************************************/
+        void error(std::string_view) noexcept;
 
-		/****************************************************************
-		** \brief To add an instance of ILog towards the system logger
-		**
-		** \param std::unique_ptr<ILog> - Instance of the ILog class
-		***************************************************************/
-		void add_logger(std::shared_ptr<ILog>) noexcept;
+        /****************************************************************
+        ** \brief To add an instance of ILog towards the system logger
+        **
+        ** \param std::unique_ptr<ILog> - Instance of the ILog class
+        ***************************************************************/
+        void add_logger(std::shared_ptr<ILog>) noexcept;
 
-	  private:
-		static std::shared_ptr<CLogSystem> m_log_system;
-		[[nodiscard]] std::string format_output(ELogType, std::string_view) const noexcept;
+      private:
+        static std::shared_ptr<CLogSystem> m_log_system;
+        [[nodiscard]] std::string format_output(ELogType, std::string_view) const noexcept;
 
-		std::vector<std::string> log_type_prefix = {"DEBUG", // ~ Log type to string conversion
-													"INFO",
-													"WARNING",
-													"ERROR"};
-		ELogType m_level;											   // ~ Log level of the logging system
-		std::mutex m_mtx;											   // ~ mutex instance for logging to different derived classes.
-		std::unique_ptr<std::vector<std::shared_ptr<ILog>>> m_loggers; // ~ array of loggers, which the log
-																	   // system holds and calls (Log).
-	};
+        std::vector<std::string> log_type_prefix = {"DEBUG", // ~ Log type to string conversion
+                                                    "INFO",
+                                                    "WARNING",
+                                                    "ERROR"};
+        ELogType m_level;                                              // ~ Log level of the logging system
+        std::mutex m_mtx;                                              // ~ mutex instance for logging to different derived classes.
+        std::unique_ptr<std::vector<std::shared_ptr<ILog>>> m_loggers; // ~ array of loggers, which the log
+                                                                       // system holds and calls (Log).
+    };
 } // namespace graphquery::logger
