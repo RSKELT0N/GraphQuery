@@ -12,6 +12,14 @@ target_sources(
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/lpg.cpp)
 
+target_compile_options(
+        lpg
+        PUBLIC
+        -Wall
+        -Werror
+        -Wpedantic
+        -g)
+
 target_link_libraries(
         lpg
         PUBLIC

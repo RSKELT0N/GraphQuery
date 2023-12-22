@@ -34,8 +34,7 @@ graphquery::interact::CInteractGUI::render() noexcept
 void
 graphquery::interact::CInteractGUI::initialise_glfw() noexcept
 {
-    glfwSetErrorCallback([](int error, const char * desc)
-                         { fprintf(stderr, "GLFW Error %d: %s\n", error, desc); });
+    glfwSetErrorCallback([](int error, const char * desc) { fprintf(stderr, "GLFW Error %d: %s\n", error, desc); });
 
     if (glfwInit() == GLFW_FALSE)
         return;
@@ -118,8 +117,7 @@ graphquery::interact::CInteractGUI::initialise_frames() noexcept
     m_frames.emplace_back(std::make_unique<CFrameDock>(m_frame_dock_open));
 
     // Menu bar
-    m_frames.emplace_back(std::make_unique<CFrameMenuBar>(database::_db_storage->get_is_db_loaded(),
-                                                          database::_db_storage->get_graph_table()));
+    m_frames.emplace_back(std::make_unique<CFrameMenuBar>(database::_db_storage->get_is_db_loaded(), database::_db_storage->get_graph_table()));
 
     // Log output frame
     auto frame_log = std::make_shared<CFrameLog>();
@@ -127,8 +125,7 @@ graphquery::interact::CInteractGUI::initialise_frames() noexcept
     database::_log_system->add_logger(frame_log);
 
     // Graph DB
-    m_frames.emplace_back(std::make_unique<CFrameGraphDB>(database::_db_storage->get_is_db_loaded(),
-                                                          database::_db_storage->get_graph_table()));
+    m_frames.emplace_back(std::make_unique<CFrameGraphDB>(database::_db_storage->get_is_db_loaded(), database::_db_storage->get_graph_table()));
 
     // Graph visual
     m_frames.emplace_back(std::make_unique<CFrameGraphVisual>());
@@ -137,8 +134,7 @@ graphquery::interact::CInteractGUI::initialise_frames() noexcept
 void
 graphquery::interact::CInteractGUI::render_frames() noexcept
 {
-    std::for_each(m_frames.begin(), m_frames.end(), [](auto & frame)
-                  { frame->render_frame(); });
+    std::for_each(m_frames.begin(), m_frames.end(), [](auto & frame) { frame->render_frame(); });
 }
 
 void

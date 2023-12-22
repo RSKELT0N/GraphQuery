@@ -13,6 +13,8 @@
 #pragma once
 
 #include <cstdint>
+#include <utility>
+#include <vector>
 
 namespace graphquery::database::storage
 {
@@ -24,11 +26,10 @@ namespace graphquery::database::storage
 
         struct SProperty
         {
-            int64_t id;
-            char key[20]             = {};
-            char value[20]           = {};
             SProperty * prev_version = nullptr;
-        } __attribute__((packed));
+            int16_t property_c       = {};
+            std::vector<std::pair<std::string, std::string>> properties;
+        };
 
         struct SEdge
         {
@@ -36,24 +37,25 @@ namespace graphquery::database::storage
             int64_t property_id;
         } __attribute__((packed));
 
-        struct SNode
+        struct SVertex
         {
             int64_t id;
-            int64_t property_id;
+            int16_t label_id;
             std::vector<SEdge> neighbours;
-        } __attribute__((packed));
+        };
 
-      protected:
-        virtual void add_node(const SProperty & properties)                           = 0;
-        virtual void add_edge(int64_t src, int64_t dst, const SProperty & properties) = 0;
-        virtual void delete_node(int64_t node_id)                                     = 0;
-        virtual void delete_edge(int64_t src, int64_t dst)                            = 0;
-        virtual void update_node(int64_t node_id, const SProperty & properties)       = 0;
-        virtual void update_edge(int64_t edge_id, const SProperty & properties)       = 0;
+        virtual void add_vertex(std::string_view label, SProperty & properties) = 0;
+        virtual void add_edge(int64_t src, int64_t dst, SProperty & properties) = 0;
+        virtual void delete_vertex(int64_t vertex_id)                           = 0;
+        virtual void delete_edge(int64_t src, int64_t dst)                      = 0;
+        virtual void update_vertex(int64_t vertex_id, SProperty & properties)   = 0;
+        virtual void update_edge(int64_t edge_id, SProperty & properties)       = 0;
 
-        virtual SNode get_node(int64_t node_id)                         = 0;
-        virtual SNode get_edge(int64_t edge_id)                         = 0;
-        virtual std::vector<SNode> get_nodes_by_label(int64_t label_id) = 0;
-        virtual std::vector<SNode> get_edges_by_label(int64_t label_id) = 0;
+        virtual int64_t get_num_edges()                        = 0;
+        virtual int64_t get_num_vertices()                        = 0;
+        virtual SVertex get_vertex(int64_t vertex_id)                        = 0;
+        virtual SVertex get_edge(int64_t edge_id)                            = 0;
+        virtual std::vector<SVertex> get_vertices_by_label(int64_t label_id) = 0;
+        virtual std::vector<SVertex> get_edges_by_label(int64_t label_id)    = 0;
     };
 } // namespace graphquery::database::storage

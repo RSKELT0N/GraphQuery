@@ -31,8 +31,7 @@ graphquery::logger::CLogSTDO::error(std::string_view out) noexcept
 }
 
 std::string
-graphquery::logger::CLogSTDO::colourise(graphquery::logger::ELogType type,
-                                        std::string_view out) const noexcept
+graphquery::logger::CLogSTDO::colourise(graphquery::logger::ELogType type, std::string_view out) const noexcept
 {
     std::string formatted = {};
     switch (type)

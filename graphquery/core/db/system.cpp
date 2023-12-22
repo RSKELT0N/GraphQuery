@@ -25,8 +25,7 @@ namespace graphquery::database
     //~ Linked symbol of the interface towards the database.
     std::unique_ptr<storage::CDBStorage> _db_storage = std::make_unique<storage::CDBStorage>();
 
-    EStatus initialise([[maybe_unused]] int argc,
-                       [[maybe_unused]] char ** argv) noexcept
+    EStatus initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept
     {
         signal(SIGINT | SIGTERM,
                [](int param) -> void

@@ -4,11 +4,7 @@
 
 #include "db/system.h"
 
-graphquery::interact::CFrameGraphDB::CFrameGraphDB(
-    const bool & is_db_loaded,
-    const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
-    m_is_db_loaded(is_db_loaded),
-    m_graph_table(graph_table)
+graphquery::interact::CFrameGraphDB::CFrameGraphDB(const bool & is_db_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table): m_is_db_loaded(is_db_loaded), m_graph_table(graph_table)
 {
 }
 

@@ -12,13 +12,11 @@
 
 #pragma once
 
-#include <iostream>
 #include <memory>
 #include <string_view>
-#include <unistd.h>
 
-#include "diskdriver/diskdriver.h"
 #include "fmt/format.h"
+#include "diskdriver/diskdriver.h"
 
 namespace graphquery::database::storage
 {
@@ -37,7 +35,7 @@ namespace graphquery::database::storage
             }
             else
             {
-                load_graph(path, graph);
+                load_graph(path / graph, graph);
             }
         }
 
@@ -51,5 +49,5 @@ namespace graphquery::database::storage
 
 extern "C"
 {
-    void create_memory_model(std::unique_ptr<graphquery::database::storage::IMemoryModel> & memory_model);
+    void create_memory_model(std::shared_ptr<graphquery::database::storage::IMemoryModel> & memory_model);
 }

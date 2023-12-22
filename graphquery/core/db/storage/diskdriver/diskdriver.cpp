@@ -11,9 +11,7 @@
 //~ static symbol link
 std::shared_ptr<graphquery::logger::CLogSystem> graphquery::database::storage::CDiskDriver::m_log_system;
 
-graphquery::database::storage::CDiskDriver::CDiskDriver(const int file_mode,
-                                                        int map_mode_prot,
-                                                        int map_mode_flags)
+graphquery::database::storage::CDiskDriver::CDiskDriver(const int file_mode, int map_mode_prot, int map_mode_flags)
 {
     this->m_log_system            = logger::CLogSystem::GetInstance();
     this->m_file_mode             = file_mode;
@@ -59,8 +57,7 @@ graphquery::database::storage::CDiskDriver::close_fd() noexcept
 {
     if (::close(this->m_file_descriptor) == -1)
     {
-        m_log_system->error(
-            fmt::format("Issue closing file descriptor ({}) (Error: {})", m_path.generic_string(), errno));
+        m_log_system->error(fmt::format("Issue closing file descriptor ({}) (Error: {})", m_path.generic_string(), errno));
         return SRet_t::ERROR;
     }
     return SRet_t::VALID;
@@ -80,8 +77,7 @@ graphquery::database::storage::CDiskDriver::truncate(const int64_t file_size) no
 {
     if (this->m_file_descriptor == -1)
     {
-        m_log_system->error(
-            fmt::format("File descriptor ({}) could not be created to create file", m_path.generic_string()));
+        m_log_system->error(fmt::format("File descriptor ({}) could not be created to create file", m_path.generic_string()));
         return SRet_t::ERROR;
     }
 
@@ -104,8 +100,7 @@ graphquery::database::storage::CDiskDriver::truncate(const int64_t file_size) no
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::map() noexcept
 {
-    this->m_memory_mapped_file = static_cast<char *>(
-        mmap(nullptr, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
+    this->m_memory_mapped_file = static_cast<char *>(mmap(nullptr, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
     if (this->m_memory_mapped_file == MAP_FAILED)
     {
         m_log_system->error(fmt::format("Error mapping file to memory"));
@@ -163,9 +158,7 @@ graphquery::database::storage::CDiskDriver::check_if_folder_exists(std::string_v
 }
 
 graphquery::database::storage::CDiskDriver::SRet_t
-graphquery::database::storage::CDiskDriver::create_file(const std::filesystem::path & path,
-                                                        std::string_view file_name,
-                                                        const int64_t file_size)
+graphquery::database::storage::CDiskDriver::create_file(const std::filesystem::path & path, std::string_view file_name, const int64_t file_size)
 {
     std::string file_path = fmt::format("{}/{}", path.string(), file_name);
     if (check_if_file_exists(file_name))
@@ -178,8 +171,7 @@ graphquery::database::storage::CDiskDriver::create_file(const std::filesystem::p
 
     if (fd == -1)
     {
-        m_log_system->error(fmt::format("File descriptor ({}) could not be created to create file",
-                                        file_path));
+        m_log_system->error(fmt::format("File descriptor ({}) could not be created to create file", file_path));
         return SRet_t::ERROR;
     }
 
