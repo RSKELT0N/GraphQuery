@@ -1,8 +1,9 @@
 #include "frame_graph_db.h"
 
-#include <algorithm>
-
 #include "db/system.h"
+#include "models/lpg/lpg.h"
+
+#include <algorithm>
 
 graphquery::interact::CFrameGraphDB::CFrameGraphDB(const bool & is_db_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table): m_is_db_loaded(is_db_loaded), m_graph_table(graph_table)
 {
@@ -39,6 +40,11 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     ImGui::Text("Database Info");
     ImGui::Separator();
     ImGui::Text("%s", database::_db_storage->get_db_info().c_str());
+
+    if (ImGui::Button("Add Vertex"))
+    {
+        database::_db_storage->test();
+    }
 }
 
 void

@@ -57,7 +57,7 @@ namespace graphquery::logger
         explicit CLogSystem();
 
       public:
-        static std::shared_ptr<CLogSystem> GetInstance() noexcept;
+        static std::shared_ptr<CLogSystem> get_instance() noexcept;
         ~CLogSystem() = default;
 
         /****************************************************************

@@ -40,7 +40,7 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t close();
         [[maybe_unused]] SRet_t seek(int64_t offset);
         [[maybe_unused]] SRet_t open(std::string_view file_path);
-        [[maybe_unused]] SRet_t read(void * ptr, int64_t size, uint32_t amt) const;
+        [[maybe_unused]] SRet_t read(void * ptr, int64_t size, uint32_t amt);
         [[maybe_unused]] SRet_t write(const void * ptr, int64_t size, uint32_t amt);
 
         [[maybe_unused]] char operator[](int64_t idx);

@@ -142,6 +142,12 @@ graphquery::database::storage::CDBStorage::load_db_graph_table() noexcept
     m_db_disk.read(&m_db_graph_table[0], m_db_superblock.db_info.graph_entry_size, graph_entry_amt);
 }
 
+void
+graphquery::database::storage::CDBStorage::test() noexcept
+{
+    m_loaded_graph->add_vertex("PERSON", {});
+}
+
 std::string
 graphquery::database::storage::CDBStorage::get_db_info() const noexcept
 {
@@ -168,7 +174,7 @@ graphquery::database::storage::CDBStorage::define_graph_model(const std::string 
     try
     {
         m_graph_model_lib = std::make_unique<dylib>(dylib(fmt::format("{}/{}", PROJECT_ROOT, "lib/models"), type));
-        m_graph_model_lib->get_function<void(std::shared_ptr<IMemoryModel> &)>("create_graph_model")(m_loaded_graph);
+        m_graph_model_lib->get_function<void(std::shared_ptr<ILPGModel> &)>("create_graph_model")(m_loaded_graph);
         m_loaded_graph->init(m_db_disk.get_path().parent_path().string(), name);
     }
     catch (std::runtime_error & e)
@@ -219,10 +225,10 @@ graphquery::database::storage::CDBStorage::get_graph_table() const noexcept
     return m_db_graph_table;
 }
 
-const std::shared_ptr<graphquery::database::storage::IMemoryModel> &
+graphquery::database::storage::ILPGModel *
 graphquery::database::storage::CDBStorage::get_graph() const noexcept
 {
-    return m_loaded_graph;
+    return m_loaded_graph.get();
 }
 
 const bool &

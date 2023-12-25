@@ -15,7 +15,7 @@ graphquery::logger::CLogSystem::CLogSystem()
 }
 
 std::shared_ptr<graphquery::logger::CLogSystem>
-graphquery::logger::CLogSystem::GetInstance() noexcept
+graphquery::logger::CLogSystem::get_instance() noexcept
 {
     if (!m_log_system)
     {

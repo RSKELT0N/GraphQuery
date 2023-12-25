@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string_view>
 
 #include "fmt/format.h"
@@ -34,9 +33,7 @@ namespace graphquery::database::storage
                 create_graph(path / graph, graph);
             }
             else
-            {
                 load_graph(path / graph, graph);
-            }
         }
 
         friend class CDBStorage;
@@ -46,8 +43,3 @@ namespace graphquery::database::storage
         virtual void create_graph(std::filesystem::path path, std::string_view graph) noexcept = 0;
     };
 } // namespace graphquery::database::storage
-
-extern "C"
-{
-    void create_memory_model(std::shared_ptr<graphquery::database::storage::IMemoryModel> & memory_model);
-}

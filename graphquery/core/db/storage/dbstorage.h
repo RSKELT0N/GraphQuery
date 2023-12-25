@@ -8,9 +8,8 @@
 
 #pragma once
 
-#include "db/storage/config.h"
 #include "dylib.hpp"
-#include "memory_model.h"
+#include "db/storage/config.h"
 #include "graph_model.h"
 
 #include <string_view>
@@ -54,9 +53,10 @@ namespace graphquery::database::storage
 
         void close_graph() noexcept;
         [[nodiscard]] const std::vector<SGraph_Entry_t> & get_graph_table() const noexcept;
-        [[nodiscard]] const std::shared_ptr<IMemoryModel> & get_graph() const noexcept;
+        [[nodiscard]] ILPGModel * get_graph() const noexcept;
         [[nodiscard]] const bool & get_is_db_loaded() const noexcept;
         [[nodiscard]] std::string get_db_info() const noexcept;
+        void test() noexcept;
 
       private:
         void store_db_graph_table() noexcept;
@@ -74,7 +74,7 @@ namespace graphquery::database::storage
         CDiskDriver m_db_disk;                             //~ Instance of the DiskDriver for the DB master file.
         SDB_Superblock_t m_db_superblock             = {}; //~ Instance of the current SDBMaster structure.
         std::vector<SGraph_Entry_t> m_db_graph_table = {}; //~ Array of the existing graphs
-        std::shared_ptr<IMemoryModel> m_loaded_graph;         //~ Instance of the currently linked graph model.
+        std::shared_ptr<ILPGModel> m_loaded_graph;         //~ Instance of the currently linked graph model.
         std::unique_ptr<dylib> m_graph_model_lib;          //~ Library of the currently loaded graph model.
 
         bool m_existing_db_loaded                          = false;                                                                     //~ Bool to check if a current database is loaded.

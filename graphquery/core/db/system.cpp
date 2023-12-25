@@ -19,7 +19,7 @@ namespace graphquery::database
     //~ Linked symbol to the existing db bool
     bool _existing_db_loaded = false;
     //~ Linked symbol of the log system.
-    std::shared_ptr<logger::CLogSystem> _log_system = logger::CLogSystem::GetInstance();
+    std::shared_ptr<logger::CLogSystem> _log_system = logger::CLogSystem::get_instance();
     //~ Linked symbol of the interface towards the database.
     std::unique_ptr<interact::IInteract> _interface = std::make_unique<interact::CInteractGUI>();
     //~ Linked symbol of the interface towards the database.
