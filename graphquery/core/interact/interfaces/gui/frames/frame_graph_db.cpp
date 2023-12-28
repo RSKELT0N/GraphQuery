@@ -4,8 +4,11 @@
 #include "models/lpg/lpg.h"
 
 #include <algorithm>
+#include <utility>
 
-graphquery::interact::CFrameGraphDB::CFrameGraphDB(const bool & is_db_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table): m_is_db_loaded(is_db_loaded), m_graph_table(graph_table)
+graphquery::interact::CFrameGraphDB::
+CFrameGraphDB(const bool & is_db_loaded, const bool & is_graph_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
+    m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph_table(graph_table)
 {
 }
 
@@ -29,6 +32,9 @@ graphquery::interact::CFrameGraphDB::render_state() noexcept
         render_db_info();
         ImGui::NewLine();
         render_graph_table();
+
+        if (m_is_graph_loaded)
+            render_loaded_graph();
     }
     else
         ImGui::Text("No current database is loaded.");
@@ -40,10 +46,18 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     ImGui::Text("Database Info");
     ImGui::Separator();
     ImGui::Text("%s", database::_db_storage->get_db_info().c_str());
+    ImGui::NewLine();
 
     if (ImGui::Button("Add Vertex"))
     {
-        database::_db_storage->test();
+        database::_db_storage->get_graph()->add_vertex("PERSON", {});
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Add Edge"))
+    {
+        database::_db_storage->get_graph()->add_edge(0, 1, "KNOWS", {});
     }
 }
 
@@ -67,4 +81,15 @@ graphquery::interact::CFrameGraphDB::render_graph_table() noexcept
                       });
     }
     ImGui::EndTable();
+}
+
+void
+graphquery::interact::CFrameGraphDB::render_loaded_graph() noexcept
+{
+    ImGui::NewLine();
+    ImGui::Text(fmt::format("Graph [{}]", database::_db_storage->get_graph()->get_name()).c_str());
+    ImGui::Separator();
+
+    ImGui::Text(fmt::format("Vertices: {}", database::_db_storage->get_graph()->get_num_vertices()).c_str());
+    ImGui::Text(fmt::format("Edges: {}", database::_db_storage->get_graph()->get_num_edges()).c_str());
 }

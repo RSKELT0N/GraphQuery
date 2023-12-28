@@ -8,11 +8,13 @@
 
 #include "db/system.h"
 
-graphquery::database::storage::CDBStorage::CDBStorage(): m_db_disk(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED)
+graphquery::database::storage::CDBStorage::
+CDBStorage(): m_db_disk(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED)
 {
 }
 
-graphquery::database::storage::CDBStorage::~CDBStorage()
+graphquery::database::storage::CDBStorage::~
+CDBStorage()
 {
     if (m_existing_db_loaded)
         close();
@@ -25,6 +27,9 @@ graphquery::database::storage::CDBStorage::close() noexcept
 
     if (m_existing_db_loaded)
     {
+        if (m_existing_graph_loaded)
+            close_graph();
+
         m_db_graph_table.clear();
         m_db_disk.close();
         _log_system->info("Database file has been closed and memory has been flushed");
@@ -142,12 +147,6 @@ graphquery::database::storage::CDBStorage::load_db_graph_table() noexcept
     m_db_disk.read(&m_db_graph_table[0], m_db_superblock.db_info.graph_entry_size, graph_entry_amt);
 }
 
-void
-graphquery::database::storage::CDBStorage::test() noexcept
-{
-    m_loaded_graph->add_vertex("PERSON", {});
-}
-
 std::string
 graphquery::database::storage::CDBStorage::get_db_info() const noexcept
 {
@@ -176,6 +175,7 @@ graphquery::database::storage::CDBStorage::define_graph_model(const std::string 
         m_graph_model_lib = std::make_unique<dylib>(dylib(fmt::format("{}/{}", PROJECT_ROOT, "lib/models"), type));
         m_graph_model_lib->get_function<void(std::shared_ptr<ILPGModel> &)>("create_graph_model")(m_loaded_graph);
         m_loaded_graph->init(m_db_disk.get_path().parent_path().string(), name);
+        m_existing_graph_loaded = true;
     }
     catch (std::runtime_error & e)
     {
@@ -195,6 +195,7 @@ graphquery::database::storage::CDBStorage::close_graph() noexcept
     m_loaded_graph->close();
     m_loaded_graph.reset();
     m_graph_model_lib.reset();
+    m_existing_graph_loaded = false;
     _log_system->info(fmt::format("Graph has been unloaded from memory and changes have been flushed"));
 }
 
@@ -225,10 +226,10 @@ graphquery::database::storage::CDBStorage::get_graph_table() const noexcept
     return m_db_graph_table;
 }
 
-graphquery::database::storage::ILPGModel *
+std::shared_ptr<graphquery::database::storage::ILPGModel>
 graphquery::database::storage::CDBStorage::get_graph() const noexcept
 {
-    return m_loaded_graph.get();
+    return m_loaded_graph;
 }
 
 const bool &
@@ -237,19 +238,27 @@ graphquery::database::storage::CDBStorage::get_is_db_loaded() const noexcept
     return m_existing_db_loaded;
 }
 
+const bool &
+graphquery::database::storage::CDBStorage::get_is_graph_loaded() const noexcept
+{
+    return m_existing_graph_loaded;
+}
+
 void
 graphquery::database::storage::CDBStorage::open_graph(std::string name, std::string type) noexcept
 {
     if (m_existing_db_loaded)
     {
-        if (m_loaded_graph)
+        if (m_existing_graph_loaded)
             close_graph();
 
         if (define_graph_model(name, type))
+        {
             _log_system->info(fmt::format("Opening Graph [{}] of memory model "
                                           "type [{}] as the current context",
                                           name,
                                           type));
+        }
     }
     else
         _log_system->warning("Database has not been loaded for a graph to opened");

@@ -53,8 +53,9 @@ namespace graphquery::database::storage
 
         void close_graph() noexcept;
         [[nodiscard]] const std::vector<SGraph_Entry_t> & get_graph_table() const noexcept;
-        [[nodiscard]] ILPGModel * get_graph() const noexcept;
+        [[nodiscard]] std::shared_ptr<ILPGModel> get_graph() const noexcept;
         [[nodiscard]] const bool & get_is_db_loaded() const noexcept;
+        [[nodiscard]] const bool & get_is_graph_loaded() const noexcept;
         [[nodiscard]] std::string get_db_info() const noexcept;
         void test() noexcept;
 
@@ -78,6 +79,7 @@ namespace graphquery::database::storage
         std::unique_ptr<dylib> m_graph_model_lib;          //~ Library of the currently loaded graph model.
 
         bool m_existing_db_loaded                          = false;                                                                     //~ Bool to check if a current database is loaded.
+        bool m_existing_graph_loaded                       = false;                                                                     //~ Bool to check if a current graph is loaded.
         static constexpr uint8_t GRAPH_ENTRIES_AMT         = 0;                                                                         //~ Max amount of graph entries
         static constexpr uint64_t DB_SUPERBLOCK_START_ADDR = 0x0;                                                                       //~ MasterDB struct entry;
         static constexpr const char * MASTER_DB_FILE_NAME  = "master.gdb";                                                              //~ Storage size MAX for database master file.

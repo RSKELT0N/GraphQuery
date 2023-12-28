@@ -11,7 +11,7 @@ target_include_directories(
 
 target_sources(
         logsystem
-        PRIVATE
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/logsystem.cpp)
 
 target_link_libraries(logsystem

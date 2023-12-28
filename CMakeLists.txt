@@ -18,6 +18,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(EXECUTABLE_NAME graph-query)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+  add_compile_options(-g)
+
 # add submodules
 #  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/libcypher-parser)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/googletest)

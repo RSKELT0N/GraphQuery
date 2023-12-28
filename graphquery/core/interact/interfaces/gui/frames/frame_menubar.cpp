@@ -6,7 +6,8 @@
 
 graphquery::interact::CFrameMenuBar::~CFrameMenuBar() = default;
 
-graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table): m_is_db_loaded(is_db_loaded), m_graph_table(graph_table)
+graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded, const bool & is_graph_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
+    m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph_table(graph_table)
 {
     this->m_db_master_file_explorer = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir);
 
@@ -25,7 +26,7 @@ graphquery::interact::CFrameMenuBar::render_frame() noexcept
     {
         render_create_menu();
         render_open_menu();
-        render_db_menu();
+        render_close_menu();
         ImGui::EndMainMenuBar();
     }
 
@@ -36,12 +37,16 @@ graphquery::interact::CFrameMenuBar::render_frame() noexcept
 }
 
 void
-graphquery::interact::CFrameMenuBar::render_db_menu() noexcept
+graphquery::interact::CFrameMenuBar::render_close_menu() noexcept
 {
-    if (m_is_db_loaded && ImGui::BeginMenu("Database"))
+    if (m_is_db_loaded && ImGui::BeginMenu("Close"))
     {
-        if (ImGui::MenuItem("Close"))
+        if (ImGui::MenuItem("Database"))
             database::_db_storage->close();
+
+        if (m_is_graph_loaded)
+            if (ImGui::MenuItem("Graph"))
+                database::_db_storage->close_graph();
 
         ImGui::EndMenu();
     }

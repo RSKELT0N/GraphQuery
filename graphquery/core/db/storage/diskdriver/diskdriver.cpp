@@ -280,8 +280,7 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
 
         if (m_fd_info.st_size < (size * amt + m_seek_offset))
         {
-            static constexpr uint8_t scale = 10;
-            resize(m_fd_info.st_size + (size * amt * scale));
+            resize(m_fd_info.st_size * 2);
         }
         memcpy(&this->m_memory_mapped_file[this->m_seek_offset], ptr, size * amt);
         this->m_current_bytes_written += size * amt;

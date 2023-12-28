@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.9)
 
-add_library(lpg SHARED)
+add_library(lpg SHARED
+        transaction.cpp
+        transaction.h)
 
 target_include_directories(
         lpg
@@ -9,8 +11,9 @@ target_include_directories(
 
 target_sources(
         lpg
-        PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/lpg.cpp)
+        PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/lpg.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/transaction.cpp)
 
 target_compile_options(
         lpg

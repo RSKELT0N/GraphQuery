@@ -27,9 +27,9 @@ namespace graphquery::database::storage
 
         struct SLabel
         {
-            char label_s[LPG_LABEL_LENGTH];
-            int64_t label_id = {};
-            int64_t item_c   = {};
+            char label_s[LPG_LABEL_LENGTH] = {};
+            int64_t label_id               = {};
+            int64_t item_c                 = {};
         } __attribute__((packed));
 
         struct SProperty
@@ -41,31 +41,32 @@ namespace graphquery::database::storage
 
         struct SEdge
         {
-            int64_t id       = {};
-            int64_t label_id = {};
+            int64_t id         = {};
+            int64_t dst        = {};
+            int64_t label_id   = {};
             int64_t property_c = {};
         } __attribute__((packed));
 
         struct SVertex
         {
-            int64_t id          = {};
-            int64_t label_id    = {};
-            int64_t neighbour_c = {};
-            int64_t edge_label_c     = {};
-            int64_t property_c = {};
+            int64_t id           = {};
+            int64_t label_id     = {};
+            int64_t neighbour_c  = {};
+            int64_t edge_label_c = {};
+            int64_t property_c   = {};
         };
 
-        virtual void add_vertex(std::string_view label, const std::pair<std::string, std::string> & prop...) = 0;
-        virtual void add_edge(int64_t src, int64_t dst, const std::pair<std::string, std::string> & prop...) = 0;
-        virtual void delete_vertex(int64_t vertex_id)                                                        = 0;
-        virtual void delete_edge(int64_t src, int64_t dst)                                                   = 0;
-        virtual void update_vertex(int64_t vertex_id, const std::pair<std::string, std::string> & prop...)   = 0;
-        virtual void update_edge(int64_t edge_id, const std::pair<std::string, std::string> & prop...)       = 0;
+        virtual void delete_vertex(int64_t vertex_id)                                                                                = 0;
+        virtual void delete_edge(int64_t src, int64_t dst)                                                                           = 0;
+        virtual void update_edge(int64_t edge_id, const std::pair<std::string, std::string> & prop...)                               = 0;
+        virtual void update_vertex(int64_t vertex_id, const std::pair<std::string, std::string> & prop...)                           = 0;
+        virtual void add_vertex(std::string_view label, const std::pair<std::string, std::string> & prop...)                         = 0;
+        virtual void add_edge(int64_t src, int64_t dst, std::string_view label, const std::pair<std::string, std::string> & prop...) = 0;
 
-        virtual int64_t get_num_edges()                                      = 0;
-        virtual int64_t get_num_vertices()                                   = 0;
-        virtual SVertex get_vertex(int64_t vertex_id)                        = 0;
+        virtual int64_t get_num_edges() const                                = 0;
+        virtual int64_t get_num_vertices() const                             = 0;
         virtual SEdge get_edge(int64_t edge_id)                              = 0;
+        virtual SVertex get_vertex(int64_t vertex_id)                        = 0;
         virtual std::vector<SVertex> get_vertices_by_label(int64_t label_id) = 0;
         virtual std::vector<SVertex> get_edges_by_label(int64_t label_id)    = 0;
     };
