@@ -41,8 +41,8 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t seek(int64_t offset);
         [[maybe_unused]] int64_t get_seek_offset() const noexcept;
         [[maybe_unused]] SRet_t open(std::string_view file_path);
-        [[maybe_unused]] SRet_t read(void * ptr, int64_t size, uint32_t amt);
-        [[maybe_unused]] SRet_t write(const void * ptr, int64_t size, uint32_t amt);
+        [[maybe_unused]] SRet_t read(void * ptr, int64_t size, uint32_t amt, bool update = true);
+        [[maybe_unused]] SRet_t write(const void * ptr, int64_t size, uint32_t amt, bool update = true);
 
         void resize(int64_t file_size) noexcept;
         [[maybe_unused]] SRet_t sync() const noexcept;

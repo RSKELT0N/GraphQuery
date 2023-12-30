@@ -22,8 +22,8 @@ namespace graphquery::database::storage
       public:
         struct SGraph_Entry_t
         {
-            char graph_name[GRAPH_NAME_LENGTH]       = {};
-            char graph_type[GRAPH_MODEL_TYPE_LENGTH] = {};
+            char graph_name[CFG_GRAPH_NAME_LENGTH]       = {};
+            char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH] = {};
 
         } __attribute__((packed));
 

@@ -26,8 +26,8 @@ namespace
                 graphquery::database::_log_system->debug("Graph has been saved");
             }
 
-            graphquery::database::_log_system->debug(fmt::format("System heartbeat sleeping for {} seconds..", graphquery::database::storage::SYSTEM_HEARTBEAT_INTERVAL.count()));
-            std::this_thread::sleep_for(graphquery::database::storage::SYSTEM_HEARTBEAT_INTERVAL);
+            graphquery::database::_log_system->debug(fmt::format("System heartbeat sleeping for {} seconds..", graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL.count()));
+            std::this_thread::sleep_for(graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL);
         }
     }
 } // namespace
@@ -50,9 +50,11 @@ namespace graphquery::database
                {
                    _db_storage->close();
                    _interface->clean_up();
+                   exit(0);
                });
 
-        EStatus status = Initialise_Logging();
+        const EStatus status = Initialise_Logging();
+
         std::thread(heartbeat).detach();
         return status;
     }

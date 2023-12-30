@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "db/analytic/relax.h"
+
 #include <string_view>
 
 #include "fmt/format.h"
@@ -39,6 +41,7 @@ namespace graphquery::database::storage
         friend class CDBStorage;
 
         virtual void close() noexcept                                                          = 0;
+        virtual void relax(analytic::CRelax relax)                                             = 0;
         virtual void load_graph(std::filesystem::path path, std::string_view graph) noexcept   = 0;
         virtual void create_graph(std::filesystem::path path, std::string_view graph) noexcept = 0;
         virtual void save_graph() noexcept                                                     = 0;

@@ -47,19 +47,6 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     ImGui::Separator();
     ImGui::Text("%s", database::_db_storage->get_db_info().c_str());
     ImGui::NewLine();
-
-    if (ImGui::Button("Add Vertex"))
-    {
-        for (int i = 0; i < 10000; i++)
-            database::_db_storage->get_graph()->add_vertex("PERSON", {});
-    }
-
-    ImGui::SameLine();
-
-    if (ImGui::Button("Add Edge"))
-    {
-        database::_db_storage->get_graph()->add_edge(0, 1, "KNOWS", {});
-    }
 }
 
 void

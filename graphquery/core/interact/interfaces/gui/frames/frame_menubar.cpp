@@ -145,13 +145,13 @@ graphquery::interact::CFrameMenuBar::render_create_graph_button() noexcept
 {
     if (ImGui::Button("Create Graph"))
     {
-        if ((m_created_graph_name.empty() || m_created_graph_name.length() > database::storage::GRAPH_NAME_LENGTH) || (m_created_graph_type.empty() || m_created_graph_type.length() > database::storage::GRAPH_MODEL_TYPE_LENGTH))
+        if ((m_created_graph_name.empty() || m_created_graph_name.length() > database::storage::CFG_GRAPH_NAME_LENGTH) || (m_created_graph_type.empty() || m_created_graph_type.length() > database::storage::CFG_GRAPH_MODEL_TYPE_LENGTH))
         {
             database::_log_system->warning(fmt::format("Either the name or type cannot be empty or larger than "
                                                        "configured "
                                                        "size (Name: {}, Memory Model: {}) to create a graph",
-                                                       database::storage::GRAPH_NAME_LENGTH,
-                                                       database::storage::GRAPH_MODEL_TYPE_LENGTH));
+                                                       database::storage::CFG_GRAPH_NAME_LENGTH,
+                                                       database::storage::CFG_GRAPH_MODEL_TYPE_LENGTH));
             return;
         }
         ImGui::CloseCurrentPopup();
@@ -243,7 +243,7 @@ graphquery::interact::CFrameMenuBar::render_create_db_button() noexcept
         ImGui::CloseCurrentPopup();
         set_create_db_state(false);
 
-        database::_db_storage->init(this->m_created_db_path / fmt::format("{}.gdb", this->m_created_db_name));
+        (void) std::async(std::launch::async, &database::storage::CDBStorage::init, database::_db_storage.get(), this->m_created_db_path / fmt::format("{}.gdb", this->m_created_db_name));
         this->m_created_db_name.clear();
         this->m_created_db_path.clear();
     }
@@ -291,9 +291,8 @@ graphquery::interact::CFrameMenuBar::render_open_graph_button() noexcept
     {
         assert(m_open_graph_choice >= 0 && static_cast<size_t>(m_open_graph_choice) < m_graph_table.size());
 
-        (void) std::async(std::launch::async, &database::storage::CDBStorage::open_graph, database::_db_storage.get(), m_graph_table.at(m_open_graph_choice).graph_name, m_graph_table.at(m_open_graph_choice).graph_type);
-
         set_open_graph_state(false);
+        (void) std::async(std::launch::async, &database::storage::CDBStorage::open_graph, database::_db_storage.get(), m_graph_table.at(m_open_graph_choice).graph_name, m_graph_table.at(m_open_graph_choice).graph_type);
     }
 }
 

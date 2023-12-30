@@ -161,8 +161,8 @@ graphquery::database::storage::CDBStorage::SGraph_Entry_t
 graphquery::database::storage::CDBStorage::define_graph_entry(const std::string & name, const std::string & type) noexcept
 {
     SGraph_Entry_t entry;
-    memcpy(entry.graph_name, name.c_str(), GRAPH_NAME_LENGTH);
-    memcpy(entry.graph_type, type.c_str(), GRAPH_MODEL_TYPE_LENGTH);
+    memcpy(entry.graph_name, name.c_str(), CFG_GRAPH_NAME_LENGTH);
+    memcpy(entry.graph_type, type.c_str(), CFG_GRAPH_MODEL_TYPE_LENGTH);
 
     return entry;
 }
