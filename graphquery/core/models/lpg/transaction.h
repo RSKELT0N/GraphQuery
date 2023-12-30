@@ -10,66 +10,66 @@
 
 #pragma once
 
+#include "lpg.h"
 #include "db/storage/diskdriver/diskdriver.h"
 
 #include <filesystem>
+#include <db/storage/config.h>
 
 namespace graphquery::database::storage
 {
     class CTransaction
     {
-    private:
-        static constexpr int32_t TRANSACTION_ACTION_SIZE = 200;
-        static constexpr int32_t TRANSACTION_LOG_SIZE    = 500;
+      private:
+        enum class ETransactionType : uint8_t
+        {
+            vertex,
+            edge
+        };
 
         struct SHeaderBlock
         {
-            int32_t transaction_size;
             int32_t transaction_c;
-            int32_t action_size;
-            int32_t log_size;
+            int64_t eof_addr;
         } __attribute__((packed));
 
-        struct STransaction
+        struct SVertexTransaction
         {
-            char action[TRANSACTION_ACTION_SIZE] = {};
-            char bytes[TRANSACTION_ACTION_SIZE]  = {};
+            ETransactionType type        = ETransactionType::vertex;
+            char label[LPG_LABEL_LENGTH] = {};
+            int64_t property_c           = {};
         } __attribute__((packed));
 
-    public:
-        explicit CTransaction(const std::filesystem::path & local_path);
+        struct SEdgeTransaction
+        {
+            ETransactionType type        = ETransactionType::edge;
+            int64_t src                  = {};
+            int64_t dst                  = {};
+            char label[LPG_LABEL_LENGTH] = {};
+            int64_t property_c           = {};
+        } __attribute__((packed));
+
+      public:
+        CTransaction(const std::filesystem::path & local_path, CMemoryModelLPG * lpg);
         ~CTransaction() = default;
 
         void init() noexcept;
+        void handle_transactions() noexcept;
+        void commit_vertex(std::string_view label, const std::vector<std::pair<std::string, std::string>> & props) noexcept;
+        void commit_edge(int64_t src, int64_t dst, std::string_view label, const std::vector<std::pair<std::string, std::string>> & props) noexcept;
 
       private:
-        template<typename T>
-        void store_transaction(const std::string & action, T log)
-        {
-            static_assert(sizeof(log) < TRANSACTION_LOG_SIZE);
-
-            STransaction transaction = {};
-            strncpy(&transaction.action[0], action.c_str(), TRANSACTION_ACTION_SIZE);
-            memcpy(&transaction.bytes[0], &log, sizeof(log));
-
-
-        }
-
         void load();
         void set_up();
         void define_transaction_header();
         void store_transaction_header();
-
         void read_transaction_header();
-        void read_transactions();
 
-        SHeaderBlock m_header_block;
-        std::vector<STransaction> m_transactions;
-
+        CMemoryModelLPG * m_lpg;
         CDiskDriver m_transaction_file;
-        const std::filesystem::path m_path;
-
-        static constexpr int64_t TRANSACTION_FILE_SIZE     = KB(1);
-        static constexpr std::string TRANSACTION_FILE_NAME = "transactions";
+        SHeaderBlock m_header_block{};
+        static constexpr int64_t TRANSACTION_FILE_SIZE      = KB(1);
+        static constexpr const char * TRANSACTION_FILE_NAME = "transactions";
+        static constexpr int64_t TRANSACTION_HEADER_START_ADDR = 0x00000000;
     };
 } // namespace graphquery::database::storage
