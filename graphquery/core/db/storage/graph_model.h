@@ -64,8 +64,8 @@ namespace graphquery::database::storage
         virtual void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop)                         = 0;
         virtual void add_edge(int64_t src, int64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) = 0;
 
-        virtual int64_t get_num_edges() const                                = 0;
-        virtual int64_t get_num_vertices() const                             = 0;
+        virtual const int64_t & get_num_edges() const                        = 0;
+        virtual const int64_t & get_num_vertices() const                     = 0;
         virtual SEdge get_edge(int64_t edge_id)                              = 0;
         virtual SVertex get_vertex(int64_t vertex_id)                        = 0;
         virtual std::vector<SVertex> get_vertices_by_label(int64_t label_id) = 0;

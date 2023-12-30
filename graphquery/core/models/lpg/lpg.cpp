@@ -33,10 +33,10 @@ graphquery::database::storage::CMemoryModelLPG::close() noexcept
     (void) m_connections_file.close();
 }
 
-std::string
+std::string_view
 graphquery::database::storage::CMemoryModelLPG::get_name() const noexcept
 {
-    return m_graph_metadata.graph_name;
+    return this->m_graph_metadata.graph_name;
 }
 
 void
@@ -374,13 +374,13 @@ graphquery::database::storage::CMemoryModelLPG::update_edge(int64_t edge_id, con
 {
 }
 
-int64_t
+const int64_t &
 graphquery::database::storage::CMemoryModelLPG::get_num_vertices() const
 {
     return this->m_graph_metadata.vertices_c;
 }
 
-int64_t
+const int64_t &
 graphquery::database::storage::CMemoryModelLPG::get_num_edges() const
 {
     return this->m_graph_metadata.edges_c;

@@ -61,7 +61,7 @@ namespace graphquery::database::storage
         void save_graph() noexcept override;
         void delete_vertex(int64_t vertex_id) override;
         void delete_edge(int64_t src, int64_t dst) override;
-        [[nodiscard]] std::string get_name() const noexcept override;
+        [[nodiscard]] std::string_view get_name() const noexcept override;
         void load_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void create_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void update_edge(int64_t edge_id, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
@@ -69,9 +69,9 @@ namespace graphquery::database::storage
         void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
         void add_edge(int64_t src, int64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
 
-        int64_t get_num_edges() const override;
+        const int64_t & get_num_edges() const override;
         SEdge get_edge(int64_t edge_id) override;
-        int64_t get_num_vertices() const override;
+        const int64_t & get_num_vertices() const override;
         SVertex get_vertex(int64_t vertex_id) override;
         std::vector<SVertex> get_edges_by_label(int64_t label_id) override;
         std::vector<SVertex> get_vertices_by_label(int64_t label_id) override;

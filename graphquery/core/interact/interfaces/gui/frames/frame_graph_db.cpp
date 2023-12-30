@@ -88,9 +88,9 @@ void
 graphquery::interact::CFrameGraphDB::render_loaded_graph() noexcept
 {
     ImGui::NewLine();
-    ImGui::Text("Graph [%s]", database::_db_storage->get_graph()->get_name().c_str());
+    ImGui::Text("%s", fmt::format("Graph [{}]", database::_db_storage->get_graph()->get_name()).c_str());
     ImGui::Separator();
 
-    ImGui::Text("Vertices: %lld", database::_db_storage->get_graph()->get_num_vertices());
-    ImGui::Text("Edges: %lld", database::_db_storage->get_graph()->get_num_edges());
+    ImGui::Text("%s", fmt::format("Vertices: {}", database::_db_storage->get_graph()->get_num_vertices()).c_str());
+    ImGui::Text("%s", fmt::format("Edges: {}", database::_db_storage->get_graph()->get_num_edges()).c_str());
 }
