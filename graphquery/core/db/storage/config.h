@@ -10,12 +10,18 @@
 #pragma once
 
 #include <cstdint>
+#include <chrono>
 
 namespace graphquery::database::storage
 {
     //~ Current configuration of database and graph entry.
+    static constexpr uint8_t LPG_LABEL_LENGTH          = 20; //~ Length for a graph entry name
+    static constexpr uint8_t LPG_PROPERTY_KEY_LENGTH   = 20; //~ Length for a graph entry name
+    static constexpr uint8_t LPG_PROPERTY_VALUE_LENGTH = 20; //~ Length for a graph entry name
 
-    static constexpr uint8_t LPG_LABEL_LENGTH        = 20; //~ Length for a graph entry name
     static constexpr uint8_t GRAPH_NAME_LENGTH       = 20; //~ Length for a graph entry name
     static constexpr uint8_t GRAPH_MODEL_TYPE_LENGTH = 10; //~ Length for a graph model type
+
+    //~ System config
+    static constexpr auto SYSTEM_HEARTBEAT_INTERVAL = std::chrono::seconds(30);
 } // namespace graphquery::database::storage

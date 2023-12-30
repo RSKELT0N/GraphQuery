@@ -14,9 +14,10 @@ graphquery::interact::CFrameDock::render_frame() noexcept
     ImGui::SetNextWindowPos(m_viewp->Pos);
     ImGui::SetNextWindowSize(m_viewp->Size);
 
-    if (ImGui::Begin("Graph Query", &m_is_opened, m_flags)) {}
+    if (ImGui::Begin("Graph Query", &m_is_opened, m_flags))
+    {
+        ImGui::DockSpace(ImGui::GetID("Graph Query"), ImVec2(0.0F, 0.0F), ImGuiDockNodeFlags_None);
 
-    ImGui::DockSpace(ImGui::GetID("Graph Query"), ImVec2(0.0F, 0.0F), ImGuiDockNodeFlags_None);
-
-    ImGui::End();
+        ImGui::End();
+    }
 }

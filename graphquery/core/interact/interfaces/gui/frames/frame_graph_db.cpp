@@ -6,8 +6,7 @@
 #include <algorithm>
 #include <utility>
 
-graphquery::interact::CFrameGraphDB::
-CFrameGraphDB(const bool & is_db_loaded, const bool & is_graph_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
+graphquery::interact::CFrameGraphDB::CFrameGraphDB(const bool & is_db_loaded, const bool & is_graph_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
     m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph_table(graph_table)
 {
 }
@@ -20,8 +19,9 @@ graphquery::interact::CFrameGraphDB::render_frame() noexcept
     if (ImGui::Begin("Graph Database"))
     {
         render_state();
+
+        ImGui::End();
     }
-    ImGui::End();
 }
 
 void
@@ -50,7 +50,8 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 
     if (ImGui::Button("Add Vertex"))
     {
-        database::_db_storage->get_graph()->add_vertex("PERSON", {});
+        for (int i = 0; i < 10000; i++)
+            database::_db_storage->get_graph()->add_vertex("PERSON", {});
     }
 
     ImGui::SameLine();
@@ -64,7 +65,7 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 void
 graphquery::interact::CFrameGraphDB::render_graph_table() noexcept
 {
-    ImGui::Text("Graph Info");
+    ImGui::Text("Graph Table");
     ImGui::Separator();
 
     if (ImGui::BeginTable("##", 2, ImGuiTableFlags_Borders))
@@ -79,17 +80,17 @@ graphquery::interact::CFrameGraphDB::render_graph_table() noexcept
                           ImGui::TableSetColumnIndex(1);
                           ImGui::Text("Memory-model: %s", graph.graph_type);
                       });
+        ImGui::EndTable();
     }
-    ImGui::EndTable();
 }
 
 void
 graphquery::interact::CFrameGraphDB::render_loaded_graph() noexcept
 {
     ImGui::NewLine();
-    ImGui::Text(fmt::format("Graph [{}]", database::_db_storage->get_graph()->get_name()).c_str());
+    ImGui::Text("Graph [%s]", database::_db_storage->get_graph()->get_name().c_str());
     ImGui::Separator();
 
-    ImGui::Text(fmt::format("Vertices: {}", database::_db_storage->get_graph()->get_num_vertices()).c_str());
-    ImGui::Text(fmt::format("Edges: {}", database::_db_storage->get_graph()->get_num_edges()).c_str());
+    ImGui::Text("Vertices: %lld", database::_db_storage->get_graph()->get_num_vertices());
+    ImGui::Text("Edges: %lld", database::_db_storage->get_graph()->get_num_edges());
 }

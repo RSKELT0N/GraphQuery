@@ -39,11 +39,15 @@ namespace graphquery::database::storage
 
         [[maybe_unused]] SRet_t close();
         [[maybe_unused]] SRet_t seek(int64_t offset);
+        [[maybe_unused]] int64_t get_seek_offset() const noexcept;
         [[maybe_unused]] SRet_t open(std::string_view file_path);
         [[maybe_unused]] SRet_t read(void * ptr, int64_t size, uint32_t amt);
         [[maybe_unused]] SRet_t write(const void * ptr, int64_t size, uint32_t amt);
 
+        void resize(int64_t file_size) noexcept;
+        [[maybe_unused]] SRet_t sync() const noexcept;
         [[maybe_unused]] char operator[](int64_t idx);
+
         [[nodiscard]] bool check_if_initialised() const noexcept;
         [[nodiscard]] std::filesystem::path get_path() const noexcept;
         void set_path(std::filesystem::path file_path) noexcept;
@@ -54,12 +58,10 @@ namespace graphquery::database::storage
         [[nodiscard]] static bool check_if_folder_exists(std::string_view file_path) noexcept;
 
       private:
-        void resize(int64_t file_size) noexcept;
         [[maybe_unused]] SRet_t unmap() const noexcept;
         [[maybe_unused]] SRet_t open_fd() noexcept;
         [[maybe_unused]] SRet_t close_fd() noexcept;
         [[maybe_unused]] SRet_t map() noexcept;
-        [[maybe_unused]] SRet_t sync() const noexcept;
         [[maybe_unused]] SRet_t truncate(int64_t) noexcept;
 
         static std::shared_ptr<logger::CLogSystem> m_log_system;

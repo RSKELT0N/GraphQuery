@@ -11,10 +11,8 @@
 #pragma once
 
 #include "lpg.h"
-#include "db/storage/diskdriver/diskdriver.h"
 
 #include <filesystem>
-#include <db/storage/config.h>
 
 namespace graphquery::database::storage
 {
@@ -54,6 +52,7 @@ namespace graphquery::database::storage
         ~CTransaction() = default;
 
         void init() noexcept;
+        void reset() noexcept;
         void handle_transactions() noexcept;
         void commit_vertex(std::string_view label, const std::vector<std::pair<std::string, std::string>> & props) noexcept;
         void commit_edge(int64_t src, int64_t dst, std::string_view label, const std::vector<std::pair<std::string, std::string>> & props) noexcept;

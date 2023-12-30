@@ -1,8 +1,11 @@
 #include "system.h"
 
-#include <csignal>
-
 #include "log/loggers/log_stdo.h"
+#include "storage/config.h"
+
+#include <csignal>
+#include <thread>
+#include <chrono>
 
 namespace
 {
@@ -11,6 +14,21 @@ namespace
         graphquery::database::_log_system->add_logger(std::make_shared<graphquery::logger::CLogSTDO>());
 
         return graphquery::database::EStatus::valid;
+    }
+
+    void heartbeat() noexcept
+    {
+        while (true)
+        {
+            if (graphquery::database::_db_storage->get_is_db_loaded() && graphquery::database::_db_storage->get_is_graph_loaded())
+            {
+                graphquery::database::_db_storage->get_graph()->save_graph();
+                graphquery::database::_log_system->debug("Graph has been saved");
+            }
+
+            graphquery::database::_log_system->debug(fmt::format("System heartbeat sleeping for {} seconds..", graphquery::database::storage::SYSTEM_HEARTBEAT_INTERVAL.count()));
+            std::this_thread::sleep_for(graphquery::database::storage::SYSTEM_HEARTBEAT_INTERVAL);
+        }
     }
 } // namespace
 
@@ -32,10 +50,10 @@ namespace graphquery::database
                {
                    _db_storage->close();
                    _interface->clean_up();
-                   exit(0);
                });
 
         EStatus status = Initialise_Logging();
+        std::thread(heartbeat).detach();
         return status;
     }
 } // namespace graphquery::database

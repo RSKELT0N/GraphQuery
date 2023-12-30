@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "config.h"
 #include "memory_model.h"
 
 #include <cstdint>
@@ -30,14 +31,14 @@ namespace graphquery::database::storage
             char label_s[LPG_LABEL_LENGTH] = {};
             int64_t label_id               = {};
             int64_t item_c                 = {};
-        } __attribute__((packed));
+        };
 
         struct SProperty
         {
-            char key[20]             = {};
-            char value[20]           = {};
-            SProperty * prev_version = nullptr;
-        } __attribute__((packed));
+            char key[LPG_PROPERTY_KEY_LENGTH]     = {};
+            char value[LPG_PROPERTY_VALUE_LENGTH] = {};
+            SProperty * prev_version              = nullptr;
+        };
 
         struct SEdge
         {
@@ -45,7 +46,7 @@ namespace graphquery::database::storage
             int64_t dst        = {};
             int64_t label_id   = {};
             int64_t property_c = {};
-        } __attribute__((packed));
+        };
 
         struct SVertex
         {
@@ -58,10 +59,10 @@ namespace graphquery::database::storage
 
         virtual void delete_vertex(int64_t vertex_id)                                                                                = 0;
         virtual void delete_edge(int64_t src, int64_t dst)                                                                           = 0;
-        virtual void update_edge(int64_t edge_id, const std::pair<std::string, std::string> & prop...)                               = 0;
-        virtual void update_vertex(int64_t vertex_id, const std::pair<std::string, std::string> & prop...)                           = 0;
-        virtual void add_vertex(std::string_view label, const std::pair<std::string, std::string> & prop...)                         = 0;
-        virtual void add_edge(int64_t src, int64_t dst, std::string_view label, const std::pair<std::string, std::string> & prop...) = 0;
+        virtual void update_edge(int64_t edge_id, const std::initializer_list<std::pair<std::string, std::string>> & prop)                               = 0;
+        virtual void update_vertex(int64_t vertex_id, const std::initializer_list<std::pair<std::string, std::string>> & prop)                           = 0;
+        virtual void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop)                         = 0;
+        virtual void add_edge(int64_t src, int64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) = 0;
 
         virtual int64_t get_num_edges() const                                = 0;
         virtual int64_t get_num_vertices() const                             = 0;

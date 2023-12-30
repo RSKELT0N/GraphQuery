@@ -19,6 +19,16 @@ graphquery::database::storage::CTransaction::init() noexcept
 }
 
 void
+graphquery::database::storage::CTransaction::reset() noexcept
+{
+    m_header_block.transaction_c = 0;
+    m_header_block.eof_addr      = sizeof(SHeaderBlock);
+    m_transaction_file.resize(TRANSACTION_FILE_SIZE);
+    (void) m_transaction_file.sync();
+    store_transaction_header();
+}
+
+void
 graphquery::database::storage::CTransaction::set_up()
 {
     CDiskDriver::create_file(m_transaction_file.get_path(), TRANSACTION_FILE_NAME, TRANSACTION_FILE_SIZE);
@@ -154,7 +164,5 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
             m_lpg->add_edge_entry(transc.src, transc.dst, transc.label, props);
         }
     }
-    m_header_block.transaction_c = 0;
-    m_header_block.eof_addr = sizeof(SHeaderBlock);
-    store_transaction_header();
+    this->reset();
 }

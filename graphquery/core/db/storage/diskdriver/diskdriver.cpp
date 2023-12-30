@@ -326,6 +326,12 @@ graphquery::database::storage::CDiskDriver::seek(int64_t offset)
     return SRet_t::VALID;
 }
 
+int64_t
+graphquery::database::storage::CDiskDriver::get_seek_offset() const noexcept
+{
+    return this->m_seek_offset;
+}
+
 bool
 graphquery::database::storage::CDiskDriver::check_if_initialised() const noexcept
 {

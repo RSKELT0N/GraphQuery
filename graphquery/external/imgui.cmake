@@ -28,9 +28,9 @@ target_link_libraries(imgui
 # Add program include directories
 target_include_directories(imgui
 		PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}/
 		${CMAKE_CURRENT_SOURCE_DIR}/imgui/
 		${CMAKE_CURRENT_SOURCE_DIR}/imgui/backends/
-		${CMAKE_CURRENT_SOURCE_DIR}/imnode/
 		${CMAKE_CURRENT_SOURCE_DIR}/imnodes/
 		${CMAKE_CURRENT_SOURCE_DIR}/imgui-filebrowser/
 		${CMAKE_CURRENT_SOURCE_DIR}/imgui/misc/cpp/)

@@ -18,14 +18,16 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(EXECUTABLE_NAME graph-query)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-  add_compile_options(-g)
+  if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
+    add_compile_options(-g)
+  endif (CMAKE_BUILD_TYPE EQUAL "DEBUG")
 
 # add submodules
 #  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/libcypher-parser)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glew)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/googletest)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/dylib)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glfw)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glew)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/fmt)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external)                     # imgui/imnodes/imfile_browser
 

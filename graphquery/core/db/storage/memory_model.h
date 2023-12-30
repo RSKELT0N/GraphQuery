@@ -41,6 +41,7 @@ namespace graphquery::database::storage
         virtual void close() noexcept                                                          = 0;
         virtual void load_graph(std::filesystem::path path, std::string_view graph) noexcept   = 0;
         virtual void create_graph(std::filesystem::path path, std::string_view graph) noexcept = 0;
+        virtual void save_graph() noexcept                                                     = 0;
         virtual std::string get_name() const noexcept                                          = 0;
     };
 } // namespace graphquery::database::storage

@@ -4,6 +4,8 @@
 #include "fmt/format.h"
 #include "imgui_stdlib.h"
 
+#include <future>
+
 graphquery::interact::CFrameMenuBar::~CFrameMenuBar() = default;
 
 graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded, const bool & is_graph_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
@@ -120,8 +122,8 @@ graphquery::interact::CFrameMenuBar::render_create_graph_info() noexcept
         render_create_graph_name();
         render_create_graph_type();
         render_create_graph_button();
+        ImGui::EndChild();
     }
-    ImGui::EndChild();
 }
 
 void
@@ -152,10 +154,13 @@ graphquery::interact::CFrameMenuBar::render_create_graph_button() noexcept
                                                        database::storage::GRAPH_MODEL_TYPE_LENGTH));
             return;
         }
-        database::_db_storage->create_graph(this->m_created_graph_name, this->m_created_graph_type);
+        ImGui::CloseCurrentPopup();
+        set_create_graph_state(false);
+
+        (void) std::async(std::launch::async, &database::storage::CDBStorage::create_graph, database::_db_storage.get(), this->m_created_graph_name, this->m_created_graph_type);
+
         m_created_graph_name = "";
         m_created_graph_type = "";
-        set_create_graph_state(false);
     }
 }
 
@@ -184,8 +189,8 @@ graphquery::interact::CFrameMenuBar::render_create_db_info() noexcept
         render_create_db_location();
         render_create_db_name();
         render_create_db_button();
+        ImGui::EndChild();
     }
-    ImGui::EndChild();
 }
 
 void
@@ -235,10 +240,12 @@ graphquery::interact::CFrameMenuBar::render_create_db_button() noexcept
                                            "database");
             return;
         }
+        ImGui::CloseCurrentPopup();
+        set_create_db_state(false);
+
         database::_db_storage->init(this->m_created_db_path / fmt::format("{}.gdb", this->m_created_db_name));
         this->m_created_db_name.clear();
         this->m_created_db_path.clear();
-        set_create_db_state(false);
     }
 }
 
@@ -284,9 +291,8 @@ graphquery::interact::CFrameMenuBar::render_open_graph_button() noexcept
     {
         assert(m_open_graph_choice >= 0 && static_cast<size_t>(m_open_graph_choice) < m_graph_table.size());
 
-        database::_db_storage->open_graph(m_graph_table.at(m_open_graph_choice).graph_name, m_graph_table.at(m_open_graph_choice).graph_type);
+        (void) std::async(std::launch::async, &database::storage::CDBStorage::open_graph, database::_db_storage.get(), m_graph_table.at(m_open_graph_choice).graph_name, m_graph_table.at(m_open_graph_choice).graph_type);
 
-        ImGui::CloseCurrentPopup();
         set_open_graph_state(false);
     }
 }

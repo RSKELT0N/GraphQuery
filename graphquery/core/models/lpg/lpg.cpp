@@ -1,5 +1,7 @@
 #include "lpg.h"
 
+#include "transaction.h"
+
 #include <fcntl.h>
 #include <iostream>
 #include <string_view>
@@ -7,16 +9,21 @@
 #include <optional>
 #include <vector>
 
+namespace
+{
+    std::unique_ptr<graphquery::database::storage::CTransaction> transactions;
+}
+
 //~ static symbol link
 std::shared_ptr<graphquery::logger::CLogSystem> graphquery::database::storage::CMemoryModelLPG::m_log_system;
 
-graphquery::database::storage::CMemoryModelLPG::
-CMemoryModelLPG(): m_master_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED), m_connections_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED)
+graphquery::database::storage::CMemoryModelLPG::CMemoryModelLPG(): m_master_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED), m_connections_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED), m_flush_needed(false)
 {
     m_log_system = logger::CLogSystem::get_instance();
     m_labelled_vertices = std::vector<std::vector<SVertexContainer>>();
     m_vertex_properties = std::vector<std::vector<SProperty>>();
     m_edge_properties   = std::vector<std::vector<SProperty>>();
+    m_vertex_map        = std::map<int64_t, int64_t>();
 }
 
 void
@@ -32,17 +39,33 @@ graphquery::database::storage::CMemoryModelLPG::get_name() const noexcept
     return m_graph_metadata.graph_name;
 }
 
+void
+graphquery::database::storage::CMemoryModelLPG::save_graph() noexcept
+{
+    if (m_flush_needed)
+    {
+        store_graph_header();
+        store_vertex_labels();
+        store_edge_labels();
+        store_labelled_vertices();
+        m_flush_needed = false;
+        transactions->reset();
+        m_log_system->debug("Graph has been saved");
+    }
+}
 
 void
 graphquery::database::storage::CMemoryModelLPG::create_graph(std::filesystem::path path, std::string_view graph) noexcept
 {
     this->m_master_file.set_path(path);
     this->m_connections_file.set_path(path);
+    transactions = std::make_unique<CTransaction>(path, this);
 
     (void) CDiskDriver::create_file(path, MASTER_FILE_NAME, MASTER_FILE_SIZE);
     (void) CDiskDriver::create_file(path, CONNECTIONS_FILE_NAME, CONNECTIONS_FILE_SIZE);
     (void) this->m_master_file.open(MASTER_FILE_NAME);
     (void) this->m_connections_file.open(CONNECTIONS_FILE_NAME);
+    transactions->init();
 
     this->m_graph_name = graph;
 
@@ -55,13 +78,17 @@ graphquery::database::storage::CMemoryModelLPG::load_graph(std::filesystem::path
 {
     this->m_master_file.set_path(path);
     this->m_connections_file.set_path(path);
+    transactions = std::make_unique<CTransaction>(path, this);
+
     (void) this->m_master_file.open(MASTER_FILE_NAME);
     (void) this->m_connections_file.open(CONNECTIONS_FILE_NAME);
+    transactions->init();
 
     read_graph_header();
     read_vertex_labels();
     read_edge_labels();
     read_labelled_vertices();
+    transactions->handle_transactions();
 }
 
 void
@@ -166,7 +193,7 @@ graphquery::database::storage::CMemoryModelLPG::read_labelled_vertices() noexcep
                 edges[le_id].resize(le_count);
                 m_connections_file.read(&edges[le_id][0], sizeof(SEdge), le_count);
             }
-            m_vertex_map.emplace(metadata.id, vertex_c++);
+            m_vertex_map[metadata.id] = vertex_c++;
         }
     }
 }
@@ -247,7 +274,7 @@ graphquery::database::storage::CMemoryModelLPG::get_vertex_by_id(const int64_t i
 }
 
 void
-graphquery::database::storage::CMemoryModelLPG::add_vertex_entry(std::string_view label, const std::pair<std::string, std::string> & prop...) noexcept
+graphquery::database::storage::CMemoryModelLPG::add_vertex_entry(std::string_view label, const std::vector<std::pair<std::string, std::string>> & prop) noexcept
 {
     SVertexContainer vertex = {};
 
@@ -267,13 +294,11 @@ graphquery::database::storage::CMemoryModelLPG::add_vertex_entry(std::string_vie
     m_labelled_vertices[label_idx].push_back(vertex);
     m_vertex_labels[label_idx].item_c++;
 
-    store_graph_header();
-    store_vertex_labels();
-    store_labelled_vertices();
+    transactions->commit_vertex(label, prop);
 }
 
 void
-graphquery::database::storage::CMemoryModelLPG::add_edge_entry(int64_t src, int64_t dst, std::string_view label, const std::pair<std::string, std::string> & prop...) noexcept
+graphquery::database::storage::CMemoryModelLPG::add_edge_entry(int64_t src, int64_t dst, std::string_view label, const std::vector<std::pair<std::string, std::string>> & prop) noexcept
 {
     SEdge edge = {};
     //~ src vertex reference
@@ -312,21 +337,21 @@ graphquery::database::storage::CMemoryModelLPG::add_edge_entry(int64_t src, int6
     src_vertex->edge_labels[distance].item_c++;
     src_vertex->vertex_metadata.neighbour_c++;
 
-    store_graph_header();
-    store_edge_labels();
-    store_labelled_vertices();
+    transactions->commit_edge(src, dst, label, prop);
 }
 
 void
-graphquery::database::storage::CMemoryModelLPG::add_vertex(std::string_view label, const std::pair<std::string, std::string> & prop...)
+graphquery::database::storage::CMemoryModelLPG::add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop)
 {
     add_vertex_entry(label, prop);
+    m_flush_needed = true;
 }
 
 void
-graphquery::database::storage::CMemoryModelLPG::add_edge(int64_t src, int64_t dst, std::string_view label, const std::pair<std::string, std::string> & prop...)
+graphquery::database::storage::CMemoryModelLPG::add_edge(int64_t src, int64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop)
 {
     add_edge_entry(src, dst, label, prop);
+    m_flush_needed = true;
 }
 
 void
@@ -340,12 +365,12 @@ graphquery::database::storage::CMemoryModelLPG::delete_edge(int64_t src, int64_t
 }
 
 void
-graphquery::database::storage::CMemoryModelLPG::update_vertex(int64_t vertex_id, const std::pair<std::string, std::string> & prop...)
+graphquery::database::storage::CMemoryModelLPG::update_vertex(int64_t vertex_id, const std::initializer_list<std::pair<std::string, std::string>> & prop)
 {
 }
 
 void
-graphquery::database::storage::CMemoryModelLPG::update_edge(int64_t edge_id, const std::pair<std::string, std::string> & prop...)
+graphquery::database::storage::CMemoryModelLPG::update_edge(int64_t edge_id, const std::initializer_list<std::pair<std::string, std::string>> & prop)
 {
 }
 

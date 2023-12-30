@@ -20,8 +20,7 @@ target_compile_options(
         PUBLIC
         -Wall
         -Werror
-        -Wpedantic
-        -g)
+        -Wpedantic)
 
 target_link_libraries(
         lpg

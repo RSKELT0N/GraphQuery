@@ -20,11 +20,10 @@
 #include "db/storage/config.h"
 #include "db/storage/diskdriver/diskdriver.h"
 #include "db/storage/graph_model.h"
-#include "db/storage/memory_model.h"
 
-#include <unordered_map>
 #include <optional>
 #include <algorithm>
+#include <map>
 
 namespace graphquery::database::storage
 {
@@ -59,42 +58,37 @@ namespace graphquery::database::storage
         ~CMemoryModelLPG() override = default;
 
         void close() noexcept override;
+        void save_graph() noexcept override;
         void delete_vertex(int64_t vertex_id) override;
         void delete_edge(int64_t src, int64_t dst) override;
-        void update_edge(int64_t edge_id, const std::pair<std::string, std::string> & prop...) override;
-        void update_vertex(int64_t vertex_id, const std::pair<std::string, std::string> & prop...) override;
-        void add_vertex(std::string_view label, const std::pair<std::string, std::string> & prop...) override;
-        void add_edge(int64_t src, int64_t dst, std::string_view label, const std::pair<std::string, std::string> & prop...) override;
+        [[nodiscard]] std::string get_name() const noexcept override;
         void load_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void create_graph(std::filesystem::path path, std::string_view graph) noexcept override;
-        [[nodiscard]] std::string get_name() const noexcept override;
+        void update_edge(int64_t edge_id, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
+        void update_vertex(int64_t vertex_id, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
+        void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
+        void add_edge(int64_t src, int64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
 
         int64_t get_num_edges() const override;
+        SEdge get_edge(int64_t edge_id) override;
         int64_t get_num_vertices() const override;
         SVertex get_vertex(int64_t vertex_id) override;
-        SEdge get_edge(int64_t edge_id) override;
-        std::vector<SVertex> get_vertices_by_label(int64_t label_id) override;
         std::vector<SVertex> get_edges_by_label(int64_t label_id) override;
+        std::vector<SVertex> get_vertices_by_label(int64_t label_id) override;
 
       private:
-        void add_vertex_entry(std::string_view label, const std::pair<std::string, std::string> & prop...) noexcept;
-        void add_edge_entry(int64_t src, int64_t dst, std::string_view label, const std::pair<std::string, std::string> & prop...) noexcept;
+        friend class CTransaction;
+        void add_vertex_entry(std::string_view label, const std::vector<std::pair<std::string, std::string>> & prop) noexcept;
+        void add_edge_entry(int64_t src, int64_t dst, std::string_view label, const std::vector<std::pair<std::string, std::string>> & prop) noexcept;
 
-        /****************************************************************
-         ** \brief Iterates over known vertex labels and assigns against
-         *         the creating vertex. If exists, return ID of label, if not,
-         *         creates new entry and returns ID.
-         **
-         ** \param std::string_view - Label of vertex
-         ***************************************************************/
-        [[nodiscard]] std::optional<int64_t> check_if_vertex_label_exists(std::string_view) const noexcept;
         [[nodiscard]] std::optional<int64_t> check_if_edge_label_exists(std::string_view) const noexcept;
+        [[nodiscard]] std::optional<int64_t> check_if_vertex_label_exists(std::string_view) const noexcept;
 
-        [[nodiscard]] int64_t create_vertex_label(std::string_view) noexcept;
         [[nodiscard]] int64_t create_edge_label(std::string_view) noexcept;
+        [[nodiscard]] int64_t create_vertex_label(std::string_view) noexcept;
 
-        [[nodiscard]] SLabel create_label(std::string_view label, int64_t label_id, int64_t item_c) const noexcept;
         [[nodiscard]] std::vector<SVertexContainer>::iterator get_vertex_by_id(int64_t id) noexcept;
+        [[nodiscard]] SLabel create_label(std::string_view label, int64_t label_id, int64_t item_c) const noexcept;
 
         void define_graph_header() noexcept;
 
@@ -114,13 +108,14 @@ namespace graphquery::database::storage
 
         std::vector<SLabel> m_vertex_labels;
         std::vector<SLabel> m_edge_labels;
-        std::unordered_map<int64_t, int64_t> m_vertex_map;
+        std::map<int64_t, int64_t> m_vertex_map;
 
         std::vector<std::vector<SVertexContainer>> m_labelled_vertices;
         std::vector<std::vector<SProperty>> m_vertex_properties;
         std::vector<std::vector<SProperty>> m_edge_properties;
 
         std::string m_graph_name;
+        bool m_flush_needed;
         static std::shared_ptr<logger::CLogSystem> m_log_system;
         static constexpr int16_t MASTER_FILE_SIZE           = KB(1);
         static constexpr int16_t CONNECTIONS_FILE_SIZE      = KB(1);

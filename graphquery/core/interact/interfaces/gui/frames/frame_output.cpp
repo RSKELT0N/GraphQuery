@@ -16,9 +16,8 @@ graphquery::interact::CFrameLog::render_frame() noexcept
     {
         render_clear_button();
         render_log_output();
+        ImGui::End();
     }
-
-    ImGui::End();
 }
 
 void
@@ -39,9 +38,8 @@ graphquery::interact::CFrameLog::render_log_box() noexcept
 
         if (is_scroll_at_end())
             ImGui::SetScrollHereY(1.0F);
+        ImGui::EndChild();
     }
-
-    ImGui::EndChild();
 }
 
 void

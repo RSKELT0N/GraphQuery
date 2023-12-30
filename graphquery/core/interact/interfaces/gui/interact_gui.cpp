@@ -1,17 +1,19 @@
 #include "interact_gui.h"
 
-#include <algorithm>
-#include <cstdio>
-
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
 #include "db/system.h"
-#include "imnodes.h"
 #include "interact/interfaces/gui/frames/frame_dock.h"
 #include "interact/interfaces/gui/frames/frame_graph_db.h"
 #include "interact/interfaces/gui/frames/frame_graph_visual.h"
 #include "interact/interfaces/gui/frames/frame_menubar.h"
 #include "interact/interfaces/gui/frames/frame_output.h"
+
+// #include "GL/glew.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+#include "GLFW/glfw3.h"
+
+#include <algorithm>
+#include <cstdio>
 
 graphquery::interact::CInteractGUI::CInteractGUI()
 {
@@ -24,7 +26,7 @@ void
 graphquery::interact::CInteractGUI::render() noexcept
 {
     initialise_frames();
-    [[likely]] while (glfwWindowShouldClose(*m_window) == 0)
+    [[likely]] while (glfwWindowShouldClose(m_window) == 0)
     {
         on_update();
     }
@@ -44,24 +46,27 @@ graphquery::interact::CInteractGUI::initialise_glfw() noexcept
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 #else
     // GL 3.0 + GLSL 130
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 #endif
 
     // Create window with graphics context
-    m_window = std::make_unique<GLFWwindow *>(glfwCreateWindow(1280, 720, PROJECT_NAME, nullptr, nullptr));
+    m_window = glfwCreateWindow(1280, 720, PROJECT_NAME, nullptr, nullptr);
 
     [[unlikely]] if (m_window == nullptr)
     {
         return;
     }
 
-    glfwMakeContextCurrent(*m_window);
+    glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1); // Enable vsync
+
+    // if (glewInit() != GLEW_OK
+    // database::_log_system->error("Failed to initialize GLEW");
 }
 
 void
@@ -69,12 +74,9 @@ graphquery::interact::CInteractGUI::initialise_imgui() noexcept
 {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
+    m_imgui_context = ImGui::CreateContext();
 
     ImGuiIO & io = ImGui::GetIO();
-    (void) io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport
 
@@ -89,7 +91,7 @@ graphquery::interact::CInteractGUI::initialise_imgui() noexcept
     }
 
     // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(*m_window, true);
+    ImGui_ImplGlfw_InitForOpenGL(m_window, true);
 
     if (!ImGui_ImplOpenGL3_Init(IMGUI_GL_VERSION)) [[unlikely]]
         database::_log_system->error("Error initialising OpenGl for ImGUI.");
@@ -98,7 +100,7 @@ graphquery::interact::CInteractGUI::initialise_imgui() noexcept
 void
 graphquery::interact::CInteractGUI::initialise_nodes_editor() noexcept
 {
-    ImNodes::CreateContext();
+    m_imnodes_context = ImNodes::CreateContext();
     ImNodes::StyleColorsDark();
     ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkCreationOnSnap);
 
@@ -147,6 +149,9 @@ graphquery::interact::CInteractGUI::on_update() noexcept
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    ImGui::SetCurrentContext(m_imgui_context);
+    ImNodes::SetCurrentContext(m_imnodes_context);
+
     render_frames();
 
     // Rendering
@@ -154,17 +159,12 @@ graphquery::interact::CInteractGUI::on_update() noexcept
 
     int display_w;
     int display_h;
-    glfwGetFramebufferSize(*m_window, &display_w, &display_h);
+    glfwGetFramebufferSize(m_window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
 
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    // Update and Render additional Platform Windows
-    // (Platform functions may change the current OpenGL context, so we
-    // save/restore it to make it easier to paste this code elsewhere.
-    //  For this specific demo app we could also call
-    //  glfwMakeContextCurrent(window) directly)
     [[likely]] if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         GLFWwindow * backup_current_context = glfwGetCurrentContext();
@@ -173,7 +173,7 @@ graphquery::interact::CInteractGUI::on_update() noexcept
         glfwMakeContextCurrent(backup_current_context);
     }
 
-    glfwSwapBuffers(*m_window);
+    glfwSwapBuffers(m_window);
 }
 
 void
@@ -185,6 +185,6 @@ graphquery::interact::CInteractGUI::clean_up() noexcept
     ImGui::DestroyContext();
     ImNodes::DestroyContext();
 
-    glfwDestroyWindow(*m_window);
+    glfwDestroyWindow(m_window);
     glfwTerminate();
 }
