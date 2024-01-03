@@ -10,7 +10,9 @@ namespace graphquery::interact
     class CFrameMenuBar : public IFrame
     {
       public:
-        CFrameMenuBar(const bool & is_db_loaded, const bool & is_graph_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table);
+        CFrameMenuBar(const bool & is_db_loaded,
+                      const bool & is_graph_loaded,
+                      const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table);
         ~CFrameMenuBar() override;
 
         void render_frame() noexcept override;

@@ -8,7 +8,10 @@
 
 graphquery::interact::CFrameMenuBar::~CFrameMenuBar() = default;
 
-graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded, const bool & is_graph_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
+graphquery::interact::CFrameMenuBar::
+CFrameMenuBar(const bool & is_db_loaded,
+              const bool & is_graph_loaded,
+              const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
     m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph_table(graph_table)
 {
     this->m_db_master_file_explorer = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir);
@@ -16,7 +19,8 @@ graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded, co
     this->m_db_master_file_explorer.SetTitle("Open Database");
     this->m_db_master_file_explorer.SetTypeFilters({".gdb"});
 
-    this->m_db_folder_location_explorer = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir | ImGuiFileBrowserFlags_SelectDirectory);
+    this->m_db_folder_location_explorer =
+        ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir | ImGuiFileBrowserFlags_SelectDirectory);
 
     this->m_db_folder_location_explorer.SetTitle("Select Location Path");
 }
@@ -145,7 +149,8 @@ graphquery::interact::CFrameMenuBar::render_create_graph_button() noexcept
 {
     if (ImGui::Button("Create Graph"))
     {
-        if ((m_created_graph_name.empty() || m_created_graph_name.length() > database::storage::CFG_GRAPH_NAME_LENGTH) || (m_created_graph_type.empty() || m_created_graph_type.length() > database::storage::CFG_GRAPH_MODEL_TYPE_LENGTH))
+        if ((m_created_graph_name.empty() || m_created_graph_name.length() > database::storage::CFG_GRAPH_NAME_LENGTH) ||
+            (m_created_graph_type.empty() || m_created_graph_type.length() > database::storage::CFG_GRAPH_MODEL_TYPE_LENGTH))
         {
             database::_log_system->warning(fmt::format("Either the name or type cannot be empty or larger than "
                                                        "configured "
@@ -157,7 +162,11 @@ graphquery::interact::CFrameMenuBar::render_create_graph_button() noexcept
         ImGui::CloseCurrentPopup();
         set_create_graph_state(false);
 
-        (void) std::async(std::launch::async, &database::storage::CDBStorage::create_graph, database::_db_storage.get(), this->m_created_graph_name, this->m_created_graph_type);
+        (void) std::async(std::launch::async,
+                          &database::storage::CDBStorage::create_graph,
+                          database::_db_storage.get(),
+                          this->m_created_graph_name,
+                          this->m_created_graph_type);
 
         m_created_graph_name = "";
         m_created_graph_type = "";
@@ -243,7 +252,10 @@ graphquery::interact::CFrameMenuBar::render_create_db_button() noexcept
         ImGui::CloseCurrentPopup();
         set_create_db_state(false);
 
-        (void) std::async(std::launch::async, &database::storage::CDBStorage::init, database::_db_storage.get(), this->m_created_db_path / fmt::format("{}.gdb", this->m_created_db_name));
+        (void) std::async(std::launch::async,
+                          &database::storage::CDBStorage::init,
+                          database::_db_storage.get(),
+                          this->m_created_db_path / fmt::format("{}.gdb", this->m_created_db_name));
         this->m_created_db_name.clear();
         this->m_created_db_path.clear();
     }
@@ -278,7 +290,9 @@ graphquery::interact::CFrameMenuBar::render_open_graph_list() noexcept
 {
     std::string graphs = {};
 
-    std::for_each(m_graph_table.begin(), m_graph_table.end(), [&graphs](const auto & graph) -> void { graphs += fmt::format("{}{}", graph.graph_name, '\0'); });
+    std::for_each(m_graph_table.begin(),
+                  m_graph_table.end(),
+                  [&graphs](const auto & graph) -> void { graphs += fmt::format("{}{}", graph.graph_name, '\0'); });
     graphs += fmt::format("\0");
 
     ImGui::Combo("##", &m_open_graph_choice, graphs.c_str());
@@ -292,7 +306,11 @@ graphquery::interact::CFrameMenuBar::render_open_graph_button() noexcept
         assert(m_open_graph_choice >= 0 && static_cast<size_t>(m_open_graph_choice) < m_graph_table.size());
 
         set_open_graph_state(false);
-        (void) std::async(std::launch::async, &database::storage::CDBStorage::open_graph, database::_db_storage.get(), m_graph_table.at(m_open_graph_choice).graph_name, m_graph_table.at(m_open_graph_choice).graph_type);
+        (void) std::async(std::launch::async,
+                          &database::storage::CDBStorage::open_graph,
+                          database::_db_storage.get(),
+                          m_graph_table.at(m_open_graph_choice).graph_name,
+                          m_graph_table.at(m_open_graph_choice).graph_type);
     }
 }
 

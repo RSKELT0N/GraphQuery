@@ -15,7 +15,8 @@
 #include <algorithm>
 #include <cstdio>
 
-graphquery::interact::CInteractGUI::CInteractGUI()
+graphquery::interact::CInteractGUI::
+CInteractGUI()
 {
     initialise_glfw();
     initialise_imgui();
@@ -77,8 +78,8 @@ graphquery::interact::CInteractGUI::initialise_imgui() noexcept
     m_imgui_context = ImGui::CreateContext();
 
     ImGuiIO & io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -119,7 +120,9 @@ graphquery::interact::CInteractGUI::initialise_frames() noexcept
     m_frames.emplace_back(std::make_unique<CFrameDock>(m_frame_dock_open));
 
     // Menu bar
-    m_frames.emplace_back(std::make_unique<CFrameMenuBar>(database::_db_storage->get_is_db_loaded(), database::_db_storage->get_is_graph_loaded(), database::_db_storage->get_graph_table()));
+    m_frames.emplace_back(std::make_unique<CFrameMenuBar>(database::_db_storage->get_is_db_loaded(),
+                                                          database::_db_storage->get_is_graph_loaded(),
+                                                          database::_db_storage->get_graph_table()));
 
     // Log output frame
     auto frame_log = std::make_shared<CFrameLog>();
@@ -127,7 +130,9 @@ graphquery::interact::CInteractGUI::initialise_frames() noexcept
     database::_log_system->add_logger(frame_log);
 
     // Graph DB
-    m_frames.emplace_back(std::make_unique<CFrameGraphDB>(database::_db_storage->get_is_db_loaded(), database::_db_storage->get_is_graph_loaded(), database::_db_storage->get_graph_table()));
+    m_frames.emplace_back(std::make_unique<CFrameGraphDB>(database::_db_storage->get_is_db_loaded(),
+                                                          database::_db_storage->get_is_graph_loaded(),
+                                                          database::_db_storage->get_graph_table()));
 
     // Graph visual
     m_frames.emplace_back(std::make_unique<CFrameGraphVisual>());

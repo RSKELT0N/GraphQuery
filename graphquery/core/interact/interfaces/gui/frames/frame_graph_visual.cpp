@@ -2,6 +2,8 @@
 
 #include "db/utils/ring_buffer.h"
 
+#include <db/system.h>
+
 graphquery::interact::CFrameGraphVisual::~CFrameGraphVisual() = default;
 
 void
@@ -18,9 +20,14 @@ void
 graphquery::interact::CFrameGraphVisual::render_grid() noexcept
 {
     ImNodes::BeginNodeEditor();
-    render_nodes();
-    render_edges();
     ImNodes::MiniMap(0.15, ImNodesMiniMapLocation_BottomRight);
+
+    if (!database::_db_storage->get_is_graph_loaded())
+    {
+        render_nodes();
+        render_edges();
+    }
+
     ImNodes::EndNodeEditor();
 }
 

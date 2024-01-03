@@ -12,7 +12,7 @@
 
 namespace graphquery::database::analytic
 {
-    class CRelax final
+    class CRelax
     {
       public:
         /**********************************************
@@ -20,6 +20,6 @@ namespace graphquery::database::analytic
         *         over each edge.
         ** @return void
         ***********************************************/
-        void relax(int64_t src, int64_t dst) noexcept;
+        virtual void relax(uint64_t src, uint64_t dst) noexcept = 0;
     };
 } // namespace graphquery::database::analytic

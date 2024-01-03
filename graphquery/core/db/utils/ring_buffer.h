@@ -26,25 +26,26 @@ namespace graphquery::database::utils
             std::array<ElemType, BufferSize> * data;
         };
 
-        CRingBuffer();
+        constexpr CRingBuffer();
+
         void clear() noexcept;
         void add(const ElemType & elem) noexcept;
         ElemType operator[](std::size_t i) const noexcept;
-        std::size_t get_head() const noexcept;
-        std::size_t get_current_capacity() const noexcept;
-        std::size_t get_buffer_size() const noexcept;
+        [[nodiscard]] std::size_t get_head() const noexcept;
+        [[nodiscard]] std::size_t get_current_capacity() const noexcept;
+        [[nodiscard]] std::size_t get_buffer_size() const noexcept;
 
       private:
         std::size_t m_tail          = 0;
         std::size_t m_curr_capacity = 0;
-        std::unique_ptr<std::array<ElemType, BufferSize>> m_data;
+        std::array<ElemType, BufferSize> m_data;
     };
 
     //~ public:
     template<typename ElemType, size_t BufferSize>
-    CRingBuffer<ElemType, BufferSize>::CRingBuffer()
+    constexpr CRingBuffer<ElemType, BufferSize>::CRingBuffer()
     {
-        m_data = std::make_unique<std::array<ElemType, BufferSize>>();
+        m_data = std::array<ElemType, BufferSize>();
     }
 
     template<typename ElemType, size_t BufferSize>
@@ -56,7 +57,7 @@ namespace graphquery::database::utils
     template<typename ElemType, size_t BufferSize>
     void CRingBuffer<ElemType, BufferSize>::add(const ElemType & elem) noexcept
     {
-        m_data->operator[](m_tail) = elem;
+        m_data.operator[](m_tail) = elem;
         m_tail                     = (m_tail + 1) % BufferSize;
         m_curr_capacity            = (m_curr_capacity < BufferSize) ? m_curr_capacity + 1 : BufferSize;
     }
@@ -65,7 +66,7 @@ namespace graphquery::database::utils
     ElemType CRingBuffer<ElemType, BufferSize>::operator[](std::size_t i) const noexcept
     {
         assert(0 <= i && BufferSize >= i && "Accessed element is out of range");
-        return m_data->operator[](i);
+        return m_data.operator[](i);
     }
 
     template<typename ElemType, size_t BufferSize>

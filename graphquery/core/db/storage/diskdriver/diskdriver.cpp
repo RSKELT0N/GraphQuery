@@ -11,20 +11,22 @@
 //~ static symbol link
 std::shared_ptr<graphquery::logger::CLogSystem> graphquery::database::storage::CDiskDriver::m_log_system;
 
-graphquery::database::storage::CDiskDriver::CDiskDriver(const int file_mode, int map_mode_prot, int map_mode_flags)
+graphquery::database::storage::CDiskDriver::
+CDiskDriver(const int file_mode, const int map_mode_prot, const int map_mode_flags)
 {
-    this->m_log_system            = logger::CLogSystem::get_instance();
+    m_log_system                  = logger::CLogSystem::get_instance();
     this->m_file_mode             = file_mode;
     this->m_map_mode_prot         = map_mode_prot;
     this->m_map_mode_flags        = map_mode_flags;
     this->m_current_bytes_written = 0;
 }
 
-graphquery::database::storage::CDiskDriver::~CDiskDriver()
+graphquery::database::storage::CDiskDriver::~
+CDiskDriver()
 {
     if (this->m_initialised)
     {
-        sync();
+        (void) sync();
         close();
         this->m_initialised = false;
     }
@@ -249,7 +251,6 @@ graphquery::database::storage::CDiskDriver::close()
         assert(unmap() == SRet_t::VALID);
         close_fd();
         this->m_initialised = false;
-        this->m_path.remove_filename();
         return SRet_t::VALID;
     }
 
@@ -262,7 +263,7 @@ graphquery::database::storage::CDiskDriver::read(void * ptr, const int64_t size,
 {
     if (this->m_initialised)
     {
-        if (m_fd_info.st_size < (size * amt + m_seek_offset))
+        if (m_fd_info.st_size < static_cast<int64_t>((size * amt + m_seek_offset)))
             resize(m_fd_info.st_size * 2);
 
         memcpy(ptr, &this->m_memory_mapped_file[this->m_seek_offset], size * amt);
@@ -281,9 +282,9 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
     if (this->m_initialised)
     {
         if (m_current_bytes_written >= MAX_WRITE_SIZE)
-            sync();
+            (void) sync();
 
-        if (m_fd_info.st_size < (size * amt + m_seek_offset))
+        if (m_fd_info.st_size < static_cast<int64_t>((size * amt + m_seek_offset)))
             resize(m_fd_info.st_size * 2);
 
         memcpy(&this->m_memory_mapped_file[this->m_seek_offset], ptr, size * amt);
@@ -299,7 +300,7 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
 }
 
 char
-graphquery::database::storage::CDiskDriver::operator[](const int64_t idx)
+graphquery::database::storage::CDiskDriver::operator[](const int64_t idx) const noexcept
 {
     char ret = {};
     if (this->m_initialised)
@@ -307,7 +308,7 @@ graphquery::database::storage::CDiskDriver::operator[](const int64_t idx)
         assert(idx >= 0L && idx <= this->m_fd_info.st_size);
 
         if (m_current_bytes_written >= MAX_WRITE_SIZE)
-            sync();
+            (void) sync();
 
         ret = this->m_memory_mapped_file[idx];
         m_current_bytes_written += 1;
@@ -319,11 +320,11 @@ graphquery::database::storage::CDiskDriver::operator[](const int64_t idx)
 }
 
 graphquery::database::storage::CDiskDriver::SRet_t
-graphquery::database::storage::CDiskDriver::seek(int64_t offset)
+graphquery::database::storage::CDiskDriver::seek(const uint64_t offset)
 {
     if (this->m_initialised)
     {
-        assert(offset >= 0L && offset <= this->m_fd_info.st_size);
+        assert(offset >= 0UL && static_cast<int64_t>(offset) <= this->m_fd_info.st_size);
         this->m_seek_offset = offset;
     }
     else
@@ -332,7 +333,7 @@ graphquery::database::storage::CDiskDriver::seek(int64_t offset)
     return SRet_t::VALID;
 }
 
-int64_t
+uint64_t
 graphquery::database::storage::CDiskDriver::get_seek_offset() const noexcept
 {
     return this->m_seek_offset;

@@ -154,7 +154,11 @@ graphquery::database::storage::CDBStorage::get_db_info() const noexcept
     static const auto time           = static_cast<time_t>(m_db_superblock.timestamp);
     static const auto time_formatted = ctime(&time);
 
-    return fmt::format("Version: {}\nDate Created: {}CheckSum: {}\nGraphs: {}\n", m_db_superblock.version, time_formatted, m_db_superblock.magic_check_sum, m_db_superblock.db_info.graph_table_size / m_db_superblock.db_info.graph_entry_size);
+    return fmt::format("Version: {}\nDate Created: {}CheckSum: {}\nGraphs: {}\n",
+                       m_db_superblock.version,
+                       time_formatted,
+                       m_db_superblock.magic_check_sum,
+                       m_db_superblock.db_info.graph_table_size / m_db_superblock.db_info.graph_entry_size);
 }
 
 graphquery::database::storage::CDBStorage::SGraph_Entry_t

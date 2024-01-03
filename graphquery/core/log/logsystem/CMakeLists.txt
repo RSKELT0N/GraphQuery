@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.9)
 
 add_library(
         logsystem
-        STATIC)
+        SHARED)
 
 target_include_directories(
         logsystem

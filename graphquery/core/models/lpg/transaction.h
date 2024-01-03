@@ -28,19 +28,19 @@ namespace graphquery::database::storage
 
         struct SHeaderBlock
         {
-            int32_t transaction_c;
-            int64_t eof_addr;
+            uint32_t transaction_c;
+            uint64_t eof_addr;
         } __attribute__((packed));
 
         struct SVertexTransaction
         {
             ETransactionType type            = ETransactionType::vertex;
             uint8_t remove                   = {};
-            int64_t optional_id              = {};
+            uint64_t optional_id             = {};
             char label[CFG_LPG_LABEL_LENGTH] = {};
-            size_t property_c                = {};
+            uint16_t property_c              = {};
 
-            SVertexTransaction(const int64_t optional_id = -1, const uint8_t remove = 0, const std::string_view label = "", const size_t property_c = 0)
+            explicit SVertexTransaction(const uint64_t optional_id = -1, const uint8_t remove = 0, const std::string_view label = "", const uint16_t property_c = 0)
             {
                 this->remove      = remove;
                 this->optional_id = optional_id;
@@ -53,12 +53,13 @@ namespace graphquery::database::storage
         {
             ETransactionType type            = ETransactionType::edge;
             uint8_t remove                   = {};
-            int64_t src                      = {};
-            int64_t dst                      = {};
+            uint64_t src                     = {};
+            uint64_t dst                     = {};
             char label[CFG_LPG_LABEL_LENGTH] = {};
-            size_t property_c                = {};
+            uint16_t property_c              = {};
 
-            SEdgeTransaction(const int64_t src = 0, const int64_t dst = 0, const uint8_t remove = 0, const std::string_view label = "", const size_t property_c = 0)
+            explicit
+            SEdgeTransaction(const uint64_t src = 0, const uint64_t dst = 0, const uint8_t remove = 0, const std::string_view label = "", const uint16_t property_c = 0)
             {
                 this->remove = remove;
                 this->src    = src;
@@ -76,11 +77,11 @@ namespace graphquery::database::storage
         void init() noexcept;
         void reset() noexcept;
         void handle_transactions() noexcept;
-        void commit_rm_vertex(int64_t id) noexcept;
-        void commit_rm_edge(int64_t src, int64_t dst) noexcept;
+        void commit_rm_vertex(uint64_t id) noexcept;
+        void commit_rm_edge(uint64_t src, uint64_t dst) noexcept;
 
-        void commit_vertex(std::string_view label, const std::vector<std::pair<std::string, std::string>> & props, int64_t optional_id = -1) noexcept;
-        void commit_edge(int64_t src, int64_t dst, std::string_view label, const std::vector<std::pair<std::string, std::string>> & props) noexcept;
+        void commit_vertex(std::string_view label, const std::vector<std::pair<std::string, std::string>> & props, uint64_t optional_id = -1) noexcept;
+        void commit_edge(uint64_t src, uint64_t dst, std::string_view label, const std::vector<std::pair<std::string, std::string>> & props) noexcept;
 
       private:
         void load();

@@ -20,13 +20,9 @@ namespace
     {
         while (true)
         {
-            if (graphquery::database::_db_storage->get_is_db_loaded() && graphquery::database::_db_storage->get_is_graph_loaded())
-            {
+            if (graphquery::database::_db_storage->get_is_graph_loaded())
                 graphquery::database::_db_storage->get_graph()->save_graph();
-                graphquery::database::_log_system->debug("Graph has been saved");
-            }
 
-            graphquery::database::_log_system->debug(fmt::format("System heartbeat sleeping for {} seconds..", graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL.count()));
             std::this_thread::sleep_for(graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL);
         }
     }
@@ -46,11 +42,11 @@ namespace graphquery::database
     EStatus initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept
     {
         signal(SIGINT | SIGTERM,
-               [](int param) -> void
+               [](const int param) -> void
                {
                    _db_storage->close();
                    _interface->clean_up();
-                   exit(0);
+                   exit(param);
                });
 
         const EStatus status = Initialise_Logging();

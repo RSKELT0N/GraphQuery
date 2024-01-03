@@ -6,7 +6,10 @@
 #include <algorithm>
 #include <utility>
 
-graphquery::interact::CFrameGraphDB::CFrameGraphDB(const bool & is_db_loaded, const bool & is_graph_loaded, const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
+graphquery::interact::CFrameGraphDB::
+CFrameGraphDB(const bool & is_db_loaded,
+              const bool & is_graph_loaded,
+              const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
     m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph_table(graph_table)
 {
 }
@@ -46,7 +49,15 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     ImGui::Text("Database Info");
     ImGui::Separator();
     ImGui::Text("%s", database::_db_storage->get_db_info().c_str());
-    ImGui::NewLine();
+
+    if (m_is_graph_loaded)
+    {
+        if (ImGui::Button("Add Vertex"))
+            database::_db_storage->get_graph()->add_vertex("PERSON", {});
+
+        if (ImGui::Button("Add Edge"))
+            database::_db_storage->get_graph()->add_edge(0, 1, "PERSON", {});
+    }
 }
 
 void

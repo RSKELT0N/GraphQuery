@@ -10,7 +10,6 @@ namespace graphquery::interact
         CFrameDock(bool &);
         ~CFrameDock() override;
 
-      public:
         void render_frame() noexcept override;
 
       private:

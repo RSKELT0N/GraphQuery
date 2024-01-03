@@ -31,7 +31,7 @@ namespace graphquery::database::storage
         {
             if (!CDiskDriver::check_if_folder_exists(path.generic_string() + fmt::format("/{}", graph)))
             {
-                CDiskDriver::create_folder(path, graph);
+                (void) CDiskDriver::create_folder(path, graph);
                 create_graph(path / graph, graph);
             }
             else
@@ -41,7 +41,7 @@ namespace graphquery::database::storage
         friend class CDBStorage;
 
         virtual void close() noexcept                                                          = 0;
-        virtual void relax(analytic::CRelax relax)                                             = 0;
+        virtual void relax(analytic::CRelax * relax)                                           = 0;
         virtual void load_graph(std::filesystem::path path, std::string_view graph) noexcept   = 0;
         virtual void create_graph(std::filesystem::path path, std::string_view graph) noexcept = 0;
         virtual void save_graph() noexcept                                                     = 0;

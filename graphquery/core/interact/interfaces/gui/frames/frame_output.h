@@ -8,7 +8,7 @@
 
 namespace graphquery::interact
 {
-    class CFrameLog : public IFrame, public graphquery::logger::ILog
+    class CFrameLog final : public IFrame, public logger::ILog
     {
       public:
         CFrameLog();
@@ -23,14 +23,19 @@ namespace graphquery::interact
         void error(std::string_view) noexcept override;
 
       private:
-        void render_clear_button() noexcept;
-        void render_log_box() noexcept;
+        enum EImGuiColour : ImU32
+        {
+            green  = IM_COL32(0, 255, 0, 255),
+            red    = IM_COL32(255, 0, 0, 255),
+            yellow = IM_COL32(255, 255, 0, 255),
+            blue   = IM_COL32(0, 220, 255, 255),
+        };
+
+        void render_log_box() const noexcept;
         void render_log_output() const noexcept;
         [[nodiscard]] static bool is_scroll_at_end() noexcept;
-        [[nodiscard]] ImVec4 colourise() const noexcept;
 
-      private:
         static constexpr std::size_t RING_BUFFER = 1024;
-        database::utils::CRingBuffer<std::string, RING_BUFFER> m_buffer;
+        database::utils::CRingBuffer<std::pair<ImU32, std::string>, RING_BUFFER> m_buffer;
     };
 } // namespace graphquery::interact

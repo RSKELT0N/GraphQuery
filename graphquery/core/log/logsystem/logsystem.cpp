@@ -18,9 +18,8 @@ std::shared_ptr<graphquery::logger::CLogSystem>
 graphquery::logger::CLogSystem::get_instance() noexcept
 {
     if (!m_log_system)
-    {
         m_log_system = std::shared_ptr<CLogSystem>(new CLogSystem());
-    }
+
     return m_log_system;
 }
 
