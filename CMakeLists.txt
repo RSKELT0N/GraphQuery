@@ -40,6 +40,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   if(CMAKE_TESTING_ENABLED)
     enable_testing()
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/tests)
+    message("-- ${PROJECT_NAME} [${PROJECT_VERSION}] test files has been defined")
   endif()
 
   message("-- ${PROJECT_NAME} [${PROJECT_VERSION}] build files has been defined")

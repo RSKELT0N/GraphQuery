@@ -10,6 +10,7 @@
 
 #include "log.h"
 
+#include "db/storage/config.h"
 #include "fmt/format.h"
 
 #include <memory>
@@ -18,7 +19,7 @@
 #include <string_view>
 #include <vector>
 
-#ifndef NDEBUG
+#ifdef DEBUG
 #define LOG_SYSTEM_LEVEL debug
 #else
 #define LOG_SYSTEM_LEVEL info

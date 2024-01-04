@@ -88,11 +88,11 @@ graphquery::database::storage::CTransaction::commit_rm_vertex(const uint64_t id)
 }
 
 void
-graphquery::database::storage::CTransaction::commit_rm_edge(const uint64_t src, const uint64_t dst) noexcept
+graphquery::database::storage::CTransaction::commit_rm_edge(const uint64_t src, const uint64_t dst, const std::string_view label) noexcept
 {
     m_transaction_file.seek(m_header_block.eof_addr);
 
-    const SEdgeTransaction to_write(src, dst, 1);
+    const SEdgeTransaction to_write(src, dst, 1, label);
     m_transaction_file.write(&to_write, sizeof(SEdgeTransaction), 1);
 
     m_header_block.eof_addr = m_transaction_file.get_seek_offset();

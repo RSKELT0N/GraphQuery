@@ -11,7 +11,7 @@ target_include_directories(
 
 target_sources(
         diskdriver
-        PRIVATE
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/diskdriver.cpp)
 
 target_compile_options(

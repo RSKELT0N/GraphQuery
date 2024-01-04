@@ -50,6 +50,7 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     ImGui::Separator();
     ImGui::Text("%s", database::_db_storage->get_db_info().c_str());
 
+#ifdef DEBUG
     if (m_is_graph_loaded)
     {
         if (ImGui::Button("Add Vertex"))
@@ -57,7 +58,14 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 
         if (ImGui::Button("Add Edge"))
             database::_db_storage->get_graph()->add_edge(0, 1, "PERSON", {});
+
+        if (ImGui::Button("Remove Vertex"))
+            database::_db_storage->get_graph()->rm_vertex(1);
+
+        if (ImGui::Button("Remove Edge"))
+            database::_db_storage->get_graph()->rm_edge(0, 1, "PERSON");
     }
+#endif
 }
 
 void

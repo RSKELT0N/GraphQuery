@@ -9,6 +9,10 @@
 
 #pragma once
 
+#ifndef NDEBUG
+#define DEBUG
+#endif
+
 #include <cstdint>
 #include <chrono>
 

@@ -11,7 +11,6 @@
 #pragma once
 
 #include "lpg.h"
-// #include "db/system.h"
 
 #include <filesystem>
 
@@ -78,7 +77,7 @@ namespace graphquery::database::storage
         void reset() noexcept;
         void handle_transactions() noexcept;
         void commit_rm_vertex(uint64_t id) noexcept;
-        void commit_rm_edge(uint64_t src, uint64_t dst) noexcept;
+        void commit_rm_edge(uint64_t src, uint64_t dst, std::string_view label = "") noexcept;
 
         void commit_vertex(std::string_view label, const std::vector<std::pair<std::string, std::string>> & props, uint64_t optional_id = -1) noexcept;
         void commit_edge(uint64_t src, uint64_t dst, std::string_view label, const std::vector<std::pair<std::string, std::string>> & props) noexcept;

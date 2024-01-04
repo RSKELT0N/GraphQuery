@@ -5,7 +5,7 @@ set(SUBMODULE_TESTS tests)
 set(TESTS_FOLDER unit_tests)
 
 # Retrieve source files, under SOURCE_FOLDER
-file(GLOB TEST_SOURCES
+file(GLOB_RECURSE TEST_SOURCES
         main.cpp
         ${TESTS_FOLDER}/*.cpp)
 
