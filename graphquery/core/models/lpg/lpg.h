@@ -23,8 +23,9 @@
 
 #include <optional>
 #include <algorithm>
-#include <map>
 #include <unordered_map>
+#include <semaphore>
+#include <set>
 
 namespace graphquery::database::storage
 {
@@ -56,11 +57,25 @@ namespace graphquery::database::storage
             uint16_t pos          = {};
         };
 
+        struct SPropertyContainer
+        {
+            int64_t ref_id                    = {};
+            uint16_t property_c               = {};
+            std::vector<SProperty> properties = {};
+        };
+
+        struct SEdgeContainer
+        {
+            SEdge metadata                  = {};
+            SPropertyContainer * properties = nullptr;
+        };
+
         struct SVertexContainer
         {
-            SVertex vertex_metadata                        = {};
-            std::vector<SVertexEdgeLabelEntry> edge_labels = {};
-            std::vector<LabelGroup<SEdge>> labelled_edges  = {};
+            SVertex metadata                                       = {};
+            std::vector<SVertexEdgeLabelEntry> edge_labels         = {};
+            std::vector<LabelGroup<SEdgeContainer>> labelled_edges = {};
+            SPropertyContainer * properties                        = nullptr;
         };
 
       public:
@@ -75,8 +90,8 @@ namespace graphquery::database::storage
         void rm_edge(uint64_t src, uint64_t dst, std::string_view) override;
 
         [[nodiscard]] std::string_view get_name() const noexcept override;
-        [[nodiscard]] inline const uint64_t & get_num_edges() const override;
-        [[nodiscard]] inline const uint64_t & get_num_vertices() const override;
+        [[nodiscard]] inline uint64_t get_num_edges() const override;
+        [[nodiscard]] inline uint64_t get_num_vertices() const override;
         [[nodiscard]] std::optional<SVertex> get_vertex(uint64_t vertex_id) override;
         [[nodiscard]] std::vector<SEdge> get_edge(uint64_t src, uint64_t dst) override;
         [[nodiscard]] std::optional<SEdge> get_edge(uint64_t src, uint64_t dst, std::string_view) override;
@@ -87,7 +102,7 @@ namespace graphquery::database::storage
         void create_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void update_edge(uint64_t edge_id, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
         void update_vertex(uint64_t vertex_id, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
-        void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
+        void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
         void add_vertex(uint64_t id, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
         void add_edge(uint64_t src, uint64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
 
@@ -112,9 +127,14 @@ namespace graphquery::database::storage
         [[nodiscard]] const SLabel & get_edge_label(std::string_view) noexcept;
         [[nodiscard]] const SLabel & get_vertex_label(std::string_view) noexcept;
         [[nodiscard]] const SVertexEdgeLabelEntry & get_vertex_edge_label(const SVertexContainer &, uint16_t) noexcept;
+        [[nodiscard]] uint64_t get_unassigned_vertex_id(size_t label_idx) const noexcept;
+        [[nodiscard]] uint64_t get_unassigned_vertex_label_id() const noexcept;
+        [[nodiscard]] uint64_t get_unassigned_edge_label_id() const noexcept;
+        [[nodiscard]] std::optional<std::vector<SVertexContainer>::iterator> get_vertex_by_id(uint64_t id) noexcept;
 
+        void inline access_preamble() noexcept;
         void remove_marked_vertices() noexcept;
-        void remove_marked_labels() noexcept;
+        void remove_unused_labels() noexcept;
 
         void define_graph_header() noexcept;
         void define_vertex_label_map() noexcept;
@@ -124,50 +144,49 @@ namespace graphquery::database::storage
         void store_vertex_labels() noexcept;
         void store_edge_labels() noexcept;
         void store_labelled_vertices() noexcept;
+        void store_all_edge_properties() noexcept;
 
         void read_graph_header() noexcept;
         void read_vertex_labels() noexcept;
         void read_edge_labels() noexcept;
         void read_labelled_vertices() noexcept;
+        void read_all_edge_properties() noexcept;
 
-        [[nodiscard]] uint64_t get_unassigned_vertex_id(size_t label_idx) const noexcept;
-        [[nodiscard]] uint64_t get_unassigned_vertex_label_id() const noexcept;
-        [[nodiscard]] uint64_t get_unassigned_edge_label_id() const noexcept;
-        [[nodiscard]] std::optional<std::vector<SVertexContainer>::iterator> get_vertex_by_id(uint64_t id) noexcept;
+        std::vector<SProperty> transform_properties(const std::vector<std::pair<std::string, std::string>> &) const noexcept;
 
-        std::mutex m_update;
         bool m_flush_needed;
         std::string m_graph_name;
         std::shared_ptr<logger::CLogSystem> m_log_system;
+        std::binary_semaphore m_save_lock;
 
         //~ Disk/file drivers for graph mapping from disk to memory
         CDiskDriver m_master_file;
         CDiskDriver m_connections_file;
-        SGraphMetaData m_graph_metadata = {};
+        CDiskDriver m_vertices_prop_file;
+        CDiskDriver m_edges_prop_file;
 
         //~ Graph data in-memory
+        SGraphMetaData m_graph_metadata = {};
         std::vector<SLabel> m_vertex_labels;
         std::vector<SLabel> m_edge_labels;
         LabelGroup<std::vector<SVertexContainer>> m_labelled_vertices;
-        LabelGroup<std::vector<SProperty>> m_vertex_properties;
-        LabelGroup<std::vector<SProperty>> m_edge_properties;
+        LabelGroup<SPropertyContainer> m_all_vertex_properties;
+        std::vector<SPropertyContainer> m_all_edge_properties;
 
         //~ Indexing structures
-        std::unordered_map<uint64_t, size_t> m_vertex_label_map;
-        std::unordered_map<uint16_t, size_t> m_edge_label_map;
-        LabelGroup<std::unordered_map<uint64_t, size_t>> m_vertex_map;
+        std::unordered_map<uint64_t, uint64_t> m_vertex_label_map;
+        std::unordered_map<uint16_t, uint64_t> m_edge_label_map;
+        LabelGroup<std::unordered_map<uint64_t, uint64_t>> m_vertex_map;
 
-        std::vector<std::vector<SVertexContainer>::iterator> m_marked_vertices;
-        std::vector<std::vector<SLabel>::iterator> m_marked_vertex_labels;
-        std::vector<std::vector<SLabel>::iterator> m_marked_edge_labels;
+        std::set<std::vector<SVertexContainer>::iterator> m_marked_vertices;
 
-        static constexpr const char * MASTER_FILE_NAME      = "master";
-        static constexpr const char * CONNECTIONS_FILE_NAME = "connections";
+        static constexpr const char * MASTER_FILE_NAME            = "master";
+        static constexpr const char * CONNECTIONS_FILE_NAME       = "connections";
+        static constexpr const char * VERTEX_PROPERTIES_FILE_NAME = "vertex_properties";
+        static constexpr const char * EDGE_PROPERTIES_FILE_NAME   = "edge_properties";
 
-        static constexpr int16_t MASTER_FILE_SIZE                = KB(1);
-        static constexpr int16_t CONNECTIONS_FILE_SIZE           = KB(1);
-        static constexpr uint64_t MASTER_START_ADDR              = 0x00000000;
-        static constexpr uint64_t CONNECTIONS_START_ADDR         = 0x00000000;
-        static constexpr int64_t MASTER_VERTEX_LABELS_START_ADDR = MASTER_START_ADDR + sizeof(SGraphMetaData);
+        static constexpr uint16_t DEFAULT_FILE_SIZE               = KB(1);
+        static constexpr uint64_t DEFAULT_FILE_START_ADDR         = 0x00000000;
+        static constexpr uint64_t MASTER_VERTEX_LABELS_START_ADDR = DEFAULT_FILE_START_ADDR + sizeof(SGraphMetaData);
     };
 } // namespace graphquery::database::storage

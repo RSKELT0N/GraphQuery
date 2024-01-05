@@ -18,7 +18,6 @@ namespace graphquery::database::storage
 {
     class CTransaction final
     {
-      private:
         enum class ETransactionType : uint8_t
         {
             vertex,

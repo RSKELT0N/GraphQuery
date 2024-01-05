@@ -18,7 +18,6 @@ CDiskDriver(const int file_mode, const int map_mode_prot, const int map_mode_fla
     this->m_file_mode             = file_mode;
     this->m_map_mode_prot         = map_mode_prot;
     this->m_map_mode_flags        = map_mode_flags;
-    this->m_current_bytes_written = 0;
 }
 
 graphquery::database::storage::CDiskDriver::~
@@ -235,7 +234,6 @@ graphquery::database::storage::CDiskDriver::sync() const noexcept
             return SRet_t::ERROR;
         }
 
-        m_current_bytes_written ^= m_current_bytes_written;
         return SRet_t::VALID;
     }
 
@@ -281,15 +279,10 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
 {
     if (this->m_initialised)
     {
-        if (m_current_bytes_written >= MAX_WRITE_SIZE)
-            (void) sync();
-
         if (m_fd_info.st_size < static_cast<int64_t>((size * amt + m_seek_offset)))
             resize(m_fd_info.st_size * 2);
 
         memcpy(&this->m_memory_mapped_file[this->m_seek_offset], ptr, size * amt);
-        this->m_current_bytes_written += size * amt;
-
         if (update)
             this->m_seek_offset += size * amt;
     }
@@ -307,11 +300,7 @@ graphquery::database::storage::CDiskDriver::operator[](const int64_t idx) const 
     {
         assert(idx >= 0L && idx <= this->m_fd_info.st_size);
 
-        if (m_current_bytes_written >= MAX_WRITE_SIZE)
-            (void) sync();
-
         ret = this->m_memory_mapped_file[idx];
-        m_current_bytes_written += 1;
     }
     else
         m_log_system->warning("File has not been initialised");
