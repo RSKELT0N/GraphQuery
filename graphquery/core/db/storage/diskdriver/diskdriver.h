@@ -73,8 +73,5 @@ namespace graphquery::database::storage
         uint64_t m_seek_offset       = {}; //~ Current offset within the memory map.
         char * m_memory_mapped_file  = {}; //~ buffer address of the memory mapped file.
         std::filesystem::path m_path = {}; //~ Set path of the current context.
-
-        mutable uint64_t m_current_bytes_written;         //~ Current amount of bytes written.
-        static constexpr uint64_t MAX_WRITE_SIZE = KB(4); //~ max size to write to buffer.
     };
 } // namespace graphquery::database::storage

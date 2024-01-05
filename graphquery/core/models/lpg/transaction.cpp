@@ -84,7 +84,6 @@ graphquery::database::storage::CTransaction::commit_rm_vertex(const uint64_t id)
     m_header_block.eof_addr = m_transaction_file.get_seek_offset();
     m_header_block.transaction_c++;
     store_transaction_header();
-    (void) m_transaction_file.sync();
 }
 
 void
@@ -98,7 +97,6 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const uint64_t src, 
     m_header_block.eof_addr = m_transaction_file.get_seek_offset();
     m_header_block.transaction_c++;
     store_transaction_header();
-    (void) m_transaction_file.sync();
 }
 
 void
@@ -120,7 +118,6 @@ graphquery::database::storage::CTransaction::commit_vertex(const std::string_vie
     m_header_block.eof_addr = m_transaction_file.get_seek_offset();
     m_header_block.transaction_c++;
     store_transaction_header();
-    (void) m_transaction_file.sync();
 }
 
 void
@@ -143,7 +140,6 @@ graphquery::database::storage::CTransaction::commit_edge(const uint64_t src,
     m_header_block.eof_addr = m_transaction_file.get_seek_offset();
     m_header_block.transaction_c++;
     store_transaction_header();
-    (void) m_transaction_file.sync();
 }
 
 void

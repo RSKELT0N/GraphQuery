@@ -18,7 +18,7 @@ namespace
 
     void heartbeat() noexcept
     {
-        while (true)
+        while (false)
         {
             if (graphquery::database::_db_storage->get_is_graph_loaded())
                 graphquery::database::_db_storage->get_graph()->save_graph();

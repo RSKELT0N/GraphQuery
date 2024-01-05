@@ -7,7 +7,6 @@
 #include "interact/interfaces/gui/frames/frame_menubar.h"
 #include "interact/interfaces/gui/frames/frame_output.h"
 
-// #include "GL/glew.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "GLFW/glfw3.h"

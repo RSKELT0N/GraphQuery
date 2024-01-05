@@ -2,7 +2,7 @@ name: Build & Compile on Multiple platforms
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "master", "dev" ]
 
 jobs:
   build-compile-linux:
