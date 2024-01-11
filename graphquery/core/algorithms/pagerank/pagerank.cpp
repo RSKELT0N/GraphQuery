@@ -10,7 +10,7 @@ namespace
     class CRelaxPR final : public graphquery::database::analytic::IRelax
     {
       public:
-        CRelaxPR(const double _d, std::shared_ptr<int[]> _outdeg, std::shared_ptr<double[]> _x, std::shared_ptr<double[]> _y)
+        CRelaxPR(const double _d, std::shared_ptr<uint32_t[]> _outdeg, std::shared_ptr<double[]> _x, std::shared_ptr<double[]> _y)
         {
             this->d      = _d;
             this->outdeg = std::move(_outdeg);
@@ -27,13 +27,13 @@ namespace
         }
 
         double d;
-        std::shared_ptr<int[]> outdeg;
+        std::shared_ptr<uint32_t[]> outdeg;
         std::shared_ptr<double[]> x;
         std::shared_ptr<double[]> y;
     };
 } // namespace
 
-graphquery::database::analytic::CGraphAlgorithmPageRank::CGraphAlgorithmPageRank()
+graphquery::database::analytic::CGraphAlgorithmPageRank::CGraphAlgorithmPageRank(std::string name): IGraphAlgorithm(std::move(name))
 {
     this->m_log_system = logger::CLogSystem::get_instance();
 }
@@ -59,7 +59,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(std::shared_ptr
         y[i]        = 0;
     }
 
-    auto outdeg = std::make_shared<int[]>(n);
+    auto outdeg = std::make_shared<uint32_t[]>(n);
     graph_model->calc_outdegree(outdeg);
 
     std::unique_ptr<IRelax> PRrelax = std::make_unique<CRelaxPR>(d, outdeg, x, y);
@@ -136,6 +136,6 @@ extern "C"
 {
     LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm)
     {
-        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmPageRank();
+        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmPageRank("PageRank");
     }
 }

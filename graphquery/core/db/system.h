@@ -12,6 +12,7 @@
 #include "db/storage/dbstorage.h"
 #include "interact/interfaces/gui/interact_gui.h"
 #include "log/logsystem/logsystem.h"
+#include "db/analytic/analytic.h"
 
 #include <cstdint>
 
@@ -41,4 +42,6 @@ namespace graphquery::database
     extern std::unique_ptr<interact::IInteract> _interface;
     //~ Instance of the graph data model.
     extern std::unique_ptr<storage::CDBStorage> _db_storage;
+    //~ Instance of the graph anayltic engine.
+    extern std::unique_ptr<analytic::CAnalyticEngine> _db_analytic;
 } // namespace graphquery::database

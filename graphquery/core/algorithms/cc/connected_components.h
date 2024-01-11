@@ -7,7 +7,7 @@ namespace graphquery::database::analytic
     class CGraphAlgorithmCC final : public IGraphAlgorithm
     {
       public:
-        CGraphAlgorithmCC();
+        explicit CGraphAlgorithmCC(std::string);
         ~CGraphAlgorithmCC() override = default;
 
         [[nodiscard]] double compute(std::shared_ptr<storage::ILPGModel>) noexcept override;

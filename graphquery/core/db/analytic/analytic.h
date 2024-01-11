@@ -16,22 +16,34 @@
 #include <cstdint>
 #include <functional>
 #include <future>
-#include <set>
+#include <unordered_map>
 
 namespace graphquery::database::analytic
 {
     class CAnalyticEngine
     {
       public:
-        CAnalyticEngine();
         ~CAnalyticEngine() = default;
+        explicit CAnalyticEngine(std::shared_ptr<storage::ILPGModel> graph);
 
       private:
         struct SResult
         {
+            SResult()  = default;
             ~SResult() = default;
+
             explicit SResult(const std::function<double()> & func): compute_function(func) { process_function(); }
+
+            SResult(SResult && other) noexcept
+            {
+                this->compute_function = other.compute_function;
+                this->resultant        = std::move(other.resultant);
+                other.compute_function = nullptr;
+                other.resultant        = {};
+            }
+
             [[nodiscard]] inline bool processed() const noexcept { return resultant.valid(); }
+
             [[nodiscard]] inline double get_resultant() noexcept
             {
                 assert(resultant.valid());
@@ -49,12 +61,14 @@ namespace graphquery::database::analytic
             std::function<double()> compute_function;
         };
 
-        void load_libraries() noexcept;
-        void refresh_libraries() noexcept;
-        void process_algorithm(uint8_t idx) noexcept;
+        void load_libraries(bool refresh = true) noexcept;
+        void insert_lib(std::string_view lib_path);
+        void process_algorithm(std::string_view algorithm) noexcept;
 
-        std::unique_ptr<std::vector<SResult>> m_results;
-        std::unique_ptr<std::set<dylib>> m_libs;
-        std::vector<std::unique_ptr<IGraphAlgorithm>> m_algorithms;
+        std::vector<SResult> m_results;
+        std::shared_ptr<storage::ILPGModel> m_graph;
+        std::unordered_map<std::string, std::unique_ptr<IGraphAlgorithm *>> m_algorithms;
+
+        static constexpr const char * LIB_FOLDER_PATH = "lib/algorithms";
     };
 } // namespace graphquery::database::analytic

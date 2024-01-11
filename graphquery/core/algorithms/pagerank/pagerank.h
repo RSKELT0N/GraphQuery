@@ -7,7 +7,7 @@ namespace graphquery::database::analytic
     class CGraphAlgorithmPageRank final : public IGraphAlgorithm
     {
       public:
-        CGraphAlgorithmPageRank();
+        explicit CGraphAlgorithmPageRank(std::string);
         ~CGraphAlgorithmPageRank() override = default;
 
         [[nodiscard]] double compute(std::shared_ptr<storage::ILPGModel>) noexcept override;

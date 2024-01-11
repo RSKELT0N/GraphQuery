@@ -24,7 +24,7 @@ namespace graphquery::database::storage
     class ILPGModel : public IMemoryModel
     {
       public:
-        ILPGModel()          = default;
+        ILPGModel()           = default;
         ~ILPGModel() override = default;
 
         struct SLabel
@@ -36,8 +36,8 @@ namespace graphquery::database::storage
 
         struct SProperty
         {
-            char key[CFG_LPG_PROPERTY_KEY_LENGTH]     = {};
-            char value[CFG_LPG_PROPERTY_VALUE_LENGTH] = {};
+            char key[CFG_LPG_PROPERTY_KEY_LENGTH]     = {0};
+            char value[CFG_LPG_PROPERTY_VALUE_LENGTH] = {0};
 
             SProperty() = default;
 
@@ -50,8 +50,8 @@ namespace graphquery::database::storage
 
         struct SEdge
         {
-            uint64_t dst        = {};
-            uint16_t label_id   = {};
+            uint64_t dst      = {};
+            uint16_t label_id = {};
         };
 
         struct SVertex
@@ -70,14 +70,14 @@ namespace graphquery::database::storage
         virtual std::vector<SVertex> get_vertices_by_label(std::string_view label_id)       = 0;
         virtual std::vector<SVertex> get_edges_by_label(std::string_view label_id)          = 0;
 
-        virtual void rm_vertex(uint64_t vertex_id)                                                                                                         = 0;
-        virtual void rm_edge(uint64_t src, uint64_t dst)                                                                                                   = 0;
-        virtual void rm_edge(uint64_t src, uint64_t dst, std::string_view)                                                                                 = 0;
-        virtual void update_edge(uint64_t edge_id, const std::initializer_list<std::pair<std::string, std::string>> & prop)                                = 0;
-        virtual void update_vertex(uint64_t vertex_id, const std::initializer_list<std::pair<std::string, std::string>> & prop)                            = 0;
-        virtual void add_vertex(uint64_t id, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop)              = 0;
-        virtual void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop)                           = 0;
-        virtual void add_edge(uint64_t src, uint64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) = 0;
+        virtual void rm_vertex(uint64_t vertex_id)                                                                                                                   = 0;
+        virtual void rm_edge(uint64_t src, uint64_t dst)                                                                                                             = 0;
+        virtual void rm_edge(uint64_t src, uint64_t dst, std::string_view)                                                                                           = 0;
+        virtual void update_edge(uint64_t edge_id, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)                                = 0;
+        virtual void update_vertex(uint64_t vertex_id, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)                            = 0;
+        virtual void add_vertex(uint64_t id, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)              = 0;
+        virtual void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)                           = 0;
+        virtual void add_edge(uint64_t src, uint64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) = 0;
     };
 } // namespace graphquery::database::storage
 
