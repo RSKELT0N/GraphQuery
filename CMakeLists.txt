@@ -35,6 +35,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core/db/storage/diskdriver)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core/log/logsystem)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core/models)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core/algorithms)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core)
 
   if(CMAKE_TESTING_ENABLED)

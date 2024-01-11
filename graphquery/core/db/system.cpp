@@ -36,8 +36,10 @@ namespace graphquery::database
     std::shared_ptr<logger::CLogSystem> _log_system = logger::CLogSystem::get_instance();
     //~ Linked symbol of the interface towards the database.
     std::unique_ptr<interact::IInteract> _interface = std::make_unique<interact::CInteractGUI>();
-    //~ Linked symbol of the interface towards the database.
+    //~ Linked symbol of the db storage.
     std::unique_ptr<storage::CDBStorage> _db_storage = std::make_unique<storage::CDBStorage>();
+    //~ Linked symbol of the analytic engine.
+    std::unique_ptr<analytic::CAnalyticEngine> _db_analytic = std::make_unique<analytic::CAnalyticEngine>(_db_storage->get_graph());
 
     EStatus initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept
     {
