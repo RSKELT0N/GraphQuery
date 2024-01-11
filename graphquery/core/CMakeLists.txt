@@ -8,13 +8,13 @@ file(GLOB_RECURSE
         SOURCES
         main.cpp
         db/*.cpp
+        db/*.h
+        db/*.hpp
         interact/*.cpp
-        log/loggers/*.cpp
-        db/utils/ring_buffer.h)
+        log/loggers/*.cpp)
 
 # Set source files to compile for generating executable
-add_executable(${EXECUTABLE_NAME} ${SOURCES}
-        db/analytic/relax.h)
+add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
 target_compile_definitions(${EXECUTABLE_NAME}
         PUBLIC

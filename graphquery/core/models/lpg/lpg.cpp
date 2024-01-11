@@ -552,8 +552,7 @@ graphquery::database::storage::CMemoryModelLPG::add_vertex_entry(const uint64_t 
 }
 
 graphquery::database::storage::CMemoryModelLPG::EActionState
-graphquery::database::storage::CMemoryModelLPG::add_vertex_entry(const std::string_view label,
-                                                                 const std::vector<std::pair<std::string_view, std::string_view>> & prop) noexcept
+graphquery::database::storage::CMemoryModelLPG::add_vertex_entry(const std::string_view label, const std::vector<std::pair<std::string, std::string>> & prop) noexcept
 {
     access_preamble();
     SVertexContainer vertex = {};
@@ -900,7 +899,19 @@ graphquery::database::storage::CMemoryModelLPG::get_edge(uint64_t src, uint64_t 
 }
 
 void
-graphquery::database::storage::CMemoryModelLPG::relax(analytic::CRelax * relax) noexcept
+graphquery::database::storage::CMemoryModelLPG::calc_outdegree(std::shared_ptr<int[]> arr) noexcept
+{
+    for (uint16_t label = 0; label < m_graph_metadata.vertex_label_c; label++)
+    {
+        for (uint64_t vertex = 0; vertex < m_vertex_labels[0].item_c; vertex++)
+        {
+            arr[vertex] = m_labelled_vertices[label][vertex].metadata.neighbour_c;
+        }
+    }
+}
+
+void
+graphquery::database::storage::CMemoryModelLPG::edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept
 {
     //~ Iterating over all vertices and edges once. Multiple for-loops
     //~ due to label separation between vertices and edges.

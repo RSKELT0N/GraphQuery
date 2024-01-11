@@ -16,11 +16,9 @@
 #define LIB_EXPORT
 #endif
 
-#include <vector>
-#include "db/storage/config.h"
-#include "db/storage/diskdriver/diskdriver.h"
 #include "db/storage/graph_model.h"
 
+#include <vector>
 #include <optional>
 #include <algorithm>
 #include <unordered_map>
@@ -59,7 +57,7 @@ namespace graphquery::database::storage
 
         struct SPropertyContainer
         {
-            int64_t ref_id                    = {};
+            uint64_t ref_id                   = {};
             uint16_t property_c               = {};
             std::vector<SProperty> properties = {};
         };
@@ -83,11 +81,13 @@ namespace graphquery::database::storage
         ~CMemoryModelLPG() override = default;
 
         void close() noexcept override;
-        void relax(analytic::CRelax * relax) noexcept override;
+
         void save_graph() noexcept override;
         void rm_vertex(uint64_t vertex_id) override;
         void rm_edge(uint64_t src, uint64_t dst) override;
+        void calc_outdegree(std::shared_ptr<int[]>) noexcept override;
         void rm_edge(uint64_t src, uint64_t dst, std::string_view) override;
+        void edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept override;
 
         [[nodiscard]] std::string_view get_name() const noexcept override;
         [[nodiscard]] inline uint64_t get_num_edges() const override;
@@ -102,7 +102,7 @@ namespace graphquery::database::storage
         void create_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void update_edge(uint64_t edge_id, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
         void update_vertex(uint64_t vertex_id, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
-        void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
+        void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
         void add_vertex(uint64_t id, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
         void add_edge(uint64_t src, uint64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
 

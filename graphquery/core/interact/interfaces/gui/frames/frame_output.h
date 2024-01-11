@@ -1,6 +1,6 @@
 #pragma once
 
-#include "db/utils/ring_buffer.h"
+#include "db/utils/ring_buffer.hpp"
 #include "interact/interfaces/gui/frame.h"
 #include "log/logsystem/logsystem.h"
 

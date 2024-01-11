@@ -1,7 +1,5 @@
 #include "frame_output.h"
 
-#include <algorithm>
-
 #include "imgui_internal.h"
 
 graphquery::interact::CFrameLog::
