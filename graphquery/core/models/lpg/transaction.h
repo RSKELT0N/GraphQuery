@@ -38,7 +38,10 @@ namespace graphquery::database::storage
             char label[CFG_LPG_LABEL_LENGTH] = {};
             uint16_t property_c              = {};
 
-            explicit SVertexTransaction(const uint64_t optional_id = -1, const uint8_t remove = 0, const std::string_view label = "", const uint16_t property_c = 0)
+            explicit SVertexTransaction(const uint64_t optional_id   = ULONG_LONG_MAX,
+                                        const uint8_t remove         = 0,
+                                        const std::string_view label = "",
+                                        const uint16_t property_c    = 0)
             {
                 this->remove      = remove;
                 this->optional_id = optional_id;
@@ -78,8 +81,8 @@ namespace graphquery::database::storage
         void commit_rm_vertex(uint64_t id) noexcept;
         void commit_rm_edge(uint64_t src, uint64_t dst, std::string_view label = "") noexcept;
 
-        void commit_vertex(std::string_view label, const std::vector<std::pair<std::string, std::string>> & props, uint64_t optional_id = -1) noexcept;
-        void commit_edge(uint64_t src, uint64_t dst, std::string_view label, const std::vector<std::pair<std::string, std::string>> & props) noexcept;
+        void commit_vertex(std::string_view label, const std::vector<CMemoryModelLPG::SProperty> & props, uint64_t optional_id = -1) noexcept;
+        void commit_edge(uint64_t src, uint64_t dst, std::string_view label, const std::vector<CMemoryModelLPG::SProperty> & props) noexcept;
 
       private:
         void load();
@@ -88,8 +91,8 @@ namespace graphquery::database::storage
         void store_transaction_header();
         void read_transaction_header();
 
-        void process_vertex_transaction(const SVertexTransaction &, const std::vector<std::pair<std::string, std::string>> & props) const noexcept;
-        void process_edge_transaction(const SEdgeTransaction &, const std::vector<std::pair<std::string, std::string>> & props) const noexcept;
+        void process_vertex_transaction(const SVertexTransaction &, const std::vector<CMemoryModelLPG::SProperty> & props) const noexcept;
+        void process_edge_transaction(const SEdgeTransaction &, const std::vector<CMemoryModelLPG::SProperty> & props) const noexcept;
 
         CMemoryModelLPG * m_lpg;
         CDiskDriver m_transaction_file;

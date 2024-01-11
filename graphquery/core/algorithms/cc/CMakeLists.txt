@@ -17,13 +17,6 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/connected_components.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/connected_components.h)
 
-target_compile_options(
-        cc
-        PUBLIC
-        -Wall
-        -Werror
-        -Wpedantic)
-
 target_link_libraries(
         cc
         PUBLIC

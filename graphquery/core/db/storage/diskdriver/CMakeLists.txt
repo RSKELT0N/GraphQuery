@@ -14,13 +14,6 @@ target_sources(
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/diskdriver.cpp)
 
-target_compile_options(
-        diskdriver
-        PUBLIC
-        -Wall
-        -Werror
-        -Wpedantic)
-
 target_link_libraries(
         diskdriver
         PUBLIC

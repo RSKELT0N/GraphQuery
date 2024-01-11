@@ -3,8 +3,8 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
-graphquery::database::storage::CTransaction::
-CTransaction(const std::filesystem::path & local_path, CMemoryModelLPG * lpg): m_lpg(lpg), m_transaction_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED)
+graphquery::database::storage::CTransaction::CTransaction(const std::filesystem::path & local_path, CMemoryModelLPG * lpg):
+    m_lpg(lpg), m_transaction_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED)
 {
     m_transaction_file.set_path(local_path);
 }
@@ -101,7 +101,7 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const uint64_t src, 
 
 void
 graphquery::database::storage::CTransaction::commit_vertex(const std::string_view label,
-                                                           const std::vector<std::pair<std::string, std::string>> & props,
+                                                           const std::vector<CMemoryModelLPG::SProperty> & props,
                                                            const uint64_t optional_id) noexcept
 {
     m_transaction_file.seek(m_header_block.eof_addr);
@@ -111,8 +111,8 @@ graphquery::database::storage::CTransaction::commit_vertex(const std::string_vie
 
     for (const auto & [key, value] : props)
     {
-        m_transaction_file.write(&key, sizeof(char), CFG_LPG_PROPERTY_KEY_LENGTH);
-        m_transaction_file.write(&value, sizeof(char), CFG_LPG_PROPERTY_VALUE_LENGTH);
+        m_transaction_file.write(&key[0], sizeof(char), CFG_LPG_PROPERTY_KEY_LENGTH);
+        m_transaction_file.write(&value[0], sizeof(char), CFG_LPG_PROPERTY_VALUE_LENGTH);
     }
 
     m_header_block.eof_addr = m_transaction_file.get_seek_offset();
@@ -124,7 +124,7 @@ void
 graphquery::database::storage::CTransaction::commit_edge(const uint64_t src,
                                                          const uint64_t dst,
                                                          const std::string_view label,
-                                                         const std::vector<std::pair<std::string, std::string>> & props) noexcept
+                                                         const std::vector<CMemoryModelLPG::SProperty> & props) noexcept
 {
     m_transaction_file.seek(m_header_block.eof_addr);
 
@@ -149,7 +149,7 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
     auto v_transc = SVertexTransaction();
     auto e_transc = SEdgeTransaction();
 
-    std::vector<std::pair<std::string, std::string>> props = {};
+    std::vector<CMemoryModelLPG::SProperty> props = {};
 
     for (uint32_t i = 0; i < m_header_block.transaction_c; i++)
     {
@@ -159,21 +159,19 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
         switch (type)
         {
         case ETransactionType::vertex:
+        {
             m_transaction_file.read(&v_transc, sizeof(SVertexTransaction), 1);
 
             if (v_transc.property_c > 0)
             {
                 props.resize(v_transc.property_c);
-
-                if (e_transc.property_c > 0)
-                {
-                    props.resize(e_transc.property_c);
-                    m_transaction_file.read(&props[0], CFG_LPG_PROPERTY_KEY_LENGTH + CFG_LPG_PROPERTY_VALUE_LENGTH, v_transc.property_c);
-                }
+                m_transaction_file.read(&props[0], CFG_LPG_PROPERTY_KEY_LENGTH + CFG_LPG_PROPERTY_VALUE_LENGTH, v_transc.property_c);
             }
             process_vertex_transaction(v_transc, props);
             break;
+        }
         case ETransactionType::edge:
+        {
             m_transaction_file.read(&e_transc, sizeof(SEdgeTransaction), 1);
 
             if (e_transc.property_c > 0)
@@ -185,18 +183,19 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
             process_edge_transaction(e_transc, props);
             break;
         }
-
+        }
         v_transc = SVertexTransaction();
         e_transc = SEdgeTransaction();
+        props.clear();
     }
 }
 
 void
 graphquery::database::storage::CTransaction::process_vertex_transaction(const SVertexTransaction & transaction,
-                                                                        const std::vector<std::pair<std::string, std::string>> & props) const noexcept
+                                                                        const std::vector<CMemoryModelLPG::SProperty> & props) const noexcept
 {
     if (transaction.remove == 0)
-        if (transaction.optional_id != -1UL)
+        if (transaction.optional_id != ULONG_LONG_MAX)
             (void) m_lpg->add_vertex_entry(transaction.optional_id, transaction.label, props);
         else
             (void) m_lpg->add_vertex_entry(transaction.label, props);
@@ -206,7 +205,7 @@ graphquery::database::storage::CTransaction::process_vertex_transaction(const SV
 
 void
 graphquery::database::storage::CTransaction::process_edge_transaction(const SEdgeTransaction & transaction,
-                                                                      const std::vector<std::pair<std::string, std::string>> & props) const noexcept
+                                                                      const std::vector<CMemoryModelLPG::SProperty> & props) const noexcept
 {
     if (transaction.remove == 0)
         (void) m_lpg->add_edge_entry(transaction.src, transaction.dst, transaction.label, props);

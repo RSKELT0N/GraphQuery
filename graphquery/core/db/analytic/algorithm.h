@@ -14,6 +14,8 @@
 #define LIB_EXPORT
 #endif
 
+#include <utility>
+
 #include "db/storage/graph_model.h"
 
 namespace graphquery::database::analytic
@@ -21,10 +23,14 @@ namespace graphquery::database::analytic
     class IGraphAlgorithm
     {
       public:
-        IGraphAlgorithm()          = default;
         virtual ~IGraphAlgorithm() = default;
+        explicit IGraphAlgorithm(std::string graph_name): m_graph_name(std::move(graph_name)) {}
 
-        virtual double compute(std::shared_ptr<storage::ILPGModel>) noexcept = 0;
+        [[nodiscard]] virtual std::string_view get_name() const noexcept final { return m_graph_name; }
+        virtual double compute(storage::ILPGModel *) noexcept = 0;
+
+      protected:
+        const std::string m_graph_name;
     };
 } // namespace graphquery::database::analytic
 

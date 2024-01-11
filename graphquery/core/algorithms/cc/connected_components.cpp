@@ -1,7 +1,6 @@
 #include "connected_components.h"
 
 #include <algorithm>
-#include <utility>
 
 namespace
 {
@@ -23,19 +22,19 @@ namespace
     };
 } // namespace
 
-graphquery::database::analytic::CGraphAlgorithmCC::CGraphAlgorithmCC()
+graphquery::database::analytic::CGraphAlgorithmCC::CGraphAlgorithmCC(std::string name): IGraphAlgorithm(std::move(name))
 {
     m_log_system = logger::CLogSystem::get_instance();
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmCC::compute(std::shared_ptr<storage::ILPGModel> graph_model) noexcept
+graphquery::database::analytic::CGraphAlgorithmCC::compute(storage::ILPGModel * graph_model) noexcept
 {
     const uint64_t n = graph_model->get_num_vertices();
 
     auto x      = std::make_shared<int[]>(n);
     auto y      = std::make_shared<int[]>(n);
-    auto degree = std::make_shared<int[]>(n);
+    auto degree = std::make_shared<uint32_t[]>(n);
 
     static constexpr int max_iter = 100;
     bool change                   = true;
@@ -114,6 +113,6 @@ extern "C"
 {
     LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm)
     {
-        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmCC();
+        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmCC("Connected Components");
     }
 }
