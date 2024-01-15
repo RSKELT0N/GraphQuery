@@ -18,8 +18,7 @@ graphquery::interact::CFrameDock::render_frame() noexcept
 
     if (ImGui::Begin("Graph Query", &m_is_opened, m_flags))
     {
-        ImGui::DockSpace(ImGui::GetID("Graph Query"), ImVec2(0.0F, 0.0F), ImGuiDockNodeFlags_None);
-
+        ImGui::DockSpace(ImGui::GetID("Graph Query"), ImVec2(0.0F, 0.0F), ImGuiDockNodeFlags_AutoHideTabBar);
         ImGui::End();
     }
 }

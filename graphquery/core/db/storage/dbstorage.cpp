@@ -9,8 +9,10 @@
 #include "db/system.h"
 
 graphquery::database::storage::CDBStorage::
-CDBStorage(): m_db_disk(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED)
+CDBStorage():
+    m_db_disk(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED)
 {
+    m_loaded_graph = std::make_shared<ILPGModel *>();
 }
 
 graphquery::database::storage::CDBStorage::~
@@ -177,8 +179,8 @@ graphquery::database::storage::CDBStorage::define_graph_model(const std::string 
     try
     {
         m_graph_model_lib = std::make_unique<dylib>(dylib(fmt::format("{}/{}", PROJECT_ROOT, "lib/models"), type));
-        m_graph_model_lib->get_function<void(std::shared_ptr<ILPGModel> &)>("create_graph_model")(m_loaded_graph);
-        m_loaded_graph->init(m_db_disk.get_path().parent_path().string(), name);
+        m_graph_model_lib->get_function<void(ILPGModel **)>("create_graph_model")(m_loaded_graph.get());
+        (*m_loaded_graph)->init(m_db_disk.get_path().parent_path().string(), name);
         m_existing_graph_loaded = true;
     }
     catch (std::runtime_error & e)
@@ -196,8 +198,8 @@ graphquery::database::storage::CDBStorage::define_graph_model(const std::string 
 void
 graphquery::database::storage::CDBStorage::close_graph() noexcept
 {
-    m_loaded_graph->close();
-    m_loaded_graph.reset();
+    (*m_loaded_graph)->close();
+    delete (*m_loaded_graph);
     m_graph_model_lib.reset();
     m_existing_graph_loaded = false;
     _log_system->info(fmt::format("Graph has been unloaded from memory and changes have been flushed"));
@@ -208,7 +210,7 @@ graphquery::database::storage::CDBStorage::create_graph(const std::string & name
 {
     if (m_existing_db_loaded)
     {
-        if (m_loaded_graph)
+        if (*m_loaded_graph)
             close_graph();
 
         if (define_graph_model(name, type))
@@ -230,7 +232,7 @@ graphquery::database::storage::CDBStorage::get_graph_table() const noexcept
     return m_db_graph_table;
 }
 
-std::shared_ptr<graphquery::database::storage::ILPGModel>
+std::shared_ptr<graphquery::database::storage::ILPGModel *>
 graphquery::database::storage::CDBStorage::get_graph() const noexcept
 {
     return m_loaded_graph;

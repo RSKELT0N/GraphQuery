@@ -17,13 +17,6 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/pagerank.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/pagerank.h)
 
-target_compile_options(
-        pr
-        PUBLIC
-        -Wall
-        -Werror
-        -Wpedantic)
-
 target_link_libraries(
         pr
         PUBLIC

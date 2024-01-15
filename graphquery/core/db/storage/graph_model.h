@@ -57,9 +57,9 @@ namespace graphquery::database::storage
         struct SVertex
         {
             uint64_t id           = {};
-            uint32_t neighbour_c  = {};
             uint16_t label_id     = {};
             uint16_t edge_label_c = {};
+            uint32_t neighbour_c  = {};
         };
 
         [[nodiscard]] virtual uint64_t get_num_edges() const                                = 0;
@@ -83,5 +83,5 @@ namespace graphquery::database::storage
 
 extern "C"
 {
-    void create_graph_model(std::shared_ptr<graphquery::database::storage::ILPGModel> & graph_model);
+    void create_graph_model(graphquery::database::storage::ILPGModel ** graph_model);
 }

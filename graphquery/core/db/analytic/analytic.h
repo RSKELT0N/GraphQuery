@@ -13,7 +13,6 @@
 
 #include <cassert>
 #include <vector>
-#include <cstdint>
 #include <functional>
 #include <future>
 #include <unordered_map>
@@ -24,7 +23,9 @@ namespace graphquery::database::analytic
     {
       public:
         ~CAnalyticEngine() = default;
-        explicit CAnalyticEngine(std::shared_ptr<storage::ILPGModel> graph);
+        explicit CAnalyticEngine(std::shared_ptr<storage::ILPGModel *> graph);
+
+        void process_algorithm(std::string_view algorithm) noexcept;
 
       private:
         struct SResult
@@ -63,11 +64,11 @@ namespace graphquery::database::analytic
 
         void load_libraries(bool refresh = true) noexcept;
         void insert_lib(std::string_view lib_path);
-        void process_algorithm(std::string_view algorithm) noexcept;
 
         std::vector<SResult> m_results;
-        std::shared_ptr<storage::ILPGModel> m_graph;
+        std::shared_ptr<storage::ILPGModel *> m_graph;
         std::unordered_map<std::string, std::unique_ptr<IGraphAlgorithm *>> m_algorithms;
+        std::unordered_map<std::string, std::unique_ptr<dylib>> m_libs;
 
         static constexpr const char * LIB_FOLDER_PATH = "lib/algorithms";
     };

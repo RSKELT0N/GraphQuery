@@ -1,12 +1,15 @@
 #include "analytic.h"
 
+#include <utility>
+
 #include "db/system.h"
 
-graphquery::database::analytic::CAnalyticEngine::CAnalyticEngine(std::shared_ptr<storage::ILPGModel> graph)
+graphquery::database::analytic::CAnalyticEngine::CAnalyticEngine(std::shared_ptr<storage::ILPGModel *> graph)
 {
-    this->m_graph      = graph;
+    this->m_graph      = std::move(graph);
     this->m_results    = std::vector<SResult>();
     this->m_algorithms = std::unordered_map<std::string, std::unique_ptr<IGraphAlgorithm *>>();
+    this->m_libs       = std::unordered_map<std::string, std::unique_ptr<dylib>>();
     load_libraries(false);
 }
 
@@ -33,9 +36,11 @@ void
 graphquery::database::analytic::CAnalyticEngine::insert_lib(const std::string_view lib_path)
 {
     auto ptr       = std::make_unique<IGraphAlgorithm *>();
-    const auto lib = std::make_unique<dylib>(dylib(lib_path));
+    auto lib       = std::make_unique<dylib>(dylib(lib_path));
+
     lib->get_function<void(IGraphAlgorithm **)>("create_graph_algorithm")(ptr.get());
 
+    m_libs.emplace((*ptr)->get_name(), std::move(lib));
     m_algorithms.emplace((*ptr)->get_name(), std::move(ptr));
 }
 
@@ -47,7 +52,7 @@ graphquery::database::analytic::CAnalyticEngine::process_algorithm(const std::st
 
     const auto & lib = m_algorithms.at(algorithm.data());
 
-    static auto lambda = [&]() -> double { return (*lib)->compute(m_graph); };
+    static auto lambda = [&lib, this]() -> double { return (*lib)->compute(*m_graph); };
 
     m_results.emplace_back(lambda);
 }

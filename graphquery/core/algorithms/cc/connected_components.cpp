@@ -28,7 +28,7 @@ graphquery::database::analytic::CGraphAlgorithmCC::CGraphAlgorithmCC(std::string
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmCC::compute(std::shared_ptr<storage::ILPGModel> graph_model) noexcept
+graphquery::database::analytic::CGraphAlgorithmCC::compute(storage::ILPGModel * graph_model) noexcept
 {
     const uint64_t n = graph_model->get_num_vertices();
 

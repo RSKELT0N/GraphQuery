@@ -39,7 +39,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::CGraphAlgorithmPageRank
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmPageRank::compute(std::shared_ptr<storage::ILPGModel> graph_model) noexcept
+graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGModel * graph_model) noexcept
 {
     const uint64_t n = graph_model->get_num_vertices();
 
@@ -55,7 +55,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(std::shared_ptr
 
     for (int i = 0; i < n; ++i)
     {
-        x[i] = v[i] = 1.0 / (double) n;
+        x[i] = v[i] = 1.0 / static_cast<double>(n);
         y[i]        = 0;
     }
 

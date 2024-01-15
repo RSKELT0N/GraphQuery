@@ -24,7 +24,9 @@ target_compile_options(${EXECUTABLE_NAME}
         PUBLIC
         -Wall
         -Werror
-        -Wpedantic)
+        -Wpedantic
+        -Wextra
+        -Wshadow)
 
 target_link_libraries(${EXECUTABLE_NAME}
         PUBLIC

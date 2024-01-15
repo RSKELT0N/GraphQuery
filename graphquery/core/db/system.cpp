@@ -5,7 +5,6 @@
 
 #include <csignal>
 #include <thread>
-#include <chrono>
 
 namespace
 {
@@ -18,10 +17,10 @@ namespace
 
     void heartbeat() noexcept
     {
-        while (false)
+        while (true)
         {
             if (graphquery::database::_db_storage->get_is_graph_loaded())
-                graphquery::database::_db_storage->get_graph()->save_graph();
+                (*graphquery::database::_db_storage->get_graph())->save_graph();
 
             std::this_thread::sleep_for(graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL);
         }
@@ -53,7 +52,7 @@ namespace graphquery::database
 
         const EStatus status = Initialise_Logging();
 
-        std::thread(heartbeat).detach();
+        std::thread(&heartbeat).detach();
         return status;
     }
 } // namespace graphquery::database

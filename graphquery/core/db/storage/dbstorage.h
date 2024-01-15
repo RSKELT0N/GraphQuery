@@ -24,7 +24,6 @@ namespace graphquery::database::storage
         {
             char graph_name[CFG_GRAPH_NAME_LENGTH]       = {};
             char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH] = {};
-
         } __attribute__((packed));
 
         struct SDBInfo_t
@@ -53,7 +52,7 @@ namespace graphquery::database::storage
 
         void close_graph() noexcept;
         [[nodiscard]] const std::vector<SGraph_Entry_t> & get_graph_table() const noexcept;
-        [[nodiscard]] std::shared_ptr<ILPGModel> get_graph() const noexcept;
+        [[nodiscard]] std::shared_ptr<ILPGModel *> get_graph() const noexcept;
         [[nodiscard]] const bool & get_is_db_loaded() const noexcept;
         [[nodiscard]] const bool & get_is_graph_loaded() const noexcept;
         [[nodiscard]] std::string get_db_info() const noexcept;
@@ -75,7 +74,7 @@ namespace graphquery::database::storage
         CDiskDriver m_db_disk;                             //~ Instance of the DiskDriver for the DB master file.
         SDB_Superblock_t m_db_superblock             = {}; //~ Instance of the current SDBMaster structure.
         std::vector<SGraph_Entry_t> m_db_graph_table = {}; //~ Array of the existing graphs
-        std::shared_ptr<ILPGModel> m_loaded_graph;         //~ Instance of the currently linked graph model.
+        std::shared_ptr<ILPGModel *> m_loaded_graph  = {}; //~ Instance of the currently linked graph model.
         std::unique_ptr<dylib> m_graph_model_lib;          //~ Library of the currently loaded graph model.
 
         bool m_existing_db_loaded                          = false;        //~ Bool to check if a current database is loaded.
@@ -83,8 +82,7 @@ namespace graphquery::database::storage
         static constexpr uint8_t GRAPH_ENTRIES_AMT         = 0;            //~ Max amount of graph entries
         static constexpr uint64_t DB_SUPERBLOCK_START_ADDR = 0x0;          //~ MasterDB struct entry;
         static constexpr const char * MASTER_DB_FILE_NAME  = "master.gdb"; //~ Storage size MAX for database master file.
-        static constexpr uint32_t MASTER_DB_FILE_SIZE =
-            (sizeof(SDB_Superblock_t) + (sizeof(SGraph_Entry_t) * GRAPH_ENTRIES_AMT)); //~ Storage size MAX for database master
-                                                                                       // file.
+        static constexpr uint32_t MASTER_DB_FILE_SIZE = (sizeof(SDB_Superblock_t) + (sizeof(SGraph_Entry_t) * GRAPH_ENTRIES_AMT)); //~ Storage size MAX for database master
+        // file.
     };
 } // namespace graphquery::database::storage
