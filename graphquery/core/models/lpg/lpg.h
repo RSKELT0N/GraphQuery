@@ -51,8 +51,8 @@ namespace graphquery::database::storage
 
         struct SVertexEdgeLabelEntry
         {
-            uint16_t label_id_ref = {};
             uint64_t item_c       = {};
+            uint16_t label_id_ref = {};
             uint16_t pos          = {};
         };
 
