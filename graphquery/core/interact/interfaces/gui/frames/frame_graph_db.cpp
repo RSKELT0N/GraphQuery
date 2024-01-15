@@ -8,16 +8,10 @@
 
 graphquery::interact::CFrameGraphDB::CFrameGraphDB(const bool & is_db_loaded,
                                                    const bool & is_graph_loaded,
-<<<<<<< HEAD
-                                                   const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
-    m_is_db_loaded(is_db_loaded),
-    m_is_graph_loaded(is_graph_loaded), m_graph_table(graph_table)
-=======
                                                    std::shared_ptr<database::storage::ILPGModel *> graph,
                                                    const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
     m_is_db_loaded(is_db_loaded),
     m_is_graph_loaded(is_graph_loaded), m_graph(std::move(graph)), m_graph_table(graph_table)
->>>>>>> dev
 {
 }
 
@@ -61,21 +55,6 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-<<<<<<< HEAD
-            graph->add_vertex("PERSON", {"First Name", "Skelton"});
-
-        if (ImGui::Button("Add Vertex (0)"))
-            graph->add_vertex(0, "PERSON", {});
-
-        if (ImGui::Button("Add Edge"))
-            graph->add_edge(0, 1, "PERSON", {});
-
-        if (ImGui::Button("Remove Vertex"))
-            graph->rm_vertex(0);
-
-        if (ImGui::Button("Remove Edge"))
-            graph->rm_edge(0, 1, "PERSON");
-=======
             (*m_graph)->add_vertex("PERSON", {{"First Name", "Skelton"}});
 
         if (ImGui::Button("Add Vertex (0)"))
@@ -89,7 +68,6 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 
         if (ImGui::Button("Remove Edge"))
             (*m_graph)->rm_edge(0, 1, "PERSON");
->>>>>>> dev
     }
 #endif
 }

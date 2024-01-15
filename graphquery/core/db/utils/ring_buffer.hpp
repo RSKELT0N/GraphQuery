@@ -65,7 +65,7 @@ namespace graphquery::database::utils
     template<typename ElemType, size_t BufferSize>
     ElemType CRingBuffer<ElemType, BufferSize>::operator[](std::size_t i) const noexcept
     {
-        assert(0 <= i && BufferSize >= i && "Accessed element is out of range");
+        assert(BufferSize >= i && "Accessed element is out of range");
         return m_data.operator[](i);
     }
 

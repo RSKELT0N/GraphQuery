@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <semaphore>
 #include <set>
+#include <atomic>
 
 namespace graphquery::database::storage
 {
@@ -80,7 +81,6 @@ namespace graphquery::database::storage
             SVertex metadata                                       = {};
             std::vector<SVertexEdgeLabelEntry> edge_labels         = {};
             std::vector<LabelGroup<SEdgeContainer>> labelled_edges = {};
-            SPropertyContainer * properties                        = nullptr;
         };
 
     public:
