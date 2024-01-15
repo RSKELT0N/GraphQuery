@@ -1,32 +1,31 @@
 cmake_minimum_required(VERSION 3.9)
 
 add_library(
-        lpg
+        cc
         SHARED
-        transaction.cpp
-        transaction.h)
+        connected_components.cpp
+        connected_components.h)
 
 target_include_directories(
-        lpg
+        cc
         PUBLIC
         ${PROJECT_SOURCE_DIR}/graphquery/core)
 
 target_sources(
-        lpg
+        cc
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/lpg.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/transaction.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/connected_components.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/connected_components.h)
 
 target_link_libraries(
-        lpg
+        cc
         PUBLIC
-        diskdriver
         logsystem
         fmt)
 
 # Copy the shared library into the output/peripherals directory
-set(output_directory ${PROJECT_SOURCE_DIR}/lib/models)
+set(output_directory ${PROJECT_SOURCE_DIR}/lib/algorithms)
 add_custom_command(
-        TARGET lpg POST_BUILD
+        TARGET cc POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory ${output_directory}
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:lpg> ${output_directory})
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:cc> ${output_directory})

@@ -58,8 +58,8 @@ namespace graphquery::database::utils
     void CRingBuffer<ElemType, BufferSize>::add(const ElemType & elem) noexcept
     {
         m_data.operator[](m_tail) = elem;
-        m_tail                     = (m_tail + 1) % BufferSize;
-        m_curr_capacity            = (m_curr_capacity < BufferSize) ? m_curr_capacity + 1 : BufferSize;
+        m_tail                    = (m_tail + 1) % BufferSize;
+        m_curr_capacity           = (m_curr_capacity < BufferSize) ? m_curr_capacity + 1 : BufferSize;
     }
 
     template<typename ElemType, size_t BufferSize>

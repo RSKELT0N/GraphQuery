@@ -93,8 +93,9 @@ graphquery::interact::CInteractGUI::initialise_imgui() noexcept
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
 
-    if (!ImGui_ImplOpenGL3_Init(IMGUI_GL_VERSION)) [[unlikely]]
-        database::_log_system->error("Error initialising OpenGl for ImGUI.");
+    if (!ImGui_ImplOpenGL3_Init(IMGUI_GL_VERSION))
+        [[unlikely]]
+            database::_log_system->error("Error initialising OpenGl for ImGUI.");
 }
 
 void
@@ -124,13 +125,14 @@ graphquery::interact::CInteractGUI::initialise_frames() noexcept
                                                           database::_db_storage->get_graph_table()));
 
     // Log output frame
-    auto frame_log = std::make_shared<CFrameLog>();
-    m_frames.emplace_back(frame_log);
+    const auto frame_log = std::make_shared<CFrameLog>();
+    auto frame_logger    = m_frames.emplace_back(frame_log);
     database::_log_system->add_logger(frame_log);
 
     // Graph DB
     m_frames.emplace_back(std::make_unique<CFrameGraphDB>(database::_db_storage->get_is_db_loaded(),
                                                           database::_db_storage->get_is_graph_loaded(),
+                                                          database::_db_storage->get_graph(),
                                                           database::_db_storage->get_graph_table()));
 
     // Graph visual

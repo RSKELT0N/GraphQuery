@@ -107,7 +107,7 @@ graphquery::interact::CFrameMenuBar::render_create_graph() noexcept
     if (this->m_is_create_graph_opened)
         ImGui::OpenPopup("Create Graph");
 
-    ImGui::SetNextWindowSize(ImVec2 {CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
+    ImGui::SetNextWindowSize(ImVec2{CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
     if (ImGui::BeginPopupModal("Create Graph", &this->m_is_create_graph_opened, ImGuiWindowFlags_NoResize))
     {
         render_create_graph_info();
@@ -179,7 +179,7 @@ graphquery::interact::CFrameMenuBar::render_create_db() noexcept
     if (this->m_is_create_db_opened)
         ImGui::OpenPopup("Create Database");
 
-    ImGui::SetNextWindowSize(ImVec2 {CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
+    ImGui::SetNextWindowSize(ImVec2{CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
     if (ImGui::BeginPopupModal("Create Database", &m_is_create_db_opened, ImGuiWindowFlags_NoResize))
     {
         render_create_db_info();
@@ -246,16 +246,16 @@ graphquery::interact::CFrameMenuBar::render_create_db_button() noexcept
         if (this->m_created_db_name.empty() || this->m_created_db_path.empty())
         {
             database::_log_system->warning("Either the file path or name cannot be empty to create a "
-                                           "database");
+                "database");
             return;
         }
         ImGui::CloseCurrentPopup();
         set_create_db_state(false);
 
-        (void) std::async(std::launch::async,
-                          &database::storage::CDBStorage::init,
-                          database::_db_storage.get(),
-                          this->m_created_db_path / fmt::format("{}.gdb", this->m_created_db_name));
+        std::thread(&database::storage::CDBStorage::init,
+                    database::_db_storage.get(),
+                    this->m_created_db_path / fmt::format("{}.gdb", this->m_created_db_name)).detach();
+
         this->m_created_db_name.clear();
         this->m_created_db_path.clear();
     }
@@ -306,11 +306,10 @@ graphquery::interact::CFrameMenuBar::render_open_graph_button() noexcept
         assert(m_open_graph_choice >= 0 && static_cast<size_t>(m_open_graph_choice) < m_graph_table.size());
 
         set_open_graph_state(false);
-        (void) std::async(std::launch::async,
-                          &database::storage::CDBStorage::open_graph,
-                          database::_db_storage.get(),
-                          m_graph_table.at(m_open_graph_choice).graph_name,
-                          m_graph_table.at(m_open_graph_choice).graph_type);
+        std::thread(&database::storage::CDBStorage::open_graph,
+                    database::_db_storage.get(),
+                    m_graph_table.at(m_open_graph_choice).graph_name,
+                    m_graph_table.at(m_open_graph_choice).graph_type).detach();
     }
 }
 

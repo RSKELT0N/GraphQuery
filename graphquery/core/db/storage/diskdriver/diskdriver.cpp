@@ -101,7 +101,7 @@ graphquery::database::storage::CDiskDriver::truncate(const int64_t file_size) no
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::map() noexcept
 {
-    this->m_memory_mapped_file = static_cast<char *>(mmap(nullptr, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
+    this->m_memory_mapped_file = static_cast<char *>(mmap(nullptr, static_cast<size_t>(m_fd_info.st_size), m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
     if (this->m_memory_mapped_file == MAP_FAILED)
     {
         m_log_system->error(fmt::format("Error mapping file to memory"));
@@ -114,7 +114,7 @@ graphquery::database::storage::CDiskDriver::map() noexcept
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::unmap() const noexcept
 {
-    if (munmap(this->m_memory_mapped_file, this->m_fd_info.st_size) == -1)
+    if (munmap(this->m_memory_mapped_file, static_cast<size_t>(this->m_fd_info.st_size)) == -1)
     {
         m_log_system->error(fmt::format("Error unmapping file from memory"));
         return SRet_t::ERROR;
@@ -228,7 +228,7 @@ graphquery::database::storage::CDiskDriver::sync() const noexcept
 {
     if (this->m_initialised)
     {
-        if (msync(m_memory_mapped_file, m_fd_info.st_size, MS_SYNC) == -1)
+        if (msync(m_memory_mapped_file, static_cast<size_t>(m_fd_info.st_size), MS_SYNC) == -1)
         {
             m_log_system->warning("Issue syncing the buffer");
             return SRet_t::ERROR;
@@ -261,7 +261,7 @@ graphquery::database::storage::CDiskDriver::read(void * ptr, const int64_t size,
 {
     if (this->m_initialised)
     {
-        if (m_fd_info.st_size < static_cast<int64_t>((size * amt + m_seek_offset)))
+        if (m_fd_info.st_size < static_cast<int64_t>(size * amt + m_seek_offset))
             resize(m_fd_info.st_size * 2);
 
         memcpy(ptr, &this->m_memory_mapped_file[this->m_seek_offset], size * amt);
