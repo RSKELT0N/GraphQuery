@@ -139,6 +139,7 @@ namespace graphquery::database::storage
         [[nodiscard]] uint64_t get_unassigned_vertex_id(size_t label_idx) const noexcept;
         [[nodiscard]] uint64_t get_unassigned_vertex_label_id() const noexcept;
         [[nodiscard]] uint64_t get_unassigned_edge_label_id() const noexcept;
+        [[nodiscard]] bool check_if_vertex_exists(uint64_t id) noexcept;
         [[nodiscard]] std::optional<std::vector<SVertexContainer>::iterator> get_vertex_by_id(uint64_t id) noexcept;
 
         void inline access_preamble() noexcept;

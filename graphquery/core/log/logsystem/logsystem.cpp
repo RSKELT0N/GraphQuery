@@ -28,7 +28,7 @@ void
 graphquery::logger::CLogSystem::add_logger(std::shared_ptr<ILog> logger) noexcept
 {
     auto & _l = *this->m_loggers->emplace_back(std::move(logger));
-    std::for_each(m_backlog->begin(), m_backlog->end(), [this, &_l](const auto & log) -> void { render_output(_l, log); });
+    std::for_each(m_backlog->begin(), m_backlog->end(), [this, &_l](const auto & log) -> void { this->render_output(_l, log); });
 }
 
 void

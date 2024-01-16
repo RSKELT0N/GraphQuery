@@ -23,8 +23,11 @@ namespace graphquery::database::analytic
     class IGraphAlgorithm
     {
       public:
-        virtual ~IGraphAlgorithm() = default;
-        explicit IGraphAlgorithm(std::string graph_name): m_graph_name(std::move(graph_name)) {}
+        IGraphAlgorithm(std::string graph_name): m_graph_name(std::move(graph_name)) {}
+
+        virtual ~IGraphAlgorithm()               = default;
+        IGraphAlgorithm(const IGraphAlgorithm &) = default;
+        IGraphAlgorithm(IGraphAlgorithm &&)      = default;
 
         [[nodiscard]] virtual std::string_view get_name() const noexcept final { return m_graph_name; }
         virtual double compute(storage::ILPGModel *) noexcept = 0;

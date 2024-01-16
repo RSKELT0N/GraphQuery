@@ -17,6 +17,11 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/lpg.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/transaction.cpp)
 
+target_compile_options(
+        lpg
+        PUBLIC
+        -fPIC)
+
 target_link_libraries(
         lpg
         PUBLIC

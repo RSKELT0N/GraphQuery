@@ -136,9 +136,20 @@ graphquery::database::storage::CDiskDriver::get_path() const noexcept
 }
 
 bool
-graphquery::database::storage::CDiskDriver::check_if_file_exists(std::string_view file_path) noexcept
+graphquery::database::storage::CDiskDriver::check_if_file_exists(const std::string_view file_path) noexcept
 {
-    if (access(file_path.cbegin(), F_OK) == 0)
+    if (access(file_path.data(), F_OK) == 0)
+        return true;
+
+    return false;
+}
+
+bool
+graphquery::database::storage::CDiskDriver::check_if_file_exists(const std::string_view path, const std::string_view file_name) noexcept
+{
+    const auto & file_path = std::filesystem::path(path) / file_name;
+
+    if (access(file_path.string().c_str(), F_OK) == 0)
         return true;
 
     return false;
@@ -162,7 +173,7 @@ graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::create_file(const std::filesystem::path & path, std::string_view file_name, const int64_t file_size)
 {
     std::string file_path = fmt::format("{}/{}", path.string(), file_name);
-    if (check_if_file_exists(file_name))
+    if (check_if_file_exists(file_path))
     {
         m_log_system->warning("Cannot create file that already exists");
         return SRet_t::ERROR;

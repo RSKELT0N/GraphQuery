@@ -9,7 +9,7 @@ namespace graphquery::logger
     {
       public:
         CLogSTDO()  = default;
-        ~CLogSTDO() = default;
+        ~CLogSTDO() override = default;
 
       protected:
         /****************************************************************

@@ -2,12 +2,17 @@ cmake_minimum_required(VERSION 3.9)
 
 add_library(
         diskdriver
-        SHARED)
+        STATIC)
 
 target_include_directories(
         diskdriver
         PUBLIC
         ${PROJECT_SOURCE_DIR}/graphquery/core)
+
+target_compile_options(
+        diskdriver
+        PUBLIC
+        -fPIC)
 
 target_sources(
         diskdriver
