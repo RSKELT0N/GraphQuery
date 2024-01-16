@@ -1,6 +1,6 @@
 #include "frame_graph_visual.h"
 
-#include "db/utils/ring_buffer.h"
+#include "db/utils/ring_buffer.hpp"
 
 #include <db/system.h>
 

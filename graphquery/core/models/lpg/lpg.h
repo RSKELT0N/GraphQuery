@@ -16,11 +16,10 @@
 #define LIB_EXPORT
 #endif
 
-#include <vector>
-#include "db/storage/config.h"
-#include "db/storage/diskdriver/diskdriver.h"
 #include "db/storage/graph_model.h"
 
+#include <utility>
+#include <vector>
 #include <optional>
 #include <algorithm>
 #include <unordered_map>
@@ -36,7 +35,7 @@ namespace graphquery::database::storage
 
         enum class EActionState : int8_t
         {
-            valid   = 0,
+            valid = 0,
             invalid = -1
         };
 
@@ -44,30 +43,36 @@ namespace graphquery::database::storage
         {
             char graph_name[CFG_GRAPH_NAME_LENGTH]       = {};
             char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH] = {};
-            uint64_t vertices_c                          = {};
-            uint64_t edges_c                             = {};
-            uint16_t vertex_label_c                      = {};
-            uint16_t edge_label_c                        = {};
+            std::atomic<uint64_t> vertices_c             = {};
+            std::atomic<uint64_t> edges_c                = {};
+            std::atomic<uint16_t> vertex_label_c         = {};
+            std::atomic<uint16_t> edge_label_c           = {};
         };
 
         struct SVertexEdgeLabelEntry
         {
-            uint16_t label_id_ref = {};
             uint64_t item_c       = {};
+            uint16_t label_id_ref = {};
             uint16_t pos          = {};
         };
 
         struct SPropertyContainer
         {
-            int64_t ref_id                    = {};
+            uint64_t ref_id                   = {};
             uint16_t property_c               = {};
             std::vector<SProperty> properties = {};
+
+            SPropertyContainer() = default;
+
+            SPropertyContainer(const uint64_t _id, const uint16_t _prop_c, std::vector<SProperty> _props):
+                ref_id(_id), property_c(_prop_c), properties(std::move(_props))
+            {
+            }
         };
 
         struct SEdgeContainer
         {
-            SEdge metadata                  = {};
-            SPropertyContainer * properties = nullptr;
+            SEdge metadata           = {};
         };
 
         struct SVertexContainer
@@ -75,19 +80,20 @@ namespace graphquery::database::storage
             SVertex metadata                                       = {};
             std::vector<SVertexEdgeLabelEntry> edge_labels         = {};
             std::vector<LabelGroup<SEdgeContainer>> labelled_edges = {};
-            SPropertyContainer * properties                        = nullptr;
         };
 
-      public:
+    public:
         CMemoryModelLPG();
         ~CMemoryModelLPG() override = default;
 
         void close() noexcept override;
-        void relax(analytic::CRelax * relax) noexcept override;
+
         void save_graph() noexcept override;
         void rm_vertex(uint64_t vertex_id) override;
         void rm_edge(uint64_t src, uint64_t dst) override;
+        void calc_outdegree(std::shared_ptr<uint32_t[]>) noexcept override;
         void rm_edge(uint64_t src, uint64_t dst, std::string_view) override;
+        void edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept override;
 
         [[nodiscard]] std::string_view get_name() const noexcept override;
         [[nodiscard]] inline uint64_t get_num_edges() const override;
@@ -100,20 +106,20 @@ namespace graphquery::database::storage
 
         void load_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void create_graph(std::filesystem::path path, std::string_view graph) noexcept override;
-        void update_edge(uint64_t edge_id, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
-        void update_vertex(uint64_t vertex_id, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
+        void update_edge(uint64_t edge_id, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
+        void update_vertex(uint64_t vertex_id, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
         void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
-        void add_vertex(uint64_t id, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
-        void add_edge(uint64_t src, uint64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string, std::string>> & prop) override;
+        void add_vertex(uint64_t id, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
+        void add_edge(uint64_t src, uint64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
 
-      private:
+    private:
         friend class CTransaction;
         [[nodiscard]] EActionState rm_vertex_entry(uint64_t vertex_id) noexcept;
         [[nodiscard]] EActionState rm_edge_entry(uint64_t src_vertex_id, uint64_t dst_vertex_id) noexcept;
         [[nodiscard]] EActionState rm_edge_entry(std::string_view, uint64_t src_vertex_id, uint64_t dst_vertex_id) noexcept;
-        [[nodiscard]] EActionState add_vertex_entry(uint64_t id, std::string_view label, const std::vector<std::pair<std::string, std::string>> & prop) noexcept;
-        [[nodiscard]] EActionState add_vertex_entry(std::string_view label, const std::vector<std::pair<std::string, std::string>> & prop) noexcept;
-        [[nodiscard]] EActionState add_edge_entry(uint64_t src, uint64_t dst, std::string_view label, const std::vector<std::pair<std::string, std::string>> & prop) noexcept;
+        [[nodiscard]] EActionState add_vertex_entry(uint64_t id, std::string_view label, const std::vector<SProperty> & prop) noexcept;
+        [[nodiscard]] EActionState add_vertex_entry(std::string_view label, const std::vector<SProperty> & prop) noexcept;
+        [[nodiscard]] EActionState add_edge_entry(uint64_t src, uint64_t dst, std::string_view label, const std::vector<SProperty> & prop) noexcept;
 
         [[nodiscard]] uint16_t create_edge_label(std::string_view) noexcept;
         [[nodiscard]] uint16_t create_vertex_label(std::string_view) noexcept;
@@ -152,7 +158,7 @@ namespace graphquery::database::storage
         void read_labelled_vertices() noexcept;
         void read_all_edge_properties() noexcept;
 
-        std::vector<SProperty> transform_properties(const std::vector<std::pair<std::string, std::string>> &) const noexcept;
+        static std::vector<SProperty> transform_properties(const std::vector<std::pair<std::string_view, std::string_view>> &) noexcept;
 
         bool m_flush_needed;
         std::string m_graph_name;
@@ -174,9 +180,9 @@ namespace graphquery::database::storage
         std::vector<SPropertyContainer> m_all_edge_properties;
 
         //~ Indexing structures
-        std::unordered_map<uint64_t, uint64_t> m_vertex_label_map;
-        std::unordered_map<uint16_t, uint64_t> m_edge_label_map;
-        LabelGroup<std::unordered_map<uint64_t, uint64_t>> m_vertex_map;
+        std::unordered_map<uint64_t, uint64_t> m_vertex_label_lut;
+        std::unordered_map<uint16_t, uint64_t> m_edge_label_lut;
+        LabelGroup<std::unordered_map<uint64_t, uint64_t>> m_vertex_lut;
 
         std::set<std::vector<SVertexContainer>::iterator> m_marked_vertices;
 
