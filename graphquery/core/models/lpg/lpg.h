@@ -74,6 +74,7 @@ namespace graphquery::database::storage
         struct SEdgeContainer
         {
             SEdge metadata           = {};
+            uint64_t properties_ref  = {};
         };
 
         struct SVertexContainer
@@ -81,6 +82,7 @@ namespace graphquery::database::storage
             SVertex metadata                                       = {};
             std::vector<SVertexEdgeLabelEntry> edge_labels         = {};
             std::vector<LabelGroup<SEdgeContainer>> labelled_edges = {};
+            uint64_t properties_ref                                = {};
         };
 
     public:
@@ -180,7 +182,7 @@ namespace graphquery::database::storage
         LabelGroup<SPropertyContainer> m_all_vertex_properties;
         std::vector<SPropertyContainer> m_all_edge_properties;
 
-        //~ Indexing structures
+        //~ Lookup tables for indexing structures
         std::unordered_map<uint64_t, uint64_t> m_vertex_label_lut;
         std::unordered_map<uint16_t, uint64_t> m_edge_label_lut;
         LabelGroup<std::unordered_map<uint64_t, uint64_t>> m_vertex_lut;

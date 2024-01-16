@@ -19,24 +19,24 @@ graphquery::database::analytic::CAnalyticEngine::load_libraries(const bool refre
     if (refresh)
         m_algorithms.clear();
 
-    for (const auto & file : std::filesystem::directory_iterator(fmt::format("{}/{}", PROJECT_ROOT, LIB_FOLDER_PATH)))
+    try
     {
-        try
-        {
+        const auto & files = std::filesystem::directory_iterator(fmt::format("{}/{}", PROJECT_ROOT, LIB_FOLDER_PATH));
+
+        for (const auto & file : files)
             insert_lib(file.path().c_str());
-        }
-        catch (std::runtime_error & e)
-        {
-            _log_system->error(fmt::format("Issue linking library and creating graph algorithm ({}) Error: {}", file.path().c_str(), e.what()));
-        }
+    }
+    catch (const std::exception & e)
+    {
+        _log_system->error(fmt::format("Issue loading libraries (from lib) into analytic engine, Error: {}", e.what()));
     }
 }
 
 void
 graphquery::database::analytic::CAnalyticEngine::insert_lib(const std::string_view lib_path)
 {
-    auto ptr       = std::make_unique<IGraphAlgorithm *>();
-    auto lib       = std::make_unique<dylib>(dylib(lib_path));
+    auto ptr = std::make_unique<IGraphAlgorithm *>();
+    auto lib = std::make_unique<dylib>(dylib(lib_path));
 
     lib->get_function<void(IGraphAlgorithm **)>("create_graph_algorithm")(ptr.get());
 
