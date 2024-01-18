@@ -40,7 +40,7 @@ namespace graphquery::database
     //~ Linked symbol of the analytic engine.
     std::unique_ptr<analytic::CAnalyticEngine> _db_analytic = std::make_unique<analytic::CAnalyticEngine>(_db_storage->get_graph());
     //~ Linked symbol of the query engine.
-    std::unique_ptr<query::CQueryEngine> _db_query = std::make_unique<query::CQueryEngine>();
+    std::unique_ptr<query::CQueryEngine> _db_query = std::make_unique<query::CQueryEngine>(_db_storage->get_graph());
 
     EStatus initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept
     {
