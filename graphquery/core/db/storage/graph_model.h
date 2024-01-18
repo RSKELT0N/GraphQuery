@@ -24,6 +24,9 @@ namespace graphquery::database::storage
     class ILPGModel : public IMemoryModel
     {
       public:
+        template<typename T>
+        using LabelGroup = std::vector<T>;
+
         ILPGModel()           = default;
         ~ILPGModel() override = default;
 
@@ -32,6 +35,41 @@ namespace graphquery::database::storage
             char label_s[CFG_LPG_LABEL_LENGTH] = {};
             uint64_t item_c                    = {};
             uint16_t label_id                  = {};
+        };
+
+        struct SVertexEdgeLabelEntry
+        {
+            uint64_t item_c       = {};
+            uint16_t label_id_ref = {};
+            uint16_t pos          = {};
+        };
+
+        struct SEdgeContainer
+        {
+            typedef struct metadata_t
+            {
+                uint64_t dst      = {};
+                uint16_t label_id = {};
+            } metadata_t;
+
+            metadata_t metadata     = {};
+            uint64_t properties_ref = {};
+        };
+
+        struct SVertexContainer
+        {
+            typedef struct metadata_t
+            {
+                uint64_t id           = {};
+                uint16_t label_id     = {};
+                uint16_t edge_label_c = {};
+                uint32_t neighbour_c  = {};
+            } metadata_t;
+
+            metadata_t metadata                                    = {};
+            std::vector<SVertexEdgeLabelEntry> edge_labels         = {};
+            std::vector<LabelGroup<SEdgeContainer>> labelled_edges = {};
+            uint64_t properties_ref                                = {};
         };
 
         struct SProperty
@@ -48,27 +86,23 @@ namespace graphquery::database::storage
             }
         };
 
-        struct SEdge
+        struct SPropertyContainer
         {
-            uint64_t dst      = {};
-            uint16_t label_id = {};
+            uint64_t ref_id                   = {};
+            uint16_t property_c               = {};
+            std::vector<SProperty> properties = {};
+
+            SPropertyContainer() = default;
+            SPropertyContainer(const uint64_t _id, const std::vector<SProperty> & props): ref_id(_id), property_c(props.size()), properties(props) {}
         };
 
-        struct SVertex
-        {
-            uint64_t id           = {};
-            uint16_t label_id     = {};
-            uint16_t edge_label_c = {};
-            uint32_t neighbour_c  = {};
-        };
-
-        [[nodiscard]] virtual uint64_t get_num_edges() const                                = 0;
-        [[nodiscard]] virtual uint64_t get_num_vertices() const                             = 0;
-        virtual std::vector<SEdge> get_edge(uint64_t src, uint64_t dst)                     = 0;
-        virtual std::optional<SEdge> get_edge(uint64_t src, uint64_t dst, std::string_view) = 0;
-        virtual std::optional<SVertex> get_vertex(uint64_t vertex_id)                       = 0;
-        virtual std::vector<SVertex> get_vertices_by_label(std::string_view label_id)       = 0;
-        virtual std::vector<SVertex> get_edges_by_label(std::string_view label_id)          = 0;
+        [[nodiscard]] virtual uint64_t get_num_edges() const                                         = 0;
+        [[nodiscard]] virtual uint64_t get_num_vertices() const                                      = 0;
+        virtual std::optional<SVertexContainer> get_vertex(uint64_t vertex_id)                       = 0;
+        virtual std::vector<SEdgeContainer> get_edge(uint64_t src, uint64_t dst)                     = 0;
+        virtual std::optional<SEdgeContainer> get_edge(uint64_t src, uint64_t dst, std::string_view) = 0;
+        virtual std::vector<SVertexContainer> get_vertices_by_label(std::string_view label_id)       = 0;
+        virtual std::vector<SVertexContainer> get_edges_by_label(std::string_view label_id)          = 0;
 
         virtual void rm_vertex(uint64_t vertex_id)                                                                                                                   = 0;
         virtual void rm_edge(uint64_t src, uint64_t dst)                                                                                                             = 0;
