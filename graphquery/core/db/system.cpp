@@ -39,6 +39,8 @@ namespace graphquery::database
     std::unique_ptr<storage::CDBStorage> _db_storage = std::make_unique<storage::CDBStorage>();
     //~ Linked symbol of the analytic engine.
     std::unique_ptr<analytic::CAnalyticEngine> _db_analytic = std::make_unique<analytic::CAnalyticEngine>(_db_storage->get_graph());
+    //~ Linked symbol of the query engine.
+    std::unique_ptr<query::CQueryEngine> _db_query = std::make_unique<query::CQueryEngine>();
 
     EStatus initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept
     {
