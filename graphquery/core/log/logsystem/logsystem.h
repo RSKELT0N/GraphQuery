@@ -108,7 +108,17 @@ namespace graphquery::logger
         void add_logger(std::shared_ptr<ILog>) noexcept;
 
       private:
+        struct SLogEntry
+        {
+            const ELogType _type;
+            const std::string _str;
+
+            SLogEntry(const ELogType _t, const std::string_view _s): _type(_t), _str(_s) {}
+        };
+
         static std::shared_ptr<CLogSystem> m_log_system;
+        void render_output(const SLogEntry &) const noexcept;
+        static void render_output(ILog &, const SLogEntry &) noexcept;
         [[nodiscard]] std::string format_output(ELogType, std::string_view) const noexcept;
 
         std::vector<std::string> log_type_prefix = {"DEBUG", // ~ Log type to string conversion
@@ -117,7 +127,7 @@ namespace graphquery::logger
                                                     "ERROR"};
         ELogType m_level;                                              // ~ Log level of the logging system
         std::mutex m_mtx;                                              // ~ mutex instance for logging to different derived classes.
-        std::unique_ptr<std::vector<std::shared_ptr<ILog>>> m_loggers; // ~ array of loggers, which the log
-                                                                       // system holds and calls (Log).
+        std::unique_ptr<std::vector<std::shared_ptr<ILog>>> m_loggers; // ~ array of loggers, which the log system holds and calls (Log).
+        std::unique_ptr<std::vector<SLogEntry>> m_backlog;             // ~ backlog of all messages for loggers to be updated with when added.
     };
 } // namespace graphquery::logger

@@ -2,12 +2,17 @@ cmake_minimum_required(VERSION 3.9)
 
 add_library(
         logsystem
-        SHARED)
+        STATIC)
 
 target_include_directories(
         logsystem
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_compile_options(
+        logsystem
+        PUBLIC
+        -fPIC)
 
 target_sources(
         logsystem

@@ -1,12 +1,12 @@
 #include "dbstorage.h"
 
+#include "db/system.h"
+
 #include <fcntl.h>
 #include <string_view>
 #include <sys/mman.h>
 
 #include <cassert>
-
-#include "db/system.h"
 
 graphquery::database::storage::CDBStorage::
 CDBStorage():
@@ -40,30 +40,32 @@ graphquery::database::storage::CDBStorage::close() noexcept
 }
 
 void
-graphquery::database::storage::CDBStorage::init(std::filesystem::path path)
+graphquery::database::storage::CDBStorage::init(const std::filesystem::path & path, const std::string_view db_name)
 {
     if (m_existing_db_loaded)
         close();
 
-    m_db_disk.set_path(path.parent_path());
+    const auto & db_file_name = fmt::format("{}.gdb", db_name);
+    const auto & db_path      = std::filesystem::path(path) / db_name;
 
-    if (!CDiskDriver::check_if_file_exists(path.string()))
-        set_up(path.stem().string());
+    if (!CDiskDriver::check_if_folder_exists(db_path.string()))
+        CDiskDriver::create_folder(path, db_name);
+
+    m_db_disk.set_path(db_path);
+
+    if (!CDiskDriver::check_if_file_exists(db_path.string(), db_file_name))
+        set_up(db_file_name);
     else
-        load(path.stem().string());
+        load(db_file_name);
 }
 
 void
 graphquery::database::storage::CDBStorage::set_up(std::string_view db_name)
 {
-    std::string db_name_cmpl = fmt::format("{}.gdb", db_name);
-    _log_system->info(fmt::format("Initialising new database file: {}", db_name_cmpl));
+    _log_system->info(fmt::format("Initialising new database file: {}", db_name));
 
-    CDiskDriver::create_folder(m_db_disk.get_path(), db_name);
-    m_db_disk.set_path(m_db_disk.get_path() / db_name);
-
-    CDiskDriver::create_file(m_db_disk.get_path(), db_name_cmpl, MASTER_DB_FILE_SIZE);
-    m_db_disk.open(db_name_cmpl);
+    CDiskDriver::create_file(m_db_disk.get_path(), db_name, MASTER_DB_FILE_SIZE);
+    m_db_disk.open(db_name);
 
     define_db_superblock();
     define_db_graph_table();
@@ -118,12 +120,11 @@ graphquery::database::storage::CDBStorage::store_db_graph_table() noexcept
 void
 graphquery::database::storage::CDBStorage::load(std::string_view db_name)
 {
-    std::string db_name_cmpl = fmt::format("{}.gdb", db_name);
-    m_db_disk.open(db_name_cmpl);
+    m_db_disk.open(db_name);
     load_db_superblock();
     load_db_graph_table();
 
-    _log_system->info(fmt::format("Database file ({}) has been loaded into memory", db_name_cmpl));
+    _log_system->info(fmt::format("Database file ({}) has been loaded into memory", db_name));
 
     m_existing_db_loaded = true;
 }
@@ -208,6 +209,12 @@ graphquery::database::storage::CDBStorage::close_graph() noexcept
 void
 graphquery::database::storage::CDBStorage::create_graph(const std::string & name, const std::string & type) noexcept
 {
+    if (check_if_graph_exists(name))
+    {
+        _log_system->warning("Cannot create graph that already exists, use open_graph function");
+        return;
+    }
+
     if (m_existing_db_loaded)
     {
         if (*m_loaded_graph)
@@ -253,6 +260,12 @@ graphquery::database::storage::CDBStorage::get_is_graph_loaded() const noexcept
 void
 graphquery::database::storage::CDBStorage::open_graph(std::string name, std::string type) noexcept
 {
+    if (!check_if_graph_exists(name))
+    {
+        _log_system->warning("Cannot open graph that does not exist, initialise graph first");
+        return;
+    }
+
     if (m_existing_db_loaded)
     {
         if (m_existing_graph_loaded)
@@ -268,6 +281,16 @@ graphquery::database::storage::CDBStorage::open_graph(std::string name, std::str
     }
     else
         _log_system->warning("Database has not been loaded for a graph to opened");
+}
+
+bool
+graphquery::database::storage::CDBStorage::check_if_graph_exists(std::string_view graph_name) const noexcept
+{
+    const auto & exists = std::find_if(m_db_graph_table.begin(),
+                                       m_db_graph_table.end(),
+                                       [&graph_name](const SGraph_Entry_t & entry) { return strncmp(entry.graph_name, graph_name.data(), CFG_GRAPH_NAME_LENGTH) == 0; });
+
+    return exists != m_db_graph_table.end();
 }
 
 void

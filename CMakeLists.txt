@@ -11,6 +11,7 @@ project(GraphQuery
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   set(PROJECT graphquery)
+  add_link_options(-rdynamic)
 
   set(CMAKE_CXX_STANDARD 23)
   message("-- C++ standard is set to -std=c++${CMAKE_CXX_STANDARD}")

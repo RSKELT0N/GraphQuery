@@ -96,7 +96,9 @@ graphquery::interact::CFrameMenuBar::render_open_db() noexcept
     if (m_db_master_file_explorer.HasSelected())
     {
         const std::filesystem::path db_master_file_path = m_db_master_file_explorer.GetSelected();
-        database::_db_storage->init(db_master_file_path);
+        const std::filesystem::path root_path           = db_master_file_path.parent_path().parent_path();
+
+        database::_db_storage->init(root_path, db_master_file_path.stem().string());
         m_db_master_file_explorer.ClearSelected();
     }
 }
@@ -252,9 +254,7 @@ graphquery::interact::CFrameMenuBar::render_create_db_button() noexcept
         ImGui::CloseCurrentPopup();
         set_create_db_state(false);
 
-        std::thread(&database::storage::CDBStorage::init,
-                    database::_db_storage.get(),
-                    this->m_created_db_path / fmt::format("{}.gdb", this->m_created_db_name)).detach();
+        std::thread(&database::storage::CDBStorage::init, database::_db_storage.get(), this->m_created_db_path, this->m_created_db_name).detach();
 
         this->m_created_db_name.clear();
         this->m_created_db_path.clear();

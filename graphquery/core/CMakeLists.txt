@@ -20,7 +20,8 @@ target_compile_definitions(${EXECUTABLE_NAME}
         PUBLIC
         PROJECT_NAME="${PROJECT_NAME}")
 
-target_compile_options(${EXECUTABLE_NAME}
+target_compile_options(
+        ${EXECUTABLE_NAME}
         PUBLIC
         -Wall
         -Werror
