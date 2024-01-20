@@ -67,10 +67,16 @@ namespace graphquery::database::storage
         [[nodiscard]] inline uint64_t get_num_vertices() const override;
         [[nodiscard]] std::string_view get_name() const noexcept override;
         [[nodiscard]] std::optional<SVertexContainer> get_vertex(uint64_t vertex_id) override;
-        [[nodiscard]] std::vector<SEdgeContainer> get_edge(uint64_t src, uint64_t dst) override;
+        [[nodiscard]] std::vector<SEdgeContainer> get_edges(uint64_t src, uint64_t dst) override;
         [[nodiscard]] std::vector<SVertexContainer> get_edges_by_label(std::string_view label_id) override;
         [[nodiscard]] std::vector<SVertexContainer> get_vertices_by_label(std::string_view label_id) override;
-        [[nodiscard]] std::optional<SEdgeContainer> get_edge(uint64_t src, uint64_t dst, std::string_view) override;
+        [[nodiscard]] std::optional<SEdgeContainer> get_edge(uint64_t src, uint64_t dst, std::string_view edge_label) override;
+        [[nodiscard]] std::vector<SEdgeContainer> get_edges(uint64_t src, std::string_view edge_label, std::string_view vertex_label) override;
+        [[nodiscard]] std::vector<SEdgeContainer> get_edges(uint64_t src,
+                                                            std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs) override;
+        [[nodiscard]] std::optional<SPropertyContainer> get_vertex_property(uint64_t id) override;
+
+        [[nodiscard]] std::vector<SEdgeContainer> get_edges(const std::vector<SEdgeContainer> & edges, std::string_view edge_label, std::string_view vertex_label);
 
         void load_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void create_graph(std::filesystem::path path, std::string_view graph) noexcept override;
@@ -106,6 +112,7 @@ namespace graphquery::database::storage
         [[nodiscard]] uint64_t get_unassigned_edge_label_id() const noexcept;
         [[nodiscard]] bool check_if_vertex_exists(uint64_t id) noexcept;
         [[nodiscard]] std::optional<std::vector<SVertexContainer>::iterator> get_vertex_by_id(uint64_t id) noexcept;
+        void get_nested_edges(std::vector<SEdgeContainer> curr_edges, std::vector<std::string_view> edge_vertex_labels) noexcept;
 
         void inline access_preamble() noexcept;
         void remove_marked_vertices() noexcept;
