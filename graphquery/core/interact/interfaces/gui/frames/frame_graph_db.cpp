@@ -1,7 +1,6 @@
 #include "frame_graph_db.h"
 
 #include "db/system.h"
-#include "models/lpg/lpg.h"
 
 #include <algorithm>
 #include <utility>

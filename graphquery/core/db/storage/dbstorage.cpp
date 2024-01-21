@@ -202,8 +202,8 @@ graphquery::database::storage::CDBStorage::close_graph() noexcept
     (*m_loaded_graph)->close();
     delete (*m_loaded_graph);
     m_graph_model_lib.reset();
-    m_existing_graph_loaded = false;
     _log_system->info(fmt::format("Graph has been unloaded from memory and changes have been flushed"));
+    m_existing_graph_loaded = false;
 }
 
 void
