@@ -273,7 +273,7 @@ graphquery::database::storage::CDiskDriver::read(void * ptr, const int64_t size,
     if (this->m_initialised)
     {
         if (m_fd_info.st_size < static_cast<int64_t>(size * amt + m_seek_offset))
-            resize(m_fd_info.st_size * 2);
+            resize(static_cast<int64_t>(size * amt + m_seek_offset));
 
         memcpy(ptr, &this->m_memory_mapped_file[this->m_seek_offset], size * amt);
 
@@ -290,8 +290,8 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
 {
     if (this->m_initialised)
     {
-        if (m_fd_info.st_size < static_cast<int64_t>((size * amt + m_seek_offset)))
-            resize(m_fd_info.st_size * 2);
+        if (m_fd_info.st_size < static_cast<int64_t>(size * amt + m_seek_offset))
+            resize(static_cast<int64_t>(size * amt + m_seek_offset) * 2);
 
         memcpy(&this->m_memory_mapped_file[this->m_seek_offset], ptr, size * amt);
         if (update)
@@ -301,6 +301,21 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
         m_log_system->warning("File has not been initialised");
 
     return SRet_t::VALID;
+}
+
+void *
+graphquery::database::storage::CDiskDriver::ref(const uint64_t seek) noexcept
+{
+    static char * ptr = nullptr;
+    if (this->m_initialised)
+    {
+        if (m_fd_info.st_size < static_cast<int64_t>(seek))
+            resize(static_cast<int64_t>(seek) * 2);
+
+        ptr = &this->m_memory_mapped_file[seek];
+    }
+
+    return ptr;
 }
 
 char
