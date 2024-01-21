@@ -119,7 +119,7 @@ namespace graphquery::logger
         static std::shared_ptr<CLogSystem> m_log_system;
         void render_output(const SLogEntry &) const noexcept;
         static void render_output(ILog &, const SLogEntry &) noexcept;
-        [[nodiscard]] std::string format_output(ELogType, std::string_view) const noexcept;
+        [[nodiscard]] std::string format_output(ELogType, std::string) const noexcept;
 
         std::vector<std::string> log_type_prefix = {"DEBUG", // ~ Log type to string conversion
                                                     "INFO",

@@ -43,7 +43,7 @@ namespace graphquery::database::storage
         virtual void save_graph() noexcept                                                     = 0;
         virtual void calc_outdegree(std::shared_ptr<uint32_t[]>) noexcept                      = 0;
         virtual void edgemap(const std::unique_ptr<analytic::IRelax> & relax)                  = 0;
-        [[nodiscard]] virtual std::string_view get_name() const noexcept                       = 0;
+        [[nodiscard]] virtual std::string_view get_name() noexcept                             = 0;
         virtual void load_graph(std::filesystem::path path, std::string_view graph) noexcept   = 0;
         virtual void create_graph(std::filesystem::path path, std::string_view graph) noexcept = 0;
     };

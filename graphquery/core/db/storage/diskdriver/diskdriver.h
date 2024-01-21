@@ -42,6 +42,7 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t open(std::string_view file_path);
         [[maybe_unused]] SRet_t read(void * ptr, int64_t size, uint32_t amt, bool update = true);
         [[maybe_unused]] SRet_t write(const void * ptr, int64_t size, uint32_t amt, bool update = true);
+        [[maybe_unused]] void * ref(uint64_t seek) noexcept;
 
         void resize(int64_t file_size) noexcept;
         void set_path(std::filesystem::path file_path) noexcept;
@@ -54,6 +55,12 @@ namespace graphquery::database::storage
         [[nodiscard]] static bool check_if_file_exists(std::string_view path, std::string_view file_name) noexcept;
         [[maybe_unused]] static SRet_t create_folder(const std::filesystem::path & path, std::string_view folder_name);
         [[maybe_unused]] static SRet_t create_file(const std::filesystem::path & path, std::string_view file_name, int64_t file_size);
+
+        template<typename T>
+        inline T * ref(const uint64_t seek)
+        {
+            return std::bit_cast<T *>(ref(seek));
+        }
 
       private:
         [[maybe_unused]] SRet_t unmap() const noexcept;
