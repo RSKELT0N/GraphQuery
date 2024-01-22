@@ -32,78 +32,166 @@ namespace graphquery::database::storage
     class CMemoryModelMMAPLPG final : public ILPGModel
     {
       public:
+        /****************************************************************
+         * \enum EActionState_t
+         * \brief Declares the possible return states for this class.
+         *         Supplies a state wether correctness was attained or not.
+         *
+         *  \param valid   - valid state return (no issues found during compute)
+         *  \param invalid - invalid state return (issues were found during compute)
+         ***************************************************************/
         enum class EActionState_t : int8_t
         {
-            valid   = 0, // ~ valid state return (no issues found during compute)
-            invalid = -1 // ~ invalid state return (issues were found during compute)
+            valid   = 0,
+            invalid = -1
         };
 
+        /****************************************************************
+         * \enum EIndexValue_t
+         * \brief Declares the possible index states for an index entry.
+         *
+         * \param MARKED_INDEX      - data block marked for deletion (not considered)
+         * \param END_INDEX         - last of the linked data blocks
+         * \param UNALLOCATED_INDEX - data block that has not been allocated
+         ***************************************************************/
         enum EIndexValue_t : uint64_t
         {
-            MARKED_INDEX      = 0xFFFFFFFF, // ~ data block marked for deletion (not considered)
-            END_INDEX         = 0xFFFFFFF0, // ~ last of the linked data blocks
-            UNALLOCATED_INDEX = 0xFFFFFF00  // ~ data block that has not been allocated
+            MARKED_INDEX      = 0xFFFFFFFF,
+            END_INDEX         = 0xFFFFFFF0,
+            UNALLOCATED_INDEX = 0xFFFFFF00
         };
 
       private:
+        /****************************************************************
+         * \struct SGraphMetaData_t
+         * \brief Describes the metadata for the graph, holding neccessary
+         *        information to access the graph correctly.
+         *
+         * \param graph_name char[]       - name of the currently loaded graph
+         * \param graph_type char[]       - type of the graph (this)
+         * \param vertices_c uint64_t     - count of the vertices added to the graph
+         * \param edges_c uint64_t        - count of the edges added to the graph
+         * \param vertex_label_c uint16_t - count of the vertex labels added to the graph
+         * \param edge_label_c uint16_t   - count of the edge labels added to the graph
+         ***************************************************************/
         struct SGraphMetaData_t
         {
-            char graph_name[CFG_GRAPH_NAME_LENGTH]       = {}; // ~ name of the currently loaded graph
-            char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH] = {}; // ~ type of the graph (this)
-            uint64_t vertices_c                          = {}; // ~ count of the vertices added to the graph
-            uint64_t edges_c                             = {}; // ~ count of the edges added to the graph
-            uint16_t vertex_label_c                      = {}; // ~ count of the vertex labels added to the graph
-            uint16_t edge_label_c                        = {}; // ~ count of the edge labels added to the graph
+            char graph_name[CFG_GRAPH_NAME_LENGTH]       = {};
+            char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH] = {};
+            uint64_t vertices_c                          = {};
+            uint64_t edges_c                             = {};
+            uint16_t vertex_label_c                      = {};
+            uint16_t edge_label_c                        = {};
         };
 
+        /****************************************************************
+         * \struct SIndexMetadata_t
+         * \brief Describes the metadata for the index table, holding neccessary
+         *        information to access the index file correctly.
+         *
+         * \param index_c uint64_t               - amount of indices stored
+         * \param index_list_start_addr uint64_t - start addr of index list
+         * \param index_size uint32_t            - size of one index
+         ***************************************************************/
         struct SIndexMetadata_t
         {
-            uint64_t index_c               = {}; // ~ amount of indices stored
-            uint32_t index_size            = {}; // ~ size of one index
-            uint64_t index_list_start_addr = {}; // ~ start addr of index list
+            uint64_t index_c               = {};
+            uint64_t index_list_start_addr = {};
+            uint32_t index_size            = {};
         };
 
-        struct SBlockFileMetadata
+        /****************************************************************
+         * \struct SBlockFileMetadata_t
+         * \brief Describes the metadata for a generic data block file,
+         *        holding neccessary information to access the index file
+         *        correctly.
+         *
+         * \param data_block_c uint64_t       - amount of currently stored data blocks
+         * \param data_blocks_offset uint64_t - start addr of data block entries
+         * \param data_block_size uint32_t    - size of one data block
+         ***************************************************************/
+        struct SBlockFileMetadata_t
         {
-            uint64_t data_block_c       = {}; // ~ amount of currently stored data blocks
-            uint32_t data_block_size    = {}; // ~ size of one data block
-            uint64_t data_blocks_offset = {}; // ~ start addr of data block entries
+            uint64_t data_block_c       = {};
+            uint64_t data_blocks_offset = {};
+            uint32_t data_block_size    = {};
         };
 
+        /****************************************************************
+         * \struct SLabel_t
+         * \brief Structure of a label type within the graph
+         *
+         * \param label_s char[]    - str of label name
+         * \param item_c uint64_t   - count of the generic items under this label type
+         * \param label_id uint16_t - unique identifier for relative label usage
+         ***************************************************************/
         struct SLabel_t
         {
-            char label_s[CFG_LPG_LABEL_LENGTH] = {}; // ~ str of label name
-            uint64_t item_c                    = {}; // ~ count of the generic items under this label type
-            uint16_t label_id                  = {}; // ~ unique identifier for relative label usage
+            char label_s[CFG_LPG_LABEL_LENGTH] = {};
+            uint64_t item_c                    = {};
+            uint16_t label_id                  = {};
         };
 
+        /****************************************************************
+         * \struct SIndexEntry_t
+         * \brief Structure of an index entry to the index table.
+         *
+         * \param id uint64_t       - generic identifier for the payload
+         * \param offset uint64_t   - respective offset for the payload
+         * \param label_id uint16_t - generic label id for the index container
+         ***************************************************************/
         struct SIndexEntry_t
         {
-            uint64_t id     = {}; // ~ generic identifier for the payload
-            uint64_t offset = {}; // ~ respective offset for the payload
-            uint16_t label_id {}; // ~ generic label id for the index container
+            uint64_t id     = {};
+            uint64_t offset = {};
+            uint16_t label_id {};
         };
 
+        /****************************************************************
+         * \struct SEdgeEntry_t
+         * \brief Structure of an edge entry to the edge list.
+         *
+         * \param metadata SEdge_t        - metadata info of the edge
+         * \param properties_idx uint64_t - offset index for properties
+         ***************************************************************/
         struct SEdgeEntry_t
         {
-            SEdge_t metadata        = {};                // ~ metadata info of the edge
-            uint64_t properties_idx = UNALLOCATED_INDEX; // ~ offset index for properties
+            SEdge_t metadata        = {};
+            uint64_t properties_idx = UNALLOCATED_INDEX;
         };
 
+        /****************************************************************
+         * \struct SVertexEntry_t
+         * \brief Structure of a vertex entry to the vertex list.
+         *
+         * \param metadata SVertex_t      - metadata info the vertex
+         * \param edge_idx uint64_t       - tail edge offset
+         * \param properties_idx uint64_t - offset index for properties
+         ***************************************************************/
         struct SVertexEntry_t
         {
-            SVertex_t metadata      = {};                // ~ metadata info the vertex
-            uint64_t edge_idx       = UNALLOCATED_INDEX; // ~ tail edge offset
-            uint64_t properties_idx = UNALLOCATED_INDEX; // ~ offset index for properties
+            SVertex_t metadata      = {};
+            uint64_t edge_idx       = UNALLOCATED_INDEX;
+            uint64_t properties_idx = UNALLOCATED_INDEX;
         };
 
+        /****************************************************************
+         * \struct SDataBlock_t
+         * \brief Structure of a data block holding a generic payload,
+         *        entry to a datablock file.
+         *
+         * \tparam T          - payload type
+         * \param idx uint64_t  - index of the data block
+         * \param next uint64_t - state of the next linked block.
+         * \param payload T     - stored payload contained in data block
+         ***************************************************************/
         template<typename T>
             requires std::is_trivially_copyable_v<T>
         struct SDataBlock_t
         {
-            uint64_t idx  = {};                // ~ index of the data block
-            uint64_t next = UNALLOCATED_INDEX; // ~ state of the next linked block.
-            T payload     = {};                // ~ stored payload contained in data block
+            uint64_t idx  = {};
+            uint64_t next = UNALLOCATED_INDEX;
+            T payload     = {};
         };
 
       public:
@@ -176,8 +264,8 @@ namespace graphquery::database::storage
         SIndexEntry_t * read_index_entry(uint64_t offset) noexcept;
         SDataBlock_t<SVertexEntry_t> * read_vertex_entry(uint64_t offset) noexcept;
         inline SGraphMetaData_t * read_graph_metadata() noexcept;
-        inline SBlockFileMetadata * read_vertices_metadata() noexcept;
-        inline SBlockFileMetadata * read_edges_metadata() noexcept;
+        inline SBlockFileMetadata_t * read_vertices_metadata() noexcept;
+        inline SBlockFileMetadata_t * read_edges_metadata() noexcept;
         inline SIndexMetadata_t * read_index_metadata() noexcept;
 
         bool m_flush_needed;
