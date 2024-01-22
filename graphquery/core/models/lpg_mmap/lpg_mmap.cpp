@@ -9,6 +9,7 @@
 #include <optional>
 #include <ranges>
 #include <vector>
+#include <dispatch/io.h>
 
 namespace
 {
@@ -147,19 +148,19 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_index_metadata() noexc
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::store_vertices_metadata() noexcept
 {
-    auto * metadata              = m_vertices_file.ref<SBlockFileMetadata>(VERTICES_METADATA_START_ADDR);
+    auto * metadata              = m_vertices_file.ref<SBlockFileMetadata_t>(VERTICES_METADATA_START_ADDR);
     metadata->data_block_c       = 0;
     metadata->data_block_size    = sizeof(SDataBlock_t<SVertexEntry_t>);
-    metadata->data_blocks_offset = sizeof(SBlockFileMetadata);
+    metadata->data_blocks_offset = sizeof(SBlockFileMetadata_t);
 }
 
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::store_edges_metadata() noexcept
 {
-    auto * metadata              = m_edges_file.ref<SBlockFileMetadata>(EDGES_METADATA_START_ADDR);
+    auto * metadata              = m_edges_file.ref<SBlockFileMetadata_t>(EDGES_METADATA_START_ADDR);
     metadata->data_block_c       = 0;
     metadata->data_block_size    = sizeof(SDataBlock_t<SEdgeEntry_t>);
-    metadata->data_blocks_offset = sizeof(SBlockFileMetadata);
+    metadata->data_blocks_offset = sizeof(SBlockFileMetadata_t);
 }
 
 void
@@ -250,8 +251,36 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const std::
 }
 
 graphquery::database::storage::CMemoryModelMMAPLPG::EActionState_t
-graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(uint64_t src, uint64_t dst, std::string_view label, const std::vector<SProperty_t> & prop) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(const uint64_t src,
+                                                                   const uint64_t dst,
+                                                                   const std::string_view label,
+                                                                   const std::vector<SProperty_t> & prop) noexcept
 {
+    const auto src_vertex_exists = get_vertex_by_id(src);
+
+    if (!src_vertex_exists.has_value())
+        return EActionState_t::invalid;
+
+    SDataBlock_t<SVertexEntry_t> * vertex_src_ptr   = src_vertex_exists.value();
+    const std::optional<uint16_t> edge_label_exists = check_if_edge_label_exists(label);
+    const auto edge_label_id                        = edge_label_exists.has_value() ? edge_label_exists.value() : create_edge_label(label);
+
+    const auto tail_edge          = vertex_src_ptr->payload.edge_idx;
+    const auto edge_offset        = read_edges_metadata()->data_block_c++;
+    const auto data_blocks_offset = read_edges_metadata()->data_blocks_offset;
+
+    auto * data_block_ptr = m_edges_file.ref<SDataBlock_t<SEdgeEntry_t>>(data_blocks_offset + edge_offset * sizeof(SDataBlock_t<SEdgeEntry_t>));
+    data_block_ptr->idx   = edge_offset;
+    data_block_ptr->next  = tail_edge;
+
+    data_block_ptr->payload.properties_idx    = EIndexValue_t::UNALLOCATED_INDEX;
+    data_block_ptr->payload.metadata.dst      = dst;
+    data_block_ptr->payload.metadata.label_id = edge_label_id;
+
+    // ~ Update vertex tail and connect edges
+    vertex_src_ptr->next = edge_offset;
+
+    return EActionState_t::valid;
 }
 
 void
@@ -269,6 +298,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const uint64_t id
     transactions->commit_vertex(label, transformed_properties, id);
     m_flush_needed = true;
 }
+
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)
 {
@@ -478,16 +508,16 @@ graphquery::database::storage::CMemoryModelMMAPLPG::read_graph_metadata() noexce
     return m_master_file.ref<SGraphMetaData_t>(GRAPH_METADATA_START_ADDR);
 }
 
-graphquery::database::storage::CMemoryModelMMAPLPG::SBlockFileMetadata *
+graphquery::database::storage::CMemoryModelMMAPLPG::SBlockFileMetadata_t *
 graphquery::database::storage::CMemoryModelMMAPLPG::read_vertices_metadata() noexcept
 {
-    return m_vertices_file.ref<SBlockFileMetadata>(VERTICES_METADATA_START_ADDR);
+    return m_vertices_file.ref<SBlockFileMetadata_t>(VERTICES_METADATA_START_ADDR);
 }
 
-graphquery::database::storage::CMemoryModelMMAPLPG::SBlockFileMetadata *
+graphquery::database::storage::CMemoryModelMMAPLPG::SBlockFileMetadata_t *
 graphquery::database::storage::CMemoryModelMMAPLPG::read_edges_metadata() noexcept
 {
-    return m_edges_file.ref<SBlockFileMetadata>(EDGES_METADATA_START_ADDR);
+    return m_edges_file.ref<SBlockFileMetadata_t>(EDGES_METADATA_START_ADDR);
 }
 
 graphquery::database::storage::CMemoryModelMMAPLPG::SIndexMetadata_t *
