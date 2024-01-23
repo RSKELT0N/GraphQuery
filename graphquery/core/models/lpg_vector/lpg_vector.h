@@ -89,11 +89,14 @@ namespace graphquery::database::storage
         [[nodiscard]] std::string_view get_name() noexcept override;
         [[nodiscard]] std::optional<SVertex_t> get_vertex(uint64_t vertex_id) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(uint64_t src, uint64_t dst) override;
-        [[nodiscard]] std::vector<SVertex_t> get_edges_by_label(std::string_view label_id) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges_by_label(std::string_view label_id) override;
         [[nodiscard]] std::vector<SVertex_t> get_vertices_by_label(std::string_view label_id) override;
         [[nodiscard]] std::optional<SEdge_t> get_edge(uint64_t src, uint64_t dst, std::string_view edge_label) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(uint64_t src, std::string_view edge_label, std::string_view vertex_label) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(uint64_t src, std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs) override;
+        [[nodiscard]] std::vector<SVertex_t> get_vertices(std::function<bool(const SVertex_t &)> pred) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges(std::function<bool(const SEdge_t &)> pred) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges(uint64_t src, std::function<bool(const SEdge_t &)> pred) override;
         [[nodiscard]] std::optional<SPropertyContainer_t> get_vertex_properties(uint64_t id) override;
 
         [[nodiscard]] std::vector<SEdge_t> get_edges(const std::vector<SEdge_t> & edges, std::string_view edge_label, std::string_view vertex_label);

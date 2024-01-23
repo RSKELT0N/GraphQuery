@@ -199,6 +199,7 @@ graphquery::database::storage::CDBStorage::define_graph_model(const std::string 
 void
 graphquery::database::storage::CDBStorage::close_graph() noexcept
 {
+    (*m_loaded_graph)->save_graph();
     (*m_loaded_graph)->close();
     delete (*m_loaded_graph);
     m_graph_model_lib.reset();
