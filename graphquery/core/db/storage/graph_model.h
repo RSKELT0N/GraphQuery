@@ -16,6 +16,7 @@
 #include "memory_model.h"
 
 #include <cstdint>
+#include <functional>
 #include <vector>
 #include <optional>
 
@@ -39,6 +40,7 @@ namespace graphquery::database::storage
 
         struct SEdge_t
         {
+            uint64_t src      = {};
             uint64_t dst      = {};
             uint16_t label_id = {};
         };
@@ -67,11 +69,12 @@ namespace graphquery::database::storage
 
         struct SPropertyContainer_t
         {
-            uint64_t ref_id                   = {};
-            uint16_t property_c               = {};
+            uint64_t ref_id                     = {};
+            uint16_t property_c                 = {};
             std::vector<SProperty_t> properties = {};
 
             SPropertyContainer_t() = default;
+
             SPropertyContainer_t(const uint64_t _id, const std::vector<SProperty_t> & props): ref_id(_id), property_c(props.size()), properties(props) {}
         };
 
@@ -79,11 +82,14 @@ namespace graphquery::database::storage
         [[nodiscard]] virtual uint64_t get_num_vertices()                                                                                                  = 0;
         virtual std::optional<SVertex_t> get_vertex(uint64_t vertex_id)                                                                                    = 0;
         virtual std::vector<SEdge_t> get_edges(uint64_t src, uint64_t dst)                                                                                 = 0;
-        virtual std::vector<SVertex_t> get_edges_by_label(std::string_view label_id)                                                                       = 0;
+        virtual std::vector<SEdge_t> get_edges_by_label(std::string_view label_id)                                                                         = 0;
         virtual std::vector<SVertex_t> get_vertices_by_label(std::string_view label_id)                                                                    = 0;
         virtual std::optional<SEdge_t> get_edge(uint64_t src, uint64_t dst, std::string_view edge_label)                                                   = 0;
         virtual std::vector<SEdge_t> get_edges(uint64_t src, std::string_view edge_label, std::string_view vertex_label)                                   = 0;
         virtual std::vector<SEdge_t> get_edges(uint64_t src, std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs) = 0;
+        virtual std::vector<SVertex_t> get_vertices(std::function<bool(const SVertex_t &)>)                                                                = 0;
+        virtual std::vector<SEdge_t> get_edges(std::function<bool(const SEdge_t &)>)                                                                       = 0;
+        virtual std::vector<SEdge_t> get_edges(uint64_t src, std::function<bool(const SEdge_t &)>)                                                         = 0;
         virtual std::optional<SPropertyContainer_t> get_vertex_properties(uint64_t id)                                                                     = 0;
 
         virtual void rm_vertex(uint64_t vertex_id)                                                                                                                   = 0;

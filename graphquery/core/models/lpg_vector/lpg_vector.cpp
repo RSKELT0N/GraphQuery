@@ -623,6 +623,7 @@ graphquery::database::storage::CMemoryModelVectorLPG::add_edge_entry(const uint6
 
     edge.metadata.label_id = label_ref.label_id;
     edge.metadata.dst      = dst;
+    edge.metadata.src      = src_vertex->metadata.id;
 
     if (std::find_if(src_vertex->labelled_edges[edge_label_offset].begin(),
                      src_vertex->labelled_edges[edge_label_offset].end(),
@@ -977,6 +978,21 @@ graphquery::database::storage::CMemoryModelVectorLPG::get_edges(uint64_t src, st
     return base;
 }
 
+std::vector<graphquery::database::storage::ILPGModel::SVertex_t>
+graphquery::database::storage::CMemoryModelVectorLPG::get_vertices(std::function<bool(const SVertex_t &)> pred)
+{
+}
+
+std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
+graphquery::database::storage::CMemoryModelVectorLPG::get_edges(std::function<bool(const SEdge_t &)>)
+{
+}
+
+std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
+graphquery::database::storage::CMemoryModelVectorLPG::get_edges(uint64_t src, std::function<bool(const SEdge_t &)>)
+{
+}
+
 void
 graphquery::database::storage::CMemoryModelVectorLPG::calc_outdegree(const std::shared_ptr<uint32_t[]> arr) noexcept
 {
@@ -1035,7 +1051,7 @@ graphquery::database::storage::CMemoryModelVectorLPG::get_vertex_properties(uint
     return m_all_vertex_properties[m_vertex_lut[vertex_label_off][id]];
 }
 
-std::vector<graphquery::database::storage::ILPGModel::SVertex_t>
+std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
 graphquery::database::storage::CMemoryModelVectorLPG::get_edges_by_label(std::string_view label_id)
 {
     return {};
