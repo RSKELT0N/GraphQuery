@@ -13,6 +13,8 @@
 #include "log/logsystem/logsystem.h"
 
 #include <filesystem>
+#include <sys/fcntl.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 
 #define KB(x) ((size_t) (x * (1 << 10)))
@@ -30,7 +32,7 @@ namespace graphquery::database::storage
             VALID = 0X0000
         };
 
-        CDiskDriver(int file_mode, int map_mode_prot, int map_mode_flags);
+        explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
         ~CDiskDriver();
 
         CDiskDriver(CDiskDriver &&)      = delete;

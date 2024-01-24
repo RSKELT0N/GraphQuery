@@ -48,9 +48,9 @@ namespace graphquery::database::storage
         struct SVertex_t
         {
             uint64_t id           = {};
+            uint32_t neighbour_c  = {};
             uint16_t label_id     = {};
             uint16_t edge_label_c = {};
-            uint32_t neighbour_c  = {};
         };
 
         struct SProperty_t
