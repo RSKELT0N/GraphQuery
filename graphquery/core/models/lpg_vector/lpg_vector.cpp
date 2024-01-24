@@ -1032,7 +1032,7 @@ graphquery::database::storage::CMemoryModelVectorLPG::get_vertices_by_label(cons
     return {};
 }
 
-std::optional<graphquery::database::storage::ILPGModel::SPropertyContainer_t>
+std::vector<graphquery::database::storage::ILPGModel::SProperty_t>
 graphquery::database::storage::CMemoryModelVectorLPG::get_vertex_properties(uint64_t id)
 {
     const auto vertex = get_vertex(id);
@@ -1040,12 +1040,12 @@ graphquery::database::storage::CMemoryModelVectorLPG::get_vertex_properties(uint
     if (!vertex.has_value())
     {
         m_log_system->warning(fmt::format("Canont retreive properties of vertex({}) that does not exist", id));
-        return std::nullopt;
+        return {};
     }
 
     const auto vertex_label_off = m_vertex_label_lut[vertex.value().label_id];
 
-    return m_all_vertex_properties[m_vertex_lut[vertex_label_off][id]];
+    return m_all_vertex_properties[m_vertex_lut[vertex_label_off][id]].properties;
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SEdge_t>

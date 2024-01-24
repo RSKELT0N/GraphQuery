@@ -54,7 +54,7 @@ namespace graphquery::database::storage
          * \param END_INDEX         - last of the linked data blocks
          * \param UNALLOCATED_INDEX - data block that has not been allocated
          ***************************************************************/
-        enum EIndexValue_t : uint64_t
+        enum EIndexValue_t : uint32_t
         {
             MARKED_INDEX      = 0xFFFFFFFF,
             END_INDEX         = 0xFFFFFFF0,
@@ -120,7 +120,7 @@ namespace graphquery::database::storage
         {
             uint64_t data_blocks_start_addr = {};
             uint32_t data_block_c           = {};
-            uint32_t data_block_size    = {};
+            uint32_t data_block_size        = {};
         };
 
         /****************************************************************
@@ -195,9 +195,10 @@ namespace graphquery::database::storage
             requires std::is_trivially_copyable_v<T>
         struct SDataBlock_t
         {
-            uint32_t idx  = {};
-            uint32_t next = UNALLOCATED_INDEX;
-            T payload     = {};
+            uint32_t idx     = {};
+            uint32_t next    = END_INDEX;
+            uint32_t version = END_INDEX;
+            T payload        = {};
         };
 
       public:
@@ -226,7 +227,7 @@ namespace graphquery::database::storage
         [[nodiscard]] std::vector<SVertex_t> get_vertices(std::function<bool(const SVertex_t &)> pred) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::function<bool(const SEdge_t &)>) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(uint64_t src, std::function<bool(const SEdge_t &)>) override;
-        [[nodiscard]] std::optional<SPropertyContainer_t> get_vertex_properties(uint64_t id) override;
+        [[nodiscard]] std::vector<SProperty_t> get_vertex_properties(uint64_t id) override;
 
         void load_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void create_graph(std::filesystem::path path, std::string_view graph) noexcept override;
@@ -274,10 +275,10 @@ namespace graphquery::database::storage
         inline SBlockFileMetadata_t * read_vertices_metadata() noexcept;
         inline SBlockFileMetadata_t * read_properties_metadata() noexcept;
 
-        SIndexEntry_t * read_index_entry(uint32_t offset) noexcept;
-        SDataBlock_t<SEdgeEntry_t> * read_edge_entry(uint32_t offset) noexcept;
-        SDataBlock_t<SVertexEntry_t> * read_vertex_entry(uint32_t offset) noexcept;
-        SDataBlock_t<SProperty_t> * read_property_entry(uint32_t offset) noexcept;
+        inline SIndexEntry_t * read_index_entry(uint32_t offset) noexcept;
+        inline SDataBlock_t<SEdgeEntry_t> * read_edge_entry(uint32_t offset) noexcept;
+        inline SDataBlock_t<SVertexEntry_t> * read_vertex_entry(uint32_t offset) noexcept;
+        inline SDataBlock_t<SProperty_t> * read_property_entry(uint32_t offset) noexcept;
 
         static std::vector<SProperty_t> transform_properties(const std::vector<std::pair<std::string_view, std::string_view>> &) noexcept;
 
