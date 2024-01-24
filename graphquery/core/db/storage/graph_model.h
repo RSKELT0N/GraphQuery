@@ -43,12 +43,14 @@ namespace graphquery::database::storage
             uint64_t src      = {};
             uint64_t dst      = {};
             uint16_t label_id = {};
+            uint16_t property_c = {};
         };
 
         struct SVertex_t
         {
             uint64_t id           = {};
             uint32_t neighbour_c  = {};
+            uint16_t property_c   = {};
             uint16_t label_id     = {};
             uint16_t edge_label_c = {};
         };
@@ -90,7 +92,7 @@ namespace graphquery::database::storage
         virtual std::vector<SVertex_t> get_vertices(std::function<bool(const SVertex_t &)>)                                                                = 0;
         virtual std::vector<SEdge_t> get_edges(std::function<bool(const SEdge_t &)>)                                                                       = 0;
         virtual std::vector<SEdge_t> get_edges(uint64_t src, std::function<bool(const SEdge_t &)>)                                                         = 0;
-        virtual std::optional<SPropertyContainer_t> get_vertex_properties(uint64_t id)                                                                     = 0;
+        virtual std::vector<SProperty_t> get_vertex_properties(uint64_t id)                                                                                = 0;
 
         virtual void rm_vertex(uint64_t vertex_id)                                                                                                                   = 0;
         virtual void rm_edge(uint64_t src, uint64_t dst)                                                                                                             = 0;
