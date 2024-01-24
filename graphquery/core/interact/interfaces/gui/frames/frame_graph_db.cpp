@@ -60,7 +60,7 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
             (*m_graph)->add_vertex(0, "PERSON", {});
 
         if (ImGui::Button("Add Edge"))
-            (*m_graph)->add_edge(0, 1, "PERSON", {});
+            (*m_graph)->add_edge(0, 1, "KNOWS", {});
 
         if (ImGui::Button("Remove Vertex"))
             (*m_graph)->rm_vertex(0);

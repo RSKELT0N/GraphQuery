@@ -4,13 +4,10 @@
 
 #include <fcntl.h>
 #include <string_view>
-#include <sys/mman.h>
 
 #include <cassert>
 
-graphquery::database::storage::CDBStorage::
-CDBStorage():
-    m_db_disk(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED)
+graphquery::database::storage::CDBStorage::CDBStorage()
 {
     m_loaded_graph = std::make_shared<ILPGModel *>();
 }

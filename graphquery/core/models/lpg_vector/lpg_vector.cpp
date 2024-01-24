@@ -5,7 +5,6 @@
 #include <fcntl.h>
 #include <iostream>
 #include <string_view>
-#include <sys/mman.h>
 #include <optional>
 #include <ranges>
 #include <vector>
@@ -16,9 +15,7 @@ namespace
     std::shared_ptr<graphquery::database::storage::CTransaction> transactions;
 }
 
-graphquery::database::storage::CMemoryModelVectorLPG::CMemoryModelVectorLPG():
-    m_flush_needed(false), m_save_lock(1), m_master_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED), m_connections_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED),
-    m_vertices_prop_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED), m_edges_prop_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED)
+graphquery::database::storage::CMemoryModelVectorLPG::CMemoryModelVectorLPG(): m_flush_needed(false), m_save_lock(1)
 {
     m_log_system = logger::CLogSystem::get_instance();
 
