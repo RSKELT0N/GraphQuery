@@ -97,7 +97,7 @@ namespace graphquery::database::storage
         [[nodiscard]] std::vector<SVertex_t> get_vertices(std::function<bool(const SVertex_t &)> pred) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::function<bool(const SEdge_t &)> pred) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(uint64_t src, std::function<bool(const SEdge_t &)> pred) override;
-        [[nodiscard]] std::optional<SPropertyContainer_t> get_vertex_properties(uint64_t id) override;
+        [[nodiscard]] std::vector<SProperty_t> get_vertex_properties(uint64_t id) override;
 
         [[nodiscard]] std::vector<SEdge_t> get_edges(const std::vector<SEdge_t> & edges, std::string_view edge_label, std::string_view vertex_label);
 

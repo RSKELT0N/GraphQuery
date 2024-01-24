@@ -1,7 +1,5 @@
 #include "analytic.h"
 
-#include <utility>
-
 #include "db/system.h"
 
 graphquery::database::analytic::CAnalyticEngine::CAnalyticEngine(std::shared_ptr<storage::ILPGModel *> graph)
