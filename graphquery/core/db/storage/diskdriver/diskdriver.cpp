@@ -318,6 +318,22 @@ graphquery::database::storage::CDiskDriver::ref(const uint64_t seek) noexcept
     return ptr;
 }
 
+void *
+graphquery::database::storage::CDiskDriver::ref_update(const uint64_t size) noexcept
+{
+    static char * ptr = nullptr;
+    if (this->m_initialised)
+    {
+        if (m_fd_info.st_size < static_cast<int64_t>(m_seek_offset))
+            resize(static_cast<int64_t>(m_seek_offset) * 2);
+
+        ptr = &this->m_memory_mapped_file[m_seek_offset];
+        m_seek_offset += size;
+    }
+
+    return ptr;
+}
+
 char
 graphquery::database::storage::CDiskDriver::operator[](const int64_t idx) const noexcept
 {
@@ -339,7 +355,6 @@ graphquery::database::storage::CDiskDriver::seek(const uint64_t offset)
 {
     if (this->m_initialised)
     {
-        assert(static_cast<int64_t>(offset) <= this->m_fd_info.st_size);
         this->m_seek_offset = offset;
     }
     else
