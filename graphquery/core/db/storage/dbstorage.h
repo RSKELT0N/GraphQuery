@@ -82,7 +82,7 @@ namespace graphquery::database::storage
         static constexpr uint8_t GRAPH_ENTRIES_AMT         = 0;            //~ Max amount of graph entries
         static constexpr uint64_t DB_SUPERBLOCK_START_ADDR = 0x0;          //~ MasterDB struct entry;
         static constexpr const char * MASTER_DB_FILE_NAME  = "master.gdb"; //~ Storage size MAX for database master file.
-        static constexpr uint32_t MASTER_DB_FILE_SIZE = (sizeof(SDB_Superblock_t) + (sizeof(SGraph_Entry_t) * GRAPH_ENTRIES_AMT)); //~ Storage size MAX for database master
-        // file.
+        static constexpr uint32_t MASTER_DB_FILE_SIZE =
+            (sizeof(SDB_Superblock_t) + (sizeof(SGraph_Entry_t) * GRAPH_ENTRIES_AMT)); //~ Storage size MAX for database master file.
     };
 } // namespace graphquery::database::storage

@@ -660,7 +660,7 @@ graphquery::database::storage::CMemoryModelVectorLPG::rm_vertex_entry(const uint
     m_vertex_labels[v_idx].item_c--;
 
     //~ Update edge metadata
-    m_graph_metadata.edges_c = std::min(m_graph_metadata.edges_c - src_vertex->metadata.neighbour_c, 0ULL);
+    m_graph_metadata.edges_c = std::min(m_graph_metadata.edges_c - src_vertex->metadata.neighbour_c, 0UL);
 
     for (const auto [count, id, pos] : src_vertex->edge_labels)
         m_edge_labels[m_edge_label_lut[id]].item_c -= m_edge_labels[m_edge_label_lut[id]].item_c >= count ? count : 0;
@@ -701,7 +701,7 @@ graphquery::database::storage::CMemoryModelVectorLPG::rm_edge_entry(const uint64
         erased = {};
     }
 
-    m_graph_metadata.edges_c         = std::min(m_graph_metadata.edges_c - total, 0ULL);
+    m_graph_metadata.edges_c         = std::min(m_graph_metadata.edges_c - total, 0UL);
     src_vertex->metadata.neighbour_c = std::min(src_vertex->metadata.neighbour_c - erased, 0UL);
 
     m_flush_needed = true;

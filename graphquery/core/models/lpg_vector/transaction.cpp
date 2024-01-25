@@ -60,13 +60,6 @@ graphquery::database::storage::CTransaction::define_transaction_header()
 }
 
 void
-graphquery::database::storage::CTransaction::store_transaction_header()
-{
-    m_transaction_file.seek(TRANSACTION_HEADER_START_ADDR);
-    m_transaction_file.write(&m_header_block, sizeof(SHeaderBlock), 1);
-}
-
-void
 graphquery::database::storage::CTransaction::read_transaction_header()
 {
     m_transaction_file.seek(TRANSACTION_HEADER_START_ADDR);
