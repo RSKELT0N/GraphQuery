@@ -35,6 +35,13 @@ graphquery::database::storage::CTransaction::reset() noexcept
 }
 
 void
+graphquery::database::storage::CTransaction::store_transaction_header()
+{
+    m_transaction_file.seek(TRANSACTION_HEADER_START_ADDR);
+    m_transaction_file.write(&m_header_block, sizeof(SHeaderBlock), 1);
+}
+
+void
 graphquery::database::storage::CTransaction::set_up()
 {
     CDiskDriver::create_file(m_transaction_file.get_path(), TRANSACTION_FILE_NAME, TRANSACTION_FILE_SIZE);

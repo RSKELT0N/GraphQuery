@@ -146,7 +146,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const uin
 {
     const auto entry_offset = read_vertices_metadata()->data_block_c++;
     auto * data_block_ptr   = read_vertex_entry(entry_offset);
-    data_block_ptr->idx     = entry_offset;
+    data_block_ptr->state   = entry_offset;
     data_block_ptr->next    = EIndexValue_t::END_INDEX;
     data_block_ptr->version = EIndexValue_t::END_INDEX;
 
@@ -173,39 +173,72 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_edge_entry(const uint3
                                                                      const uint16_t label_id,
                                                                      const std::vector<SProperty_t> & props) noexcept
 {
-    const auto entry_offset = read_edges_metadata()->data_block_c++;
-    auto * data_block_ptr   = read_edge_entry(entry_offset);
+    uint32_t entry_offset = {};
+    size_t payload_offset = {};
 
-    data_block_ptr->idx     = entry_offset;
-    data_block_ptr->next    = next_ref;
-    data_block_ptr->version = EIndexValue_t::END_INDEX;
+    SEdgeDataBlock * data_block_ptr = read_edge_entry(next_ref);
 
-    data_block_ptr->payload.metadata.dst        = dst;
-    data_block_ptr->payload.metadata.src        = src;
-    data_block_ptr->payload.metadata.label_id   = label_id;
-    data_block_ptr->payload.metadata.property_c = props.size();
+    // ~ Check if existing room in current datablock
+    if (data_block_ptr->payload_c >= DATABLOCK_EDGE_PAYLOAD_C)
+    {
+        entry_offset   = read_edges_metadata()->data_block_c++;
+        data_block_ptr = read_edge_entry(entry_offset);
+
+        data_block_ptr->bit_state = 0;
+        data_block_ptr->next      = next_ref;
+        data_block_ptr->version   = EIndexValue_t::END_INDEX;
+        data_block_ptr->payload_c = payload_offset = 0;
+    }
+    else
+    {
+        entry_offset   = next_ref;
+        payload_offset = data_block_ptr->payload_c++;
+    }
+
+    data_block_ptr->bit_state[payload_offset]                   = true;
+    data_block_ptr->payload[payload_offset].metadata.dst        = dst;
+    data_block_ptr->payload[payload_offset].metadata.src        = src;
+    data_block_ptr->payload[payload_offset].metadata.label_id   = label_id;
+    data_block_ptr->payload[payload_offset].metadata.property_c = props.size();
 
     uint32_t next_props_ref = EIndexValue_t::END_INDEX;
 
     for (const SProperty_t & prop : props)
         next_props_ref = store_property_entry(prop, next_props_ref);
 
-    data_block_ptr->payload.properties_idx = next_props_ref;
+    data_block_ptr->payload[payload_offset].properties_idx = next_props_ref;
     return entry_offset;
 }
 
 uint32_t
 graphquery::database::storage::CMemoryModelMMAPLPG::store_property_entry(const SProperty_t & prop, const uint32_t next_ref) noexcept
 {
-    const auto entry_offset = read_properties_metadata()->data_block_c++;
-    auto * data_block_ptr   = read_property_entry(entry_offset);
+    uint32_t entry_offset = {};
+    size_t payload_offset = {};
 
-    data_block_ptr->idx     = entry_offset;
-    data_block_ptr->next    = next_ref;
-    data_block_ptr->version = EIndexValue_t::END_INDEX;
+    SPropertyDataBlock * data_block_ptr = read_property_entry(next_ref);
 
-    strncpy(&data_block_ptr->payload.key[0], prop.key, CFG_LPG_PROPERTY_KEY_LENGTH);
-    strncpy(&data_block_ptr->payload.value[0], prop.value, CFG_LPG_PROPERTY_VALUE_LENGTH);
+    // ~ Check if existing room in current datablock
+    if (data_block_ptr->payload_c >= DATABLOCK_PROPERTY_PAYLOAD_C)
+    {
+        entry_offset   = read_properties_metadata()->data_block_c++;
+        data_block_ptr = read_property_entry(entry_offset);
+
+        data_block_ptr->bit_state = 0;
+        data_block_ptr->next      = next_ref;
+        data_block_ptr->version   = EIndexValue_t::END_INDEX;
+        data_block_ptr->payload_c = payload_offset = 0;
+    }
+    else
+    {
+        entry_offset   = next_ref;
+        payload_offset = data_block_ptr->payload_c++;
+    }
+
+    data_block_ptr->bit_state[payload_offset] = true;
+
+    strncpy(&data_block_ptr->payload[payload_offset].key[0], prop.key, CFG_LPG_PROPERTY_KEY_LENGTH);
+    strncpy(&data_block_ptr->payload[payload_offset].value[0], prop.value, CFG_LPG_PROPERTY_VALUE_LENGTH);
 
     return entry_offset;
 }
@@ -224,7 +257,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_vertices_metadata() no
 {
     auto * metadata                  = read_vertices_metadata();
     metadata->data_block_c           = 0;
-    metadata->data_block_size        = sizeof(SDataBlock_t<SVertexEntry_t>);
+    metadata->data_block_size        = sizeof(SVertexDataBlock);
     metadata->data_blocks_start_addr = sizeof(SBlockFileMetadata_t);
 }
 
@@ -233,7 +266,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_edges_metadata() noexc
 {
     auto * metadata                  = read_edges_metadata();
     metadata->data_block_c           = 0;
-    metadata->data_block_size        = sizeof(SDataBlock_t<SEdgeEntry_t>);
+    metadata->data_block_size        = sizeof(SEdgeDataBlock);
     metadata->data_blocks_start_addr = sizeof(SBlockFileMetadata_t);
 }
 
@@ -242,7 +275,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_properties_metadata() 
 {
     auto * metadata                  = read_properties_metadata();
     metadata->data_block_c           = 0;
-    metadata->data_block_size        = sizeof(SDataBlock_t<SProperty_t>);
+    metadata->data_block_size        = sizeof(SPropertyDataBlock);
     metadata->data_blocks_start_addr = sizeof(SBlockFileMetadata_t);
 }
 
@@ -345,7 +378,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(const uint64_
     if (!src_vertex_exists.has_value())
         return EActionState_t::invalid;
 
-    SDataBlock_t<SVertexEntry_t> * vertex_src_ptr   = src_vertex_exists.value();
+    SVertexDataBlock * vertex_src_ptr               = src_vertex_exists.value();
     const std::optional<uint16_t> edge_label_exists = check_if_edge_label_exists(label);
     const auto edge_label_id                        = edge_label_exists.has_value() ? edge_label_exists.value() : create_edge_label(label);
 
@@ -444,7 +477,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(uint64_t src, uint64
 std::optional<graphquery::database::storage::ILPGModel::SVertex_t>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex(uint64_t vertex_id)
 {
-    const std::optional<SDataBlock_t<SVertexEntry_t> *> exists = get_vertex_by_id(vertex_id);
+    const std::optional<SVertexDataBlock *> exists = get_vertex_by_id(vertex_id);
 
     if (!exists.has_value())
         return std::nullopt;
@@ -462,9 +495,9 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertices(const std::func
 
     for (uint64_t i = 0; i < datablock_c; i++)
     {
-        const SDataBlock_t<SVertexEntry_t> * curr_vertex_ptr = read_vertex_entry(i);
+        const SVertexDataBlock * curr_vertex_ptr = read_vertex_entry(i);
 
-        if (curr_vertex_ptr->idx == EIndexValue_t::MARKED_INDEX)
+        if (curr_vertex_ptr->state == EIndexValue_t::MARKED_INDEX)
             continue;
 
         if (pred(curr_vertex_ptr->payload.metadata))
@@ -486,13 +519,20 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::functio
 
     for (uint64_t i = 0; i < datablock_c; i++)
     {
-        const SDataBlock_t<SEdgeEntry_t> * curr_edge_ptr = read_edge_entry(i);
+        const SEdgeDataBlock * curr_edge_ptr = read_edge_entry(i);
 
-        if (curr_edge_ptr->idx == EIndexValue_t::MARKED_INDEX)
+        if (!curr_edge_ptr->bit_state.any())
             continue;
 
-        if (pred(curr_edge_ptr->payload.metadata))
-            ret.emplace_back(curr_edge_ptr->payload.metadata);
+        for (size_t j = 0; j < curr_edge_ptr->payload_c;)
+        {
+            if (curr_edge_ptr->bit_state.test(j))
+            {
+                if (pred(curr_edge_ptr->payload[j].metadata))
+                    ret.emplace_back(curr_edge_ptr->payload[j].metadata);
+                j++;
+            }
+        }
     }
 
     ret.shrink_to_fit();
@@ -507,7 +547,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const uint64_t src
     if (!exists.has_value())
         return {};
 
-    const SDataBlock_t<SVertexEntry_t> * vertex_ptr = exists.value();
+    const SVertexDataBlock * vertex_ptr = exists.value();
 
     std::vector<SEdge_t> ret = {};
     ret.reserve(vertex_ptr->payload.metadata.neighbour_c);
@@ -516,10 +556,17 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const uint64_t src
 
     while (curr != EIndexValue_t::END_INDEX)
     {
-        const SDataBlock_t<SEdgeEntry_t> * curr_edge_ptr = read_edge_entry(curr);
+        const SEdgeDataBlock * curr_edge_ptr = read_edge_entry(curr);
 
-        if (pred(curr_edge_ptr->payload.metadata))
-            ret.emplace_back(curr_edge_ptr->payload.metadata);
+        for (size_t i = 0; i < curr_edge_ptr->payload_c;)
+        {
+            if (curr_edge_ptr->bit_state.test(i))
+            {
+                if (pred(curr_edge_ptr->payload[i].metadata))
+                    ret.emplace_back(curr_edge_ptr->payload[i].metadata);
+                i++;
+            }
+        }
 
         curr = curr_edge_ptr->next;
     }
@@ -564,7 +611,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertices_by_label(const 
                   m_vertex_lut[label_id].end(),
                   [this, &ret](const std::pair<uint64_t, uint64_t> & p)
                   {
-                      const SDataBlock_t<SVertexEntry_t> * vertex_ptr = read_vertex_entry(p.second);
+                      const SVertexDataBlock * vertex_ptr = read_vertex_entry(p.second);
                       ret.emplace_back(vertex_ptr->payload.metadata);
                   });
 
@@ -605,24 +652,33 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const uint64_t src
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SProperty_t>
-graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_properties(uint64_t id)
+graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_properties(const uint64_t id)
 {
     const auto src_vertex_exists = get_vertex_by_id(id);
     std::vector<SProperty_t> ret = {};
 
-    if (!src_vertex_exists.has_value())
+    if (unlikely(!src_vertex_exists.has_value()))
         return ret;
 
     const auto src_vertex = src_vertex_exists.value();
     ret.reserve(src_vertex->payload.metadata.property_c);
 
-    auto property_ref_cpy                    = src_vertex->payload.properties_idx;
-    SDataBlock_t<SProperty_t> * property_ptr = nullptr;
+    auto property_ref_cpy             = src_vertex->payload.properties_idx;
+    SPropertyDataBlock * property_ptr = nullptr;
 
     while (property_ref_cpy != EIndexValue_t::END_INDEX)
     {
         property_ptr = read_property_entry(src_vertex->payload.properties_idx);
-        ret.emplace_back(property_ptr->payload.key, property_ptr->payload.value);
+
+        for (size_t i = 0; i < property_ptr->payload_c;)
+        {
+            if (likely(property_ptr->bit_state.test(i)))
+            {
+                ret.emplace_back(property_ptr->payload[i].key, property_ptr->payload[i].value);
+                i++;
+            }
+        }
+
         property_ref_cpy = property_ptr->next;
     }
 
@@ -639,7 +695,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::calc_outdegree(const std::sh
     {
         const auto * curr_vertex_ptr = read_vertex_entry(i);
 
-        if (curr_vertex_ptr->idx == EIndexValue_t::MARKED_INDEX) [[unlikely]]
+        if (unlikely(curr_vertex_ptr->state == EIndexValue_t::MARKED_INDEX))
             continue;
 
         outdeg[vertex_c++] = curr_vertex_ptr->payload.metadata.neighbour_c;
@@ -649,33 +705,34 @@ graphquery::database::storage::CMemoryModelMMAPLPG::calc_outdegree(const std::sh
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept
 {
-    const auto datablock_c = read_vertices_metadata()->data_block_c;
+    const auto datablock_c               = read_vertices_metadata()->data_block_c;
+    const SEdgeDataBlock * curr_edge_ptr = nullptr;
+    uint32_t edge_ref                    = {};
 
     for (uint32_t i = 0; i < datablock_c; i++)
     {
         const auto * curr_vertex_ptr = read_vertex_entry(i);
 
-        if (curr_vertex_ptr->idx == EIndexValue_t::MARKED_INDEX) [[unlikely]]
+        if (unlikely(curr_vertex_ptr->state == EIndexValue_t::MARKED_INDEX))
             continue;
 
-        SDataBlock_t<SEdgeEntry_t> * curr_edge_ptr = nullptr;
-        uint32_t edge_ref                          = curr_vertex_ptr->payload.edge_idx;
+        edge_ref = curr_vertex_ptr->payload.edge_idx;
 
         while (edge_ref != EIndexValue_t::END_INDEX)
         {
             curr_edge_ptr = read_edge_entry(edge_ref);
 
-            if (curr_edge_ptr->idx != EIndexValue_t::MARKED_INDEX) [[unlikely]]
+            for (size_t j = 0; j < curr_edge_ptr->payload_c;)
             {
-                relax->relax(curr_vertex_ptr->payload.metadata.id, curr_edge_ptr->payload.metadata.dst);
+                if (likely(curr_edge_ptr->bit_state.test(j)))
+                    relax->relax(curr_vertex_ptr->payload.metadata.id, curr_edge_ptr->payload[j++].metadata.dst);
             }
-
             edge_ref = curr_edge_ptr->next;
         }
     }
 }
 
-std::optional<graphquery::database::storage::CMemoryModelMMAPLPG::SDataBlock_t<graphquery::database::storage::CMemoryModelMMAPLPG::SVertexEntry_t> *>
+std::optional<graphquery::database::storage::CMemoryModelMMAPLPG::SVertexDataBlock *>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_id(const uint64_t id) noexcept
 {
     int16_t vertex_label_id = -1;
@@ -747,12 +804,18 @@ graphquery::database::storage::CMemoryModelMMAPLPG::read_index_list() noexcept
 {
     define_vertex_lut();
     const auto vertices_amt = read_graph_metadata()->vertices_c;
-    auto * index_ptr        = read_index_entry(0);
 
-    for (int i = 0; i < vertices_amt; i++, index_ptr++)
+    auto func = [this, &vertices_amt]()
     {
-        m_vertex_lut[index_ptr->label_id].emplace(index_ptr->id, i);
-    }
+        auto * index_ptr = read_index_entry(0);
+        for (int64_t i = 0; i < vertices_amt; i++, index_ptr++)
+        {
+            m_vertex_lut[index_ptr->label_id][index_ptr->id] = i;
+        }
+    };
+
+    // TODO: pass control over to thread pool
+    func();
 }
 
 graphquery::database::storage::CMemoryModelMMAPLPG::SIndexEntry_t *
@@ -768,25 +831,25 @@ graphquery::database::storage::CMemoryModelMMAPLPG::read_vertex_entry(const uint
     static const auto base_addr      = read_vertices_metadata()->data_blocks_start_addr;
     static const auto datablock_size = read_vertices_metadata()->data_block_size;
     const auto effective_addr        = base_addr + (datablock_size * offset);
-    return m_vertices_file.ref<SDataBlock_t<SVertexEntry_t>>(effective_addr);
+    return m_vertices_file.ref<SVertexDataBlock>(effective_addr);
 }
 
-graphquery::database::storage::CMemoryModelMMAPLPG::SDataBlock_t<graphquery::database::storage::ILPGModel::SProperty_t> *
+graphquery::database::storage::CMemoryModelMMAPLPG::SPropertyDataBlock *
 graphquery::database::storage::CMemoryModelMMAPLPG::read_property_entry(const uint32_t offset) noexcept
 {
     static const auto base_addr      = read_properties_metadata()->data_blocks_start_addr;
     static const auto datablock_size = read_properties_metadata()->data_block_size;
     const auto effective_addr        = base_addr + (datablock_size * offset);
-    return m_properties_file.ref<SDataBlock_t<SProperty_t>>(effective_addr);
+    return m_properties_file.ref<SPropertyDataBlock>(effective_addr);
 }
 
-graphquery::database::storage::CMemoryModelMMAPLPG::SDataBlock_t<graphquery::database::storage::CMemoryModelMMAPLPG::SEdgeEntry_t> *
+graphquery::database::storage::CMemoryModelMMAPLPG::SEdgeDataBlock *
 graphquery::database::storage::CMemoryModelMMAPLPG::read_edge_entry(const uint32_t offset) noexcept
 {
     static const auto base_addr      = read_edges_metadata()->data_blocks_start_addr;
     static const auto datablock_size = read_edges_metadata()->data_block_size;
     const auto effective_addr        = base_addr + (datablock_size * offset);
-    return m_edges_file.ref<SDataBlock_t<SEdgeEntry_t>>(effective_addr);
+    return m_edges_file.ref<SEdgeDataBlock>(effective_addr);
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
