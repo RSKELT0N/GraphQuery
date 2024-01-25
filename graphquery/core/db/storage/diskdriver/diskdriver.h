@@ -38,13 +38,24 @@ namespace graphquery::database::storage
         CDiskDriver(CDiskDriver &&)      = delete;
         CDiskDriver(const CDiskDriver &) = delete;
 
+        template<typename T>
+        inline T * ref(const uint64_t seek)
+        {
+            return std::bit_cast<T *>(ref(seek));
+        }
+
+        template<typename T>
+        inline T * ref_update()
+        {
+            return std::bit_cast<T *>(ref_update(sizeof(T)));
+        }
+
         [[maybe_unused]] SRet_t close();
         [[maybe_unused]] SRet_t seek(uint64_t offset);
         [[maybe_unused]] uint64_t get_seek_offset() const noexcept;
         [[maybe_unused]] SRet_t open(std::string_view file_path);
         [[maybe_unused]] SRet_t read(void * ptr, int64_t size, uint32_t amt, bool update = true);
         [[maybe_unused]] SRet_t write(const void * ptr, int64_t size, uint32_t amt, bool update = true);
-        [[maybe_unused]] void * ref(uint64_t seek) noexcept;
 
         void resize(int64_t file_size) noexcept;
         void set_path(std::filesystem::path file_path) noexcept;
@@ -58,13 +69,9 @@ namespace graphquery::database::storage
         [[maybe_unused]] static SRet_t create_folder(const std::filesystem::path & path, std::string_view folder_name);
         [[maybe_unused]] static SRet_t create_file(const std::filesystem::path & path, std::string_view file_name, int64_t file_size);
 
-        template<typename T>
-        inline T * ref(const uint64_t seek)
-        {
-            return std::bit_cast<T *>(ref(seek));
-        }
-
       private:
+        [[maybe_unused]] void * ref(uint64_t seek) noexcept;
+        [[maybe_unused]] void * ref_update(uint64_t size) noexcept;
         [[maybe_unused]] SRet_t unmap() const noexcept;
         [[maybe_unused]] SRet_t open_fd() noexcept;
         [[maybe_unused]] SRet_t close_fd() noexcept;

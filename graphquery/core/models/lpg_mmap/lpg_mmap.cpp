@@ -142,7 +142,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_index_entry(uint64_t i
 }
 
 uint32_t
-graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const uint64_t vertex_id, const uint16_t label_id, const std::vector<SProperty_t> & props) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const uint64_t id, const uint16_t label_id, const std::vector<SProperty_t> & props) noexcept
 {
     const auto entry_offset = read_vertices_metadata()->data_block_c++;
     auto * data_block_ptr   = read_vertex_entry(entry_offset);
@@ -151,7 +151,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const uin
     data_block_ptr->version = EIndexValue_t::END_INDEX;
 
     data_block_ptr->payload.edge_idx              = EIndexValue_t::END_INDEX;
-    data_block_ptr->payload.metadata.id           = vertex_id;
+    data_block_ptr->payload.metadata.id           = id;
     data_block_ptr->payload.metadata.label_id     = label_id;
     data_block_ptr->payload.metadata.neighbour_c  = 0;
     data_block_ptr->payload.metadata.property_c   = props.size();
@@ -176,8 +176,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_edge_entry(const uint3
     const auto entry_offset = read_edges_metadata()->data_block_c++;
     auto * data_block_ptr   = read_edge_entry(entry_offset);
 
-    data_block_ptr->idx  = entry_offset;
-    data_block_ptr->next = next_ref;
+    data_block_ptr->idx     = entry_offset;
+    data_block_ptr->next    = next_ref;
     data_block_ptr->version = EIndexValue_t::END_INDEX;
 
     data_block_ptr->payload.metadata.dst        = dst;
@@ -200,8 +200,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_property_entry(const S
     const auto entry_offset = read_properties_metadata()->data_block_c++;
     auto * data_block_ptr   = read_property_entry(entry_offset);
 
-    data_block_ptr->idx  = entry_offset;
-    data_block_ptr->next = next_ref;
+    data_block_ptr->idx     = entry_offset;
+    data_block_ptr->next    = next_ref;
     data_block_ptr->version = EIndexValue_t::END_INDEX;
 
     strncpy(&data_block_ptr->payload.key[0], prop.key, CFG_LPG_PROPERTY_KEY_LENGTH);
@@ -397,6 +397,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge(const uint64_t src,
         m_log_system->warning(fmt::format("Issue adding edge({}) to vertex({})", dst, src));
         return;
     }
+
     transactions->commit_edge(src, dst, label, transformed_properties);
     m_flush_needed = true;
 }
@@ -409,6 +410,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex(const uint64_t ver
         m_log_system->warning(fmt::format("Issue removing vertex({})", vertex_id));
         return;
     }
+
     transactions->commit_rm_vertex(vertex_id);
     m_flush_needed = true;
 }
@@ -421,6 +423,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(const uint64_t src, 
         m_log_system->warning(fmt::format("Issue remvoing edge({}) to vertex({})", dst, src));
         return;
     }
+
     transactions->commit_rm_edge(src, dst);
     m_flush_needed = true;
 }
@@ -433,6 +436,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(uint64_t src, uint64
         m_log_system->warning(fmt::format("Issue remvoing edge({}) to vertex({})", dst, src));
         return;
     }
+
     transactions->commit_rm_edge(src, dst, label);
     m_flush_needed = true;
 }
@@ -662,7 +666,9 @@ graphquery::database::storage::CMemoryModelMMAPLPG::edgemap(const std::unique_pt
             curr_edge_ptr = read_edge_entry(edge_ref);
 
             if (curr_edge_ptr->idx != EIndexValue_t::MARKED_INDEX) [[unlikely]]
+            {
                 relax->relax(curr_vertex_ptr->payload.metadata.id, curr_edge_ptr->payload.metadata.dst);
+            }
 
             edge_ref = curr_edge_ptr->next;
         }
@@ -744,7 +750,9 @@ graphquery::database::storage::CMemoryModelMMAPLPG::read_index_list() noexcept
     auto * index_ptr        = read_index_entry(0);
 
     for (int i = 0; i < vertices_amt; i++, index_ptr++)
+    {
         m_vertex_lut[index_ptr->label_id].emplace(index_ptr->id, i);
+    }
 }
 
 graphquery::database::storage::CMemoryModelMMAPLPG::SIndexEntry_t *
