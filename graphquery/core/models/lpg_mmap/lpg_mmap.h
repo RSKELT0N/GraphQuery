@@ -27,6 +27,12 @@
 #include <semaphore>
 #include <bitset>
 
+#define likely(x)   __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
+
+#define DATABLOCK_EDGE_PAYLOAD_C     3
+#define DATABLOCK_PROPERTY_PAYLOAD_C 3
+
 namespace graphquery::database::storage
 {
     class CMemoryModelMMAPLPG final : public ILPGModel
@@ -186,16 +192,38 @@ namespace graphquery::database::storage
          * \brief Structure of a data block holding a generic payload,
          *        entry to a datablock file.
          *
-         * \tparam T          - payload type
-         * \param idx uint64_t  - index of the data block
-         * \param next uint64_t - state of the next linked block.
-         * \param payload T     - stored payload contained in data block
+         * \tparam T                       - payload type
+         * \tparam N                       - payload count
+         * \param bit_state uint64_t       - index of the data block
+         * \param next uint64_t            - state of the next linked block.
+         * \param payload std::array<T, N> - stored payload contained in data block
+         ***************************************************************/
+        template<typename T, size_t N = 1>
+            requires std::is_trivially_copyable_v<T> && (N > 0)
+        struct SDataBlock_t
+        {
+            std::bitset<N> bit_state = {};
+            uint32_t next            = END_INDEX;
+            uint32_t version         = END_INDEX;
+            size_t payload_c         = 0;
+            std::array<T, N> payload = {};
+        };
+
+        /****************************************************************
+         * \struct SDataBlock_t
+         * \brief Structure of a data block holding a generic payload,
+         *        entry to a datablock file.
+         *
+         * \tparam T             - payload type
+         * \param state uint64_t - index of the data block
+         * \param next uint64_t  - state of the next linked block.
+         * \param payload T      - stored payload contained in data block
          ***************************************************************/
         template<typename T>
             requires std::is_trivially_copyable_v<T>
-        struct SDataBlock_t
+        struct SDataBlock_t<T, 1>
         {
-            uint32_t idx     = {};
+            uint32_t state   = {};
             uint32_t next    = END_INDEX;
             uint32_t version = END_INDEX;
             T payload        = {};
@@ -239,6 +267,10 @@ namespace graphquery::database::storage
 
       private:
         friend class CTransaction;
+        using SVertexDataBlock   = SDataBlock_t<SVertexEntry_t>;
+        using SEdgeDataBlock     = SDataBlock_t<SEdgeEntry_t, DATABLOCK_EDGE_PAYLOAD_C>;
+        using SPropertyDataBlock = SDataBlock_t<SProperty_t, DATABLOCK_PROPERTY_PAYLOAD_C>;
+
         [[nodiscard]] EActionState_t rm_vertex_entry(uint64_t vertex_id) noexcept;
         [[nodiscard]] EActionState_t rm_edge_entry(uint64_t src_vertex_id, uint64_t dst_vertex_id) noexcept;
         [[nodiscard]] EActionState_t rm_edge_entry(std::string_view, uint64_t src_vertex_id, uint64_t dst_vertex_id) noexcept;
@@ -253,7 +285,7 @@ namespace graphquery::database::storage
         [[nodiscard]] inline std::optional<uint16_t> check_if_vertex_label_exists(std::string_view) noexcept;
 
         [[nodiscard]] uint64_t get_unassigned_vertex_id(size_t label_idx) const noexcept;
-        [[nodiscard]] std::optional<SDataBlock_t<SVertexEntry_t> *> get_vertex_by_id(uint64_t id) noexcept;
+        [[nodiscard]] std::optional<SVertexDataBlock *> get_vertex_by_id(uint64_t id) noexcept;
 
         void inline access_preamble() noexcept;
         void read_index_list() noexcept;
@@ -276,9 +308,9 @@ namespace graphquery::database::storage
         inline SBlockFileMetadata_t * read_properties_metadata() noexcept;
 
         inline SIndexEntry_t * read_index_entry(uint32_t offset) noexcept;
-        inline SDataBlock_t<SEdgeEntry_t> * read_edge_entry(uint32_t offset) noexcept;
-        inline SDataBlock_t<SVertexEntry_t> * read_vertex_entry(uint32_t offset) noexcept;
-        inline SDataBlock_t<SProperty_t> * read_property_entry(uint32_t offset) noexcept;
+        inline SEdgeDataBlock * read_edge_entry(uint32_t offset) noexcept;
+        inline SVertexDataBlock * read_vertex_entry(uint32_t offset) noexcept;
+        inline SPropertyDataBlock * read_property_entry(uint32_t offset) noexcept;
 
         static std::vector<SProperty_t> transform_properties(const std::vector<std::pair<std::string_view, std::string_view>> &) noexcept;
 

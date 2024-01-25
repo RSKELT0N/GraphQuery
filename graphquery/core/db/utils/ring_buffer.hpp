@@ -1,7 +1,7 @@
 /************************************************************
  * \author Ryan Skelton
  * \date 18/09/2023
- * \file ring_buffer.h
+ * \file ring_buffer.hpp
  * \brief Header including implementation of rung_buffer data
  *        structure which can be used by other translation units
  *        to efficient store data in a ring-based buffer.
