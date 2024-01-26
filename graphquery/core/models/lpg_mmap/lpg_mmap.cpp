@@ -246,7 +246,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_property_entry(const S
 }
 
 uint32_t
-graphquery::database::storage::CMemoryModelMMAPLPG::create_base_edge_entry(uint32_t next_ref) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::create_base_edge_entry(const uint32_t next_ref) noexcept
 {
     const uint32_t entry_offset     = read_edges_metadata()->data_block_c++;
     SEdgeDataBlock * data_block_ptr = read_edge_entry(entry_offset);
@@ -260,7 +260,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::create_base_edge_entry(uint3
 }
 
 uint32_t
-graphquery::database::storage::CMemoryModelMMAPLPG::create_base_property_entry(uint32_t next_ref) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::create_base_property_entry(const uint32_t next_ref) noexcept
 {
     const uint32_t entry_offset         = read_properties_metadata()->data_block_c++;
     SPropertyDataBlock * data_block_ptr = read_property_entry(entry_offset);
