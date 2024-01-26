@@ -17,12 +17,12 @@
 #define LIB_EXPORT
 #endif
 
+#include "db/utils/thread_pool.hpp"
 #include "db/storage/graph_model.h"
 
 #include <utility>
 #include <vector>
 #include <optional>
-#include <algorithm>
 #include <unordered_map>
 #include <semaphore>
 #include <bitset>
@@ -296,10 +296,13 @@ namespace graphquery::database::storage
         void store_edges_metadata() noexcept;
         void store_properties_metadata() noexcept;
 
-        uint32_t store_index_entry(uint64_t id, uint16_t label_id, uint32_t vertex_offset) noexcept;
+        uint32_t store_property_entry(const SProperty_t & prop, uint32_t next_ref) noexcept;
+        void store_index_entry(uint64_t id, uint16_t label_id, uint32_t vertex_offset) noexcept;
         uint32_t store_vertex_entry(uint64_t id, uint16_t label_id, const std::vector<SProperty_t> & props) noexcept;
         uint32_t store_edge_entry(uint32_t next_ref, uint64_t src, uint64_t dst, uint16_t label_id, const std::vector<SProperty_t> & props) noexcept;
-        uint32_t store_property_entry(const SProperty_t & prop, uint32_t next_ref) noexcept;
+
+        uint32_t create_base_edge_entry(uint32_t next_ref = EIndexValue_t::END_INDEX) noexcept;
+        uint32_t create_base_property_entry(uint32_t next_ref = EIndexValue_t::END_INDEX) noexcept;
 
         inline SGraphMetaData_t * read_graph_metadata() noexcept;
         inline SIndexMetadata_t * read_index_metadata() noexcept;
@@ -311,6 +314,8 @@ namespace graphquery::database::storage
         inline SEdgeDataBlock * read_edge_entry(uint32_t offset) noexcept;
         inline SVertexDataBlock * read_vertex_entry(uint32_t offset) noexcept;
         inline SPropertyDataBlock * read_property_entry(uint32_t offset) noexcept;
+        inline SLabel_t * read_vertex_label_entry(uint32_t offset) noexcept;
+        inline SLabel_t * read_edge_label_entry(uint32_t offset) noexcept;
 
         static std::vector<SProperty_t> transform_properties(const std::vector<std::pair<std::string_view, std::string_view>> &) noexcept;
 
@@ -326,7 +331,8 @@ namespace graphquery::database::storage
         CDiskDriver m_index_file;
         CDiskDriver m_properties_file;
 
-        std::unordered_map<uint16_t, std::unordered_map<uint64_t, int64_t>> m_vertex_lut;
+        utils::CThreadPool<8> m_thread_pool;
+        std::vector<std::vector<uint64_t>> m_label_map;
 
         static constexpr const char * MASTER_FILE_NAME     = "master";
         static constexpr const char * VERTICES_FILE_NAME   = "vertices";
