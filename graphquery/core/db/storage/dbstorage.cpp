@@ -31,7 +31,7 @@ graphquery::database::storage::CDBStorage::close() noexcept
 
         m_db_graph_table.clear();
         m_db_disk.close();
-        _log_system->info("Database file has been closed and memory has been flushed");
+        _log_system->info("Database file has been closed and changes has been synced");
         m_existing_db_loaded = false;
     }
 }
@@ -200,7 +200,7 @@ graphquery::database::storage::CDBStorage::close_graph() noexcept
     (*m_loaded_graph)->close();
     delete (*m_loaded_graph);
     m_graph_model_lib.reset();
-    _log_system->info(fmt::format("Graph has been unloaded from memory and changes have been flushed"));
+    _log_system->info(fmt::format("Graph has been unloaded from memory and changes have been synced"));
     m_existing_graph_loaded = false;
 }
 
