@@ -68,7 +68,6 @@ graphquery::database::storage::CMemoryModelMMAPLPG::create_graph(std::filesystem
     (void) CDiskDriver::create_file(path, VERTICES_FILE_NAME, DEFAULT_FILE_SIZE);
     (void) CDiskDriver::create_file(path, EDGES_FILE_NAME, DEFAULT_FILE_SIZE);
     (void) CDiskDriver::create_file(path, INDEX_FILE_NAME, DEFAULT_FILE_SIZE);
-    (void) CDiskDriver::create_file(path, INDEX_FILE_NAME, DEFAULT_FILE_SIZE);
     (void) CDiskDriver::create_file(path, PROPERTIES_FILE_NAME, DEFAULT_FILE_SIZE);
 
     //~ Open mapping to model files
@@ -339,7 +338,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::create_vertex_label(const st
     strncpy(&label_ptr->label_s[0], label_str.data(), 20);
     label_ptr->item_c     = 0;
     label_ptr->label_id   = label_id;
-    m_label_map[label_id] = std::vector<uint64_t>();
+    m_label_map.emplace_back();
     return label_id;
 }
 
@@ -802,11 +801,12 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::define_vertex_lut() noexcept
 {
     const auto label_c = read_graph_metadata()->vertex_label_c;
+    m_label_map.resize(label_c);
 
-    for (uint16_t i = 0; i < label_c; i++)
+    SLabel_t * label_ptr       = read_vertex_label_entry(0);
+
+    for (uint16_t i = 0; i < label_c; i++, label_ptr++)
     {
-        const SLabel_t * label_ptr       = read_vertex_label_entry(i);
-        m_label_map[label_ptr->label_id] = std::vector<uint64_t>();
         m_label_map[label_ptr->label_id].resize(label_ptr->item_c);
     }
 }
