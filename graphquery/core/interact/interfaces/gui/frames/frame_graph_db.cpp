@@ -54,8 +54,8 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-            for (int i = 0; i < 1; i++)
-                (*m_graph)->add_vertex("PERSON", {{"First Name", "Skelton"}});
+            for (int i = 0; i < 1000000; i++)
+                (*m_graph)->add_vertex("PERSON", {});
 
         if (ImGui::Button("Add Vertex (0)"))
             (*m_graph)->add_vertex(0, "PERSON", {});
