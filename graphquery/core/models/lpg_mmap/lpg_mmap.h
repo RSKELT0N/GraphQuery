@@ -121,12 +121,14 @@ namespace graphquery::database::storage
          * \param data_block_c uint64_t       - amount of currently stored data blocks
          * \param data_blocks_offset uint64_t - start addr of data block entries
          * \param data_block_size uint32_t    - size of one data block
+         * \param free_list uint32_t          - linked list of free data blocks
          ***************************************************************/
         struct SBlockFileMetadata_t
         {
             uint64_t data_blocks_start_addr = {};
             uint32_t data_block_c           = {};
             uint32_t data_block_size        = {};
+            uint32_t free_list              = END_INDEX;
         };
 
         /****************************************************************
@@ -270,6 +272,12 @@ namespace graphquery::database::storage
         using SVertexDataBlock   = SDataBlock_t<SVertexEntry_t>;
         using SEdgeDataBlock     = SDataBlock_t<SEdgeEntry_t, DATABLOCK_EDGE_PAYLOAD_C>;
         using SPropertyDataBlock = SDataBlock_t<SProperty_t, DATABLOCK_PROPERTY_PAYLOAD_C>;
+
+        template<typename T>
+        void append_free_data_block(CDiskDriver & file, SBlockFileMetadata_t * block_metadata, uint32_t block_offset) noexcept;
+
+        template<typename T>
+        [[nodiscard]] std::optional<SDataBlock_t<T> *> attain_free_data_block(CDiskDriver & file, SBlockFileMetadata_t * block_metadata) noexcept;
 
         [[nodiscard]] EActionState_t rm_vertex_entry(uint64_t vertex_id) noexcept;
         [[nodiscard]] EActionState_t rm_edge_entry(uint64_t src_vertex_id, uint64_t dst_vertex_id) noexcept;
