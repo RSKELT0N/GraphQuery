@@ -308,6 +308,41 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_properties_metadata() 
     metadata->data_blocks_start_addr = sizeof(SBlockFileMetadata_t);
 }
 
+template<typename T>
+void
+graphquery::database::storage::CMemoryModelMMAPLPG::append_free_data_block(CDiskDriver & file, SBlockFileMetadata_t * block_metadata, uint32_t block_offset) noexcept
+{
+    const auto head = block_metadata->free_list;
+
+    SDataBlock_t<T> * data_block_ptr = file.ref<T>(block_metadata->data_blocks_start_addr + block_metadata->data_block_size * block_offset);
+    data_block_ptr->state            = END_INDEX;
+    data_block_ptr->next             = head;
+    data_block_ptr->version          = END_INDEX;
+    data_block_ptr->payload          = {};
+
+    block_metadata->free_list = block_offset;
+}
+
+template<typename T>
+std::optional<graphquery::database::storage::CMemoryModelMMAPLPG::SDataBlock_t<T> *>
+graphquery::database::storage::CMemoryModelMMAPLPG::attain_free_data_block(CDiskDriver & file, SBlockFileMetadata_t * block_metadata) noexcept
+{
+    const auto head = block_metadata->free_list;
+
+    if (head == EIndexValue_t::END_INDEX)
+        return std::nullopt;
+
+    SDataBlock_t<T> * data_block_ptr = file.ref<T>(block_metadata->data_blocks_start_addr + block_metadata->data_block_size * head);
+    data_block_ptr->state            = END_INDEX;
+    data_block_ptr->version          = END_INDEX;
+    data_block_ptr->payload          = {};
+
+    block_metadata->free_list = data_block_ptr->next;
+    data_block_ptr->next      = END_INDEX;
+
+    return data_block_ptr;
+}
+
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::access_preamble() noexcept
 {
@@ -336,8 +371,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::create_vertex_label(const st
     auto * label_ptr            = m_master_file.ref<SLabel_t>(label_offset);
 
     strncpy(&label_ptr->label_s[0], label_str.data(), 20);
-    label_ptr->item_c     = 0;
-    label_ptr->label_id   = label_id;
+    label_ptr->item_c   = 0;
+    label_ptr->label_id = label_id;
     m_label_map.emplace_back();
     return label_id;
 }
@@ -803,7 +838,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::define_vertex_lut() noexcept
     const auto label_c = read_graph_metadata()->vertex_label_c;
     m_label_map.resize(label_c);
 
-    SLabel_t * label_ptr       = read_vertex_label_entry(0);
+    SLabel_t * label_ptr = read_vertex_label_entry(0);
 
     for (uint16_t i = 0; i < label_c; i++, label_ptr++)
     {
