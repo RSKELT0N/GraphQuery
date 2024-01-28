@@ -31,23 +31,28 @@ namespace graphquery::database::storage
             uint64_t eof_addr                = {};
         } __attribute__((packed));
 
-        struct SVertexTransaction
+        struct SVertexCommit
         {
-            ETransactionType type            = ETransactionType::vertex;
-            uint8_t remove                   = {0};
-            uint64_t optional_id             = {0};
             char label[CFG_LPG_LABEL_LENGTH] = {""};
+            uint64_t optional_id             = {0};
             uint16_t property_c              = {0};
+            uint8_t remove                   = {0};
         } __attribute__((packed));
 
-        struct SEdgeTransaction
+        struct SEdgeCommit
         {
-            ETransactionType type            = ETransactionType::edge;
-            uint8_t remove                   = {0};
+            char label[CFG_LPG_LABEL_LENGTH] = {""};
             uint64_t src                     = {0};
             uint64_t dst                     = {0};
-            char label[CFG_LPG_LABEL_LENGTH] = {""};
             uint16_t property_c              = {0};
+            uint8_t remove                   = {0};
+        } __attribute__((packed));
+
+        template<typename T>
+        struct STransaction
+        {
+            ETransactionType type = ETransactionType::vertex;
+            T commit              = {};
         } __attribute__((packed));
 
       public:
@@ -65,6 +70,9 @@ namespace graphquery::database::storage
         void commit_edge(uint64_t src, uint64_t dst, std::string_view label, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) noexcept;
 
       private:
+        using SVertexTransaction = STransaction<SVertexCommit>;
+        using SEdgeTransaction   = STransaction<SEdgeCommit>;
+
         void load();
         void set_up();
         void define_transaction_header();
