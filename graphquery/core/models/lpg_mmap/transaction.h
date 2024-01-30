@@ -76,10 +76,13 @@ namespace graphquery::database::storage
         void load();
         void set_up();
         void define_transaction_header();
-        inline SHeaderBlock * read_transaction_header();
 
-        void process_vertex_transaction(const SVertexTransaction *, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept;
-        void process_edge_transaction(const SEdgeTransaction *, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept;
+        template<typename T>
+        inline CDiskDriver::SRef_t<T> read_transaction(uint64_t seek);
+        inline CDiskDriver::SRef_t<SHeaderBlock> read_transaction_header();
+
+        void process_vertex_transaction(CDiskDriver::SRef_t<SVertexTransaction>, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept;
+        void process_edge_transaction(CDiskDriver::SRef_t<SEdgeTransaction>, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept;
 
         CMemoryModelMMAPLPG * m_lpg;
         CDiskDriver m_transaction_file;

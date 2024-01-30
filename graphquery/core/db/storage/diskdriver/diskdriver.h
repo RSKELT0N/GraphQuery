@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "log/logsystem/logsystem.h"
 
 #include <filesystem>
@@ -32,23 +34,38 @@ namespace graphquery::database::storage
             VALID = 0X0000
         };
 
+        template<typename T>
+        struct SRef_t
+        {
+            ~SRef_t() { --counter; }
+            SRef_t() = default;
+
+            SRef_t(T * _t, uint32_t * _counter): ref(_t), counter(_counter) { ++counter; }
+
+            T * operator->() { return ref; }
+            T * operator++(int) { return ref++; }
+
+            T * ref            = {};
+            uint32_t * counter = nullptr;
+        } __attribute__((packed));
+
+        template<typename T>
+        inline SRef_t<T> ref(const uint64_t seek)
+        {
+            return SRef_t<T>(std::bit_cast<T *>(ref(seek)), &m_ref_counter);
+        }
+
+        template<typename T>
+        inline SRef_t<T> ref_update()
+        {
+            return SRef_t<T>(std::bit_cast<T *>(ref_update(sizeof(T))), &m_ref_counter);
+        }
+
         explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
         ~CDiskDriver();
 
         CDiskDriver(CDiskDriver &&)      = delete;
         CDiskDriver(const CDiskDriver &) = delete;
-
-        template<typename T>
-        inline T * ref(const uint64_t seek)
-        {
-            return std::bit_cast<T *>(ref(seek));
-        }
-
-        template<typename T>
-        inline T * ref_update()
-        {
-            return std::bit_cast<T *>(ref_update(sizeof(T)));
-        }
 
         [[maybe_unused]] SRet_t close();
         [[maybe_unused]] SRet_t seek(uint64_t offset);
@@ -78,6 +95,11 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t map() noexcept;
         [[maybe_unused]] SRet_t truncate(int64_t) noexcept;
 
+        uint8_t m_resizing;
+        uint32_t m_ref_counter;
+        std::mutex m_resize_lock;
+        std::unique_lock<std::mutex> m_unq_lock;
+        std::condition_variable m_cv_lock;
         static std::shared_ptr<logger::CLogSystem> m_log_system;
 
         int m_file_mode      = {}; //~ Set file mode of the descriptor when opened.
