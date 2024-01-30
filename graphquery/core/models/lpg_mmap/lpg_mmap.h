@@ -23,7 +23,6 @@
 #include <utility>
 #include <vector>
 #include <optional>
-#include <unordered_map>
 #include <semaphore>
 #include <bitset>
 
@@ -85,15 +84,15 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SGraphMetaData_t
         {
-            char graph_name[CFG_GRAPH_NAME_LENGTH]       = {};
-            char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH] = {};
-            uint64_t vertices_c                          = {};
-            uint64_t edges_c                             = {};
-            uint64_t vertex_label_table_addr             = {};
-            uint64_t edge_label_table_addr               = {};
-            uint64_t label_size                          = {};
-            uint16_t vertex_label_c                      = {};
-            uint16_t edge_label_c                        = {};
+            char graph_name[CFG_GRAPH_NAME_LENGTH]        = {};
+            char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH]  = {};
+            std::atomic<uint64_t> vertices_c              = {};
+            std::atomic<uint64_t> edges_c                 = {};
+            std::atomic<uint64_t> vertex_label_table_addr = {};
+            std::atomic<uint64_t> edge_label_table_addr   = {};
+            std::atomic<uint64_t> label_size              = {};
+            std::atomic<uint16_t> vertex_label_c          = {};
+            std::atomic<uint16_t> edge_label_c            = {};
         };
 
         /****************************************************************
@@ -107,9 +106,9 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SIndexMetadata_t
         {
-            uint64_t index_list_start_addr = {};
-            uint32_t index_c               = {};
-            uint32_t index_size            = {};
+            std::atomic<uint64_t> index_list_start_addr = {};
+            std::atomic<uint32_t> index_c               = {};
+            std::atomic<uint32_t> index_size            = {};
         };
 
         /****************************************************************
@@ -125,10 +124,10 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SBlockFileMetadata_t
         {
-            uint64_t data_blocks_start_addr = {};
-            uint32_t data_block_c           = {};
-            uint32_t data_block_size        = {};
-            uint32_t free_list              = END_INDEX;
+            std::atomic<uint64_t> data_blocks_start_addr = {};
+            std::atomic<uint32_t> data_block_c           = {};
+            std::atomic<uint32_t> data_block_size        = {};
+            std::atomic<uint32_t> free_list              = END_INDEX;
         };
 
         /****************************************************************
@@ -142,8 +141,8 @@ namespace graphquery::database::storage
         struct SLabel_t
         {
             char label_s[CFG_LPG_LABEL_LENGTH] = {};
-            uint64_t item_c                    = {};
-            uint16_t label_id                  = {};
+            std::atomic<uint64_t> item_c       = {};
+            std::atomic<uint16_t> label_id     = {};
         };
 
         /****************************************************************
@@ -156,9 +155,8 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SIndexEntry_t
         {
-            uint64_t id       = {};
-            uint32_t offset   = {};
-            uint16_t label_id = {};
+            std::atomic<uint64_t> id     = {};
+            std::atomic<uint32_t> offset = {};
         };
 
         /****************************************************************
@@ -170,8 +168,8 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SEdgeEntry_t
         {
-            SEdge_t metadata        = {};
-            uint32_t properties_idx = END_INDEX;
+            SEdge_t metadata                     = {};
+            std::atomic<uint32_t> properties_idx = END_INDEX;
         };
 
         /****************************************************************
@@ -184,9 +182,9 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SVertexEntry_t
         {
-            SVertex_t metadata      = {};
-            uint32_t edge_idx       = END_INDEX;
-            uint32_t properties_idx = END_INDEX;
+            SVertex_t metadata                   = {};
+            std::atomic<uint32_t> edge_idx       = END_INDEX;
+            std::atomic<uint32_t> properties_idx = END_INDEX;
         };
 
         /****************************************************************
@@ -201,14 +199,14 @@ namespace graphquery::database::storage
          * \param payload std::array<T, N> - stored payload contained in data block
          ***************************************************************/
         template<typename T, size_t N = 1>
-            requires std::is_trivially_copyable_v<T> && (N > 0)
+            requires(N > 0)
         struct SDataBlock_t
         {
-            std::bitset<N> bit_state = {};
-            uint32_t next            = END_INDEX;
-            uint32_t version         = END_INDEX;
-            size_t payload_c         = 0;
-            std::array<T, N> payload = {};
+            std::bitset<N> bit_state      = {};
+            std::atomic<uint32_t> next    = END_INDEX;
+            std::atomic<uint32_t> version = END_INDEX;
+            std::atomic<size_t> payload_c = 0;
+            std::array<T, N> payload      = {};
         };
 
         /****************************************************************
@@ -222,12 +220,11 @@ namespace graphquery::database::storage
          * \param payload T      - stored payload contained in data block
          ***************************************************************/
         template<typename T>
-            requires std::is_trivially_copyable_v<T>
         struct SDataBlock_t<T, 1>
         {
-            uint32_t state   = {};
-            uint32_t next    = END_INDEX;
-            uint32_t version = END_INDEX;
+            std::atomic<uint32_t> state   = {};
+            std::atomic<uint32_t> next    = END_INDEX;
+            std::atomic<uint32_t> version = END_INDEX;
             T payload        = {};
         };
 
@@ -273,6 +270,20 @@ namespace graphquery::database::storage
         using SEdgeDataBlock     = SDataBlock_t<SEdgeEntry_t, DATABLOCK_EDGE_PAYLOAD_C>;
         using SPropertyDataBlock = SDataBlock_t<SProperty_t, DATABLOCK_PROPERTY_PAYLOAD_C>;
 
+        void inline transaction_preamble() noexcept;
+        void inline transaction_epilogue() noexcept;
+        void read_index_list() noexcept;
+        void define_vertex_lut() noexcept;
+        void store_graph_metadata() noexcept;
+        void store_index_metadata() noexcept;
+        void store_vertices_metadata() noexcept;
+        void store_edges_metadata() noexcept;
+        void store_properties_metadata() noexcept;
+        uint32_t store_property_entry(const SProperty_t & prop, uint32_t next_ref) noexcept;
+        void store_index_entry(uint64_t id, uint16_t label_id, uint32_t vertex_offset) noexcept;
+        uint32_t store_vertex_entry(uint64_t id, uint16_t label_id, const std::vector<SProperty_t> & props) noexcept;
+        uint32_t store_edge_entry(uint32_t next_ref, uint64_t src, uint64_t dst, uint16_t label_id, const std::vector<SProperty_t> & props) noexcept;
+
         template<typename T>
         void append_free_data_block(CDiskDriver & file, SBlockFileMetadata_t * block_metadata, uint32_t block_offset) noexcept;
 
@@ -293,43 +304,34 @@ namespace graphquery::database::storage
         [[nodiscard]] inline std::optional<uint16_t> check_if_vertex_label_exists(std::string_view) noexcept;
 
         [[nodiscard]] uint64_t get_unassigned_vertex_id(size_t label_idx) const noexcept;
-        [[nodiscard]] std::optional<SVertexDataBlock *> get_vertex_by_id(uint64_t id) noexcept;
-
-        void inline access_preamble() noexcept;
-        void read_index_list() noexcept;
-        void define_vertex_lut() noexcept;
-        void store_graph_metadata() noexcept;
-        void store_index_metadata() noexcept;
-        void store_vertices_metadata() noexcept;
-        void store_edges_metadata() noexcept;
-        void store_properties_metadata() noexcept;
-
-        uint32_t store_property_entry(const SProperty_t & prop, uint32_t next_ref) noexcept;
-        void store_index_entry(uint64_t id, uint16_t label_id, uint32_t vertex_offset) noexcept;
-        uint32_t store_vertex_entry(uint64_t id, uint16_t label_id, const std::vector<SProperty_t> & props) noexcept;
-        uint32_t store_edge_entry(uint32_t next_ref, uint64_t src, uint64_t dst, uint16_t label_id, const std::vector<SProperty_t> & props) noexcept;
+        [[nodiscard]] std::optional<CDiskDriver::SRef_t<SVertexDataBlock>> get_vertex_by_id(uint64_t id) noexcept;
 
         uint32_t create_base_edge_entry(uint32_t next_ref = EIndexValue_t::END_INDEX) noexcept;
         uint32_t create_base_property_entry(uint32_t next_ref = EIndexValue_t::END_INDEX) noexcept;
 
-        inline SGraphMetaData_t * read_graph_metadata() noexcept;
-        inline SIndexMetadata_t * read_index_metadata() noexcept;
-        inline SBlockFileMetadata_t * read_edges_metadata() noexcept;
-        inline SBlockFileMetadata_t * read_vertices_metadata() noexcept;
-        inline SBlockFileMetadata_t * read_properties_metadata() noexcept;
+        inline CDiskDriver::SRef_t<SGraphMetaData_t> read_graph_metadata() noexcept;
+        inline CDiskDriver::SRef_t<SIndexMetadata_t> read_index_metadata() noexcept;
+        inline CDiskDriver::SRef_t<SBlockFileMetadata_t> read_edges_metadata() noexcept;
+        inline CDiskDriver::SRef_t<SBlockFileMetadata_t> read_vertices_metadata() noexcept;
+        inline CDiskDriver::SRef_t<SBlockFileMetadata_t> read_properties_metadata() noexcept;
 
-        inline SIndexEntry_t * read_index_entry(uint32_t offset) noexcept;
-        inline SEdgeDataBlock * read_edge_entry(uint32_t offset) noexcept;
-        inline SVertexDataBlock * read_vertex_entry(uint32_t offset) noexcept;
-        inline SPropertyDataBlock * read_property_entry(uint32_t offset) noexcept;
-        inline SLabel_t * read_vertex_label_entry(uint32_t offset) noexcept;
-        inline SLabel_t * read_edge_label_entry(uint32_t offset) noexcept;
+        inline CDiskDriver::SRef_t<SIndexEntry_t> read_index_entry(uint32_t offset) noexcept;
+        inline CDiskDriver::SRef_t<SEdgeDataBlock> read_edge_entry(uint32_t offset) noexcept;
+        inline CDiskDriver::SRef_t<SVertexDataBlock> read_vertex_entry(uint32_t offset) noexcept;
+        inline CDiskDriver::SRef_t<SPropertyDataBlock> read_property_entry(uint32_t offset) noexcept;
+        inline CDiskDriver::SRef_t<SLabel_t> read_vertex_label_entry(uint32_t offset) noexcept;
+        inline CDiskDriver::SRef_t<SLabel_t> read_edge_label_entry(uint32_t offset) noexcept;
 
         static std::vector<SProperty_t> transform_properties(const std::vector<std::pair<std::string_view, std::string_view>> &) noexcept;
 
-        bool m_flush_needed;
+        bool m_sync_needed;
         std::string m_graph_name;
-        std::binary_semaphore m_save_lock;
+
+        uint8_t m_syncing;
+        uint32_t m_transaction_ref_c;
+        std::mutex m_sync_lock;
+        std::unique_lock<std::mutex> m_unq_lock;
+        std::condition_variable m_cv_sync;
         std::shared_ptr<logger::CLogSystem> m_log_system;
 
         //~ Disk/file drivers for graph mapping from disk to memory

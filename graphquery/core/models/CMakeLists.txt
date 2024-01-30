@@ -1,2 +1,2 @@
-add_subdirectory(lpg_vector)
+#add_subdirectory(lpg_vector)
 add_subdirectory(lpg_mmap)

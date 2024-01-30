@@ -11,7 +11,6 @@
 
 #include <array>
 #include <cassert>
-#include <memory>
 
 namespace graphquery::database::utils
 {
@@ -26,7 +25,7 @@ namespace graphquery::database::utils
             std::array<ElemType, BufferSize> * data;
         };
 
-        constexpr CRingBuffer();
+        inline constexpr CRingBuffer();
 
         void clear() noexcept;
         void add(const ElemType & elem) noexcept;
@@ -43,7 +42,7 @@ namespace graphquery::database::utils
 
     //~ public:
     template<typename ElemType, size_t BufferSize>
-    constexpr CRingBuffer<ElemType, BufferSize>::CRingBuffer()
+    inline constexpr CRingBuffer<ElemType, BufferSize>::CRingBuffer()
     {
         m_data = std::array<ElemType, BufferSize>();
     }

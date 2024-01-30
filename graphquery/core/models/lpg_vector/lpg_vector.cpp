@@ -620,7 +620,7 @@ graphquery::database::storage::CMemoryModelVectorLPG::add_edge_entry(const uint6
 
     edge.metadata.label_id = label_ref.label_id;
     edge.metadata.dst      = dst;
-    edge.metadata.src      = src_vertex->metadata.id;
+    edge.metadata.src      = src_vertex->metadata.id.load();
 
     if (std::find_if(src_vertex->labelled_edges[edge_label_offset].begin(),
                      src_vertex->labelled_edges[edge_label_offset].end(),

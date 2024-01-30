@@ -50,6 +50,22 @@ namespace graphquery::database::storage
             std::atomic<uint16_t> edge_label_c           = {};
         };
 
+        struct SVertexEdgeLabelEntry_t
+        {
+            std::atomic<uint64_t> item_c       = {};
+            std::atomic<uint16_t> label_id_ref = {};
+            std::atomic<uint16_t> pos          = {};
+
+            SVertexEdgeLabelEntry_t()  = default;
+            ~SVertexEdgeLabelEntry_t() = default;
+            SVertexEdgeLabelEntry_t(const SVertexEdgeLabelEntry_t & cpy)
+            {
+                item_c       = cpy.item_c.load();
+                label_id_ref = cpy.label_id_ref.load();
+                pos          = cpy.pos.load();
+            }
+        };
+
         struct SLabel_t
         {
             char label_s[CFG_LPG_LABEL_LENGTH] = {};
@@ -69,6 +85,23 @@ namespace graphquery::database::storage
             std::vector<SVertexEdgeLabelEntry_t> edge_labels       = {};
             std::vector<LabelGroup<SEdgeContainer>> labelled_edges = {};
             uint64_t properties_ref                                = {};
+        };
+
+        struct SPropertyContainer_t
+        {
+            uint64_t ref_id                     = {};
+            uint16_t property_c                 = {};
+            std::vector<SProperty_t> properties = {};
+
+            SPropertyContainer_t() = default;
+
+            SPropertyContainer_t(const SPropertyContainer_t & cpy)
+            {
+                ref_id     = cpy.ref_id;
+                property_c = cpy.property_c;
+            }
+
+            SPropertyContainer_t(const uint64_t _id, const std::vector<SProperty_t> & props): ref_id(_id), property_c(props.size()), properties(props) {}
         };
 
       public:
