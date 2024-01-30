@@ -23,5 +23,5 @@ namespace graphquery::database::storage
     static constexpr uint8_t CFG_GRAPH_MODEL_TYPE_LENGTH = 20; //~ Length for a graph model type
 
     //~ System config
-    static constexpr auto CFG_SYSTEM_HEARTBEAT_INTERVAL = std::chrono::seconds(15);
+    static constexpr auto CFG_SYSTEM_HEARTBEAT_INTERVAL = std::chrono::seconds(30);
 } // namespace graphquery::database::storage
