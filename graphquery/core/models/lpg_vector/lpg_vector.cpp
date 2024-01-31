@@ -819,16 +819,6 @@ graphquery::database::storage::CMemoryModelVectorLPG::rm_edge(uint64_t src, uint
     transactions->commit_rm_edge(src, dst, label);
 }
 
-void
-graphquery::database::storage::CMemoryModelVectorLPG::update_vertex(uint64_t vertex_id, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)
-{
-}
-
-void
-graphquery::database::storage::CMemoryModelVectorLPG::update_edge(uint64_t edge_id, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)
-{
-}
-
 uint64_t
 graphquery::database::storage::CMemoryModelVectorLPG::get_num_vertices()
 {

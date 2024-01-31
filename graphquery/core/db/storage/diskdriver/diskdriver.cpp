@@ -1,6 +1,5 @@
 #include "diskdriver.h"
 
-#include <atomic>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -8,12 +7,6 @@
 
 #include <cassert>
 #include <cstdint>
-
-namespace
-{
-    const auto wait_on_resizing = [](const uint8_t * resizing) -> bool { return *resizing == 0; };
-    const auto wait_on_refs     = [](const uint32_t * refs) -> bool { return *refs == 0; };
-} // namespace
 
 //~ static symbol link
 std::shared_ptr<graphquery::logger::CLogSystem> graphquery::database::storage::CDiskDriver::m_log_system;
@@ -77,15 +70,14 @@ graphquery::database::storage::CDiskDriver::close_fd() noexcept
 void
 graphquery::database::storage::CDiskDriver::resize(const int64_t file_size) noexcept
 {
-    m_cv_lock.wait(m_unq_lock, wait_on_refs(&m_ref_counter));
     m_resizing = 1;
+    m_cv_lock.wait(m_unq_lock, wait_on_refs);
 
     assert(unmap() == SRet_t::VALID);
     truncate(file_size);
     map();
 
     m_resizing = 0;
-    m_unq_lock.unlock();
     m_cv_lock.notify_all();
 }
 
@@ -117,7 +109,7 @@ graphquery::database::storage::CDiskDriver::truncate(const int64_t file_size) no
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::map() noexcept
 {
-    this->m_memory_mapped_file = static_cast<char *>(mmap(nullptr, static_cast<size_t>(m_fd_info.st_size), m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
+    this->m_memory_mapped_file = static_cast<char *>(mmap(nullptr, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
     if (this->m_memory_mapped_file == MAP_FAILED)
     {
         m_log_system->error(fmt::format("Error mapping file to memory"));
@@ -317,7 +309,7 @@ graphquery::database::storage::CDiskDriver::ref(const uint64_t seek) noexcept
         if (m_fd_info.st_size < static_cast<int64_t>(seek))
             resize(static_cast<int64_t>(seek) * 2);
 
-        m_cv_lock.wait(m_unq_lock, wait_on_resizing(&m_resizing));
+        m_cv_lock.wait(m_unq_lock, wait_on_resizing);
         ptr = &this->m_memory_mapped_file[seek];
     }
 
@@ -333,7 +325,7 @@ graphquery::database::storage::CDiskDriver::ref_update(const uint64_t size) noex
         if (m_fd_info.st_size < static_cast<int64_t>(m_seek_offset))
             resize(static_cast<int64_t>(m_seek_offset) * 2);
 
-        m_cv_lock.wait(m_unq_lock, wait_on_resizing(&m_resizing));
+        m_cv_lock.wait(m_unq_lock, wait_on_resizing);
         ptr = &this->m_memory_mapped_file[m_seek_offset];
         m_seek_offset += size;
     }
