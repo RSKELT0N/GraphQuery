@@ -14,7 +14,7 @@
 
 namespace graphquery::database::utils
 {
-    template<typename ElemType, size_t BufferSize>
+    template<typename ElemType, std::size_t BufferSize>
     class CRingBuffer final
     {
       public:
@@ -41,19 +41,19 @@ namespace graphquery::database::utils
     };
 
     //~ public:
-    template<typename ElemType, size_t BufferSize>
+    template<typename ElemType, std::size_t BufferSize>
     inline constexpr CRingBuffer<ElemType, BufferSize>::CRingBuffer()
     {
         m_data = std::array<ElemType, BufferSize>();
     }
 
-    template<typename ElemType, size_t BufferSize>
+    template<typename ElemType, std::size_t BufferSize>
     void CRingBuffer<ElemType, BufferSize>::clear() noexcept
     {
         m_curr_capacity = 0;
     }
 
-    template<typename ElemType, size_t BufferSize>
+    template<typename ElemType, std::size_t BufferSize>
     void CRingBuffer<ElemType, BufferSize>::add(const ElemType & elem) noexcept
     {
         m_data.operator[](m_tail) = elem;
@@ -61,26 +61,26 @@ namespace graphquery::database::utils
         m_curr_capacity           = (m_curr_capacity < BufferSize) ? m_curr_capacity + 1 : BufferSize;
     }
 
-    template<typename ElemType, size_t BufferSize>
+    template<typename ElemType, std::size_t BufferSize>
     ElemType CRingBuffer<ElemType, BufferSize>::operator[](std::size_t i) const noexcept
     {
         assert(BufferSize >= i && "Accessed element is out of range");
         return m_data.operator[](i);
     }
 
-    template<typename ElemType, size_t BufferSize>
+    template<typename ElemType, std::size_t BufferSize>
     std::size_t CRingBuffer<ElemType, BufferSize>::get_current_capacity() const noexcept
     {
         return this->m_curr_capacity;
     }
 
-    template<typename ElemType, size_t BufferSize>
+    template<typename ElemType, std::size_t BufferSize>
     std::size_t CRingBuffer<ElemType, BufferSize>::get_head() const noexcept
     {
         return ((this->m_tail - 1) - this->m_curr_capacity) % BufferSize;
     }
 
-    template<typename ElemType, size_t BufferSize>
+    template<typename ElemType, std::size_t BufferSize>
     std::size_t CRingBuffer<ElemType, BufferSize>::get_buffer_size() const noexcept
     {
         return BufferSize;

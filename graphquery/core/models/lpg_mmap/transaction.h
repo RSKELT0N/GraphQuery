@@ -78,15 +78,15 @@ namespace graphquery::database::storage
         void define_transaction_header();
 
         template<typename T>
-        inline CDiskDriver::SRef_t<T> read_transaction(uint64_t seek);
-        inline CDiskDriver::SRef_t<SHeaderBlock> read_transaction_header();
+        inline SRef_t<T> read_transaction(uint64_t seek);
+        inline SRef_t<SHeaderBlock> read_transaction_header();
 
-        void process_vertex_transaction(CDiskDriver::SRef_t<SVertexTransaction>, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept;
-        void process_edge_transaction(CDiskDriver::SRef_t<SEdgeTransaction>, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept;
+        void process_vertex_transaction(SRef_t<SVertexTransaction> &, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept;
+        void process_edge_transaction(SRef_t<SEdgeTransaction> &, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept;
 
         CMemoryModelMMAPLPG * m_lpg;
         CDiskDriver m_transaction_file;
-        static constexpr int64_t TRANSACTION_FILE_SIZE         = KB(1);
+        static constexpr int64_t INITIAL_TRANSACTION_FILE_SIZE = KB(4);
         static constexpr const char * TRANSACTION_FILE_NAME    = "transactions";
         static constexpr int64_t TRANSACTION_HEADER_START_ADDR = 0x00000000;
         static constexpr int64_t TRANSACTIONS_START_ADDR       = sizeof(SHeaderBlock);
