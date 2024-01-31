@@ -13,7 +13,8 @@ target_sources(
         lpg_mmap
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/lpg_mmap.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/transaction.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/transaction.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/block_file.hpp)
 
 target_compile_options(
         lpg_mmap

@@ -100,8 +100,6 @@ namespace graphquery::database::storage
         virtual void rm_vertex(uint64_t vertex_id)                                                                                                                   = 0;
         virtual void rm_edge(uint64_t src, uint64_t dst)                                                                                                             = 0;
         virtual void rm_edge(uint64_t src, uint64_t dst, std::string_view)                                                                                           = 0;
-        virtual void update_edge(uint64_t edge_id, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)                                = 0;
-        virtual void update_vertex(uint64_t vertex_id, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)                            = 0;
         virtual void add_vertex(uint64_t id, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)              = 0;
         virtual void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)                           = 0;
         virtual void add_edge(uint64_t src, uint64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) = 0;
