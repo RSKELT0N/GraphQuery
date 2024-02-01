@@ -49,13 +49,11 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     ImGui::Separator();
     ImGui::Text("%s", database::_db_storage->get_db_info().c_str());
 
-#ifndef NDEBUG
     if (m_is_graph_loaded)
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-            for (uint64_t i = 0; i < 10; i++)
-                (*m_graph)->add_vertex("PERSON", {});
+            (*m_graph)->add_vertex("PERSON", {});
 
         if (ImGui::Button("Add Vertex (0)"))
             (*m_graph)->add_vertex(0, "PERSON", {});
@@ -69,7 +67,6 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
         if (ImGui::Button("Remove Edge"))
             (*m_graph)->rm_edge(0, 1, "PERSON");
     }
-#endif
 }
 
 void
