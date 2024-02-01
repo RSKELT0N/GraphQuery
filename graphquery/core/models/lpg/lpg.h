@@ -43,10 +43,10 @@ namespace graphquery::database::storage
         {
             char graph_name[CFG_GRAPH_NAME_LENGTH]       = {};
             char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH] = {};
-            std::atomic<uint64_t> vertices_c             = {};
-            std::atomic<uint64_t> edges_c                = {};
-            std::atomic<uint16_t> vertex_label_c         = {};
-            std::atomic<uint16_t> edge_label_c           = {};
+            uint64_t vertices_c             = {};
+            uint64_t edges_c                = {};
+            uint16_t vertex_label_c         = {};
+            uint16_t edge_label_c           = {};
         };
 
         struct SVertexEdgeLabelEntry

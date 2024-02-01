@@ -327,7 +327,7 @@ graphquery::database::storage::CMemoryModelLPG::read_all_edge_properties() noexc
 uint64_t
 graphquery::database::storage::CMemoryModelLPG::get_unassigned_vertex_id(const size_t label_idx) const noexcept
 {
-    auto base_id  = m_graph_metadata.vertices_c.load();
+    auto base_id  = m_graph_metadata.vertices_c;
     auto assigned = m_vertex_lut[label_idx].contains(base_id);
 
     while (assigned)
@@ -339,7 +339,7 @@ graphquery::database::storage::CMemoryModelLPG::get_unassigned_vertex_id(const s
 uint64_t
 graphquery::database::storage::CMemoryModelLPG::get_unassigned_vertex_label_id() const noexcept
 {
-    auto base_id  = m_graph_metadata.vertex_label_c.load();
+    auto base_id  = m_graph_metadata.vertex_label_c;
     auto assigned = m_vertex_label_lut.contains(base_id);
 
     while (assigned)
@@ -351,7 +351,7 @@ graphquery::database::storage::CMemoryModelLPG::get_unassigned_vertex_label_id()
 uint64_t
 graphquery::database::storage::CMemoryModelLPG::get_unassigned_edge_label_id() const noexcept
 {
-    auto base_id  = m_graph_metadata.edge_label_c.load();
+    auto base_id  = m_graph_metadata.edge_label_c;
     auto assigned = m_edge_label_lut.contains(base_id);
 
     while (assigned)

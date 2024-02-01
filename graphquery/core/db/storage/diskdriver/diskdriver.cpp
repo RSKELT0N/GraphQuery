@@ -313,7 +313,6 @@ graphquery::database::storage::CDiskDriver::seek(const uint64_t offset)
 {
     if (this->m_initialised)
     {
-        assert(offset >= 0UL && static_cast<int64_t>(offset) <= this->m_fd_info.st_size);
         this->m_seek_offset = offset;
     }
     else
