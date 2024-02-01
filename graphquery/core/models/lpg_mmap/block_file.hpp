@@ -103,14 +103,15 @@ namespace graphquery::database::storage
         CDatablockFile & operator=(CDatablockFile &&) noexcept = default;
 
         CDiskDriver & get_file() noexcept;
-        CDiskDriver::SRet_t close() noexcept;
         inline void store_metadata() noexcept;
         inline SRef_t<SBlockFileMetadata_t> read_metadata() noexcept;
         inline SRef_t<SDataBlock_t<T, N>> read_entry(uint32_t offset) noexcept;
         void open(std::filesystem::path path, std::string_view file_name) noexcept;
 
-        void append_free_data_block(uint32_t block_offset) noexcept;
         uint32_t create_base_entry(uint32_t next_ref) noexcept;
+        void append_free_data_block(uint32_t block_offset) noexcept;
+        void foreach_block(const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
+        void foreach_block(uint32_t start_block, const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
         [[nodiscard]] SRef_t<SDataBlock_t<T, N>> attain_data_block(uint32_t next_ref = END_INDEX) noexcept;
         [[nodiscard]] std::optional<SRef_t<SDataBlock_t<T, N>>> attain_free_data_block() noexcept;
 
@@ -207,12 +208,11 @@ graphquery::database::storage::CDatablockFile<T, N>::append_free_data_block(uint
 {
     const auto head = read_metadata()->free_list.load();
 
-    SDataBlock_t<T, N> * data_block_ptr = read_entry(block_offset);
+    SRef_t<STypeDataBlock> data_block_ptr = read_entry(block_offset);
     data_block_ptr->idx                 = block_offset;
-    data_block_ptr->state               = {};
+    data_block_ptr->state                 = 0;
     data_block_ptr->next                = head;
-    data_block_ptr->version             = END_INDEX;
-    data_block_ptr->payload             = {};
+    data_block_ptr->version               = END_INDEX;
 
     read_metadata()->free_list = block_offset;
 }
@@ -231,6 +231,45 @@ graphquery::database::storage::CDatablockFile<T, N>::create_base_entry(uint32_t 
     data_block_ptr->version = END_INDEX;
 
     return entry_offset;
+}
+
+template<typename T, uint8_t N>
+    requires(N > 0)
+void
+graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const uint32_t start_block, const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> & apply)
+{
+    if (start_block >= read_metadata()->data_block_c)
+        return;
+
+    auto block_next = start_block;
+
+    while (block_next != END_INDEX)
+    {
+        auto block_ptr = read_entry(block_next);
+
+        if (unlikely(!block_ptr->state.any()))
+            continue;
+
+        apply(block_ptr);
+        block_next = block_ptr->next.load();
+    }
+}
+
+template<typename T, uint8_t N>
+    requires(N > 0)
+void
+graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> & apply)
+{
+    const uint64_t datablock_c = read_metadata()->data_block_c;
+    auto block_ptr             = read_entry(0);
+
+    for (uint64_t i = 0; i < datablock_c; i++, ++block_ptr)
+    {
+        if (unlikely(block_ptr->state.any()))
+            continue;
+
+        apply(block_ptr);
+    }
 }
 
 template<typename T, uint8_t N>

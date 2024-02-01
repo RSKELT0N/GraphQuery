@@ -25,9 +25,6 @@
 #include <vector>
 #include <optional>
 
-#define likely(x)   __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
-
 #define DATABLOCK_EDGE_PAYLOAD_C     3
 #define DATABLOCK_PROPERTY_PAYLOAD_C 3
 
