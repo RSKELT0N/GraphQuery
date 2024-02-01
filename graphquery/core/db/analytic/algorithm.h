@@ -14,9 +14,9 @@
 #define LIB_EXPORT
 #endif
 
-#include <utility>
-
 #include "db/storage/graph_model.h"
+
+#include <utility>
 
 namespace graphquery::database::analytic
 {
