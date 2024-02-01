@@ -302,11 +302,11 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const uint6
     const std::optional<uint16_t> vertex_label_exists = check_if_vertex_label_exists(label);
     const auto vertex_label_id                        = vertex_label_exists.has_value() ? vertex_label_exists.value() : create_vertex_label(label);
 
-    if (get_vertex_by_id(id).has_value())
+    if (!get_vertex_by_id(id).has_value())
         return EActionState_t::invalid;
 
-    --read_graph_metadata()->vertices_c;
-    --read_vertex_label_entry(vertex_label_id)->item_c;
+    ++read_graph_metadata()->vertices_c;
+    ++read_vertex_label_entry(vertex_label_id)->item_c;
 
     const auto entry_offset = store_vertex_entry(id, vertex_label_id, props);
     store_index_entry(id, vertex_label_id, entry_offset);

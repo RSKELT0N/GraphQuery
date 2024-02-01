@@ -21,12 +21,12 @@ namespace graphquery::database::analytic
           public:
             CRelaxBFS() {}
 
-            ~CRelaxBFS()() override = default;
+            ~CRelaxBFS() override = default;
 
             void relax(const uint64_t src, const uint64_t dst) noexcept override {}
         };
 
-        explicit CGraphAlgorithmBFS(std::string);
+        explicit CGraphAlgorithmBFS(std::string name);
         ~CGraphAlgorithmBFS() override = default;
 
         [[nodiscard]] double compute(storage::ILPGModel *) noexcept override;

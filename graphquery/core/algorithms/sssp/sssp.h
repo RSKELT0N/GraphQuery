@@ -21,12 +21,12 @@ namespace graphquery::database::analytic
           public:
             CRelaxSSSP() {}
 
-            ~CRelaxSSSP()() override = default;
+            ~CRelaxSSSP() override = default;
 
             void relax(const uint64_t src, const uint64_t dst) noexcept override {}
         };
 
-        explicit CGraphAlgorithmSSSP(std::string);
+        explicit CGraphAlgorithmSSSP(std::string name);
         ~CGraphAlgorithmSSSP() override = default;
 
         [[nodiscard]] double compute(storage::ILPGModel *) noexcept override;
