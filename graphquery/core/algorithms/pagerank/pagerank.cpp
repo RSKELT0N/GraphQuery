@@ -4,35 +4,8 @@
 
 #include <utility>
 
-namespace
-{
-    class CRelaxPR final : public graphquery::database::analytic::IRelax
-    {
-      public:
-        CRelaxPR(const double _d, std::shared_ptr<uint32_t[]> _outdeg, std::shared_ptr<double[]> _x, std::shared_ptr<double[]> _y)
-        {
-            this->d      = _d;
-            this->outdeg = std::move(_outdeg);
-            this->x      = std::move(_x);
-            this->y      = std::move(_y);
-        }
-
-        ~CRelaxPR() override = default;
-
-        void relax(const uint64_t src, const uint64_t dst) noexcept override
-        {
-            const double w = d / outdeg[src];
-            y[dst] += w * x[src];
-        }
-
-        double d;
-        std::shared_ptr<uint32_t[]> outdeg;
-        std::shared_ptr<double[]> x;
-        std::shared_ptr<double[]> y;
-    };
-} // namespace
-
-graphquery::database::analytic::CGraphAlgorithmPageRank::CGraphAlgorithmPageRank(std::string name): IGraphAlgorithm(std::move(name))
+graphquery::database::analytic::CGraphAlgorithmPageRank::
+CGraphAlgorithmPageRank(std::string name): IGraphAlgorithm(std::move(name))
 {
     this->m_log_system = logger::CLogSystem::get_instance();
 }
@@ -119,9 +92,6 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::norm_diff(const std::sh
     double err = 0.0F;
     for (int i = 0; i < size; ++i)
     {
-        // The code below achieves
-        // d += Math.abs(b[i] - a[i]);
-        // but does so with high accuracy
         const double tmp = d;
         const double y   = abs(__val[i] - _val[i]) + err;
         d                = tmp + y;

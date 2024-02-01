@@ -2,33 +2,13 @@
 
 #include <algorithm>
 
-namespace
-{
-    class CRelaxCC final : public graphquery::database::analytic::IRelax
-    {
-      public:
-        CRelaxCC(std::shared_ptr<int[]> _x, std::shared_ptr<int[]> _y)
-        {
-            this->x = std::move(_x);
-            this->y = std::move(_y);
-        }
-
-        ~CRelaxCC() override = default;
-
-        void relax(const uint64_t src, const uint64_t dst) noexcept override { y[dst] = std::min(y[dst], y[src]); }
-
-        std::shared_ptr<int[]> x;
-        std::shared_ptr<int[]> y;
-    };
-} // namespace
-
-graphquery::database::analytic::CGraphAlgorithmCC::CGraphAlgorithmCC(std::string name): IGraphAlgorithm(std::move(name))
+graphquery::database::analytic::CGraphAlgorithmSSSP::CGraphAlgorithmSSSP(std::string name): IGraphAlgorithm(std::move(name))
 {
     m_log_system = logger::CLogSystem::get_instance();
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmCC::compute(storage::ILPGModel * graph_model) noexcept
+graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel * graph_model) noexcept
 {
     const uint64_t n = graph_model->get_num_vertices();
 
@@ -113,6 +93,6 @@ extern "C"
 {
     LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm)
     {
-        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmCC("Connected Components");
+        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmSSSP("Connected Components");
     }
 }
