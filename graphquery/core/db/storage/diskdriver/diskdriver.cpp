@@ -8,19 +8,23 @@
 #include <cassert>
 #include <cstdint>
 
+#include "db/utils/lib.h"
+#include "db/utils/ring_buffer.hpp"
+
 //~ static symbol link
 std::shared_ptr<graphquery::logger::CLogSystem> graphquery::database::storage::CDiskDriver::m_log_system;
 
 graphquery::database::storage::CDiskDriver::
 CDiskDriver(const int file_mode, const int map_mode_prot, const int map_mode_flags)
 {
-    m_log_system           = logger::CLogSystem::get_instance();
-    this->m_file_mode      = file_mode;
-    this->m_map_mode_prot  = map_mode_prot;
-    this->m_map_mode_flags = map_mode_flags;
-    this->m_resizing       = 0;
-    this->m_ref_counter    = 0;
-    this->m_unq_lock       = std::unique_lock(m_resize_lock);
+    m_log_system               = logger::CLogSystem::get_instance();
+    this->m_file_mode          = file_mode;
+    this->m_map_mode_prot      = map_mode_prot;
+    this->m_map_mode_flags     = map_mode_flags;
+    this->m_resizing           = 0;
+    this->m_ref_counter        = 0;
+    this->m_unq_lock           = std::unique_lock(m_resize_lock);
+    this->m_memory_mapped_file = nullptr;
 }
 
 graphquery::database::storage::CDiskDriver::~
@@ -74,7 +78,7 @@ graphquery::database::storage::CDiskDriver::resize(const int64_t file_size) noex
     m_cv_lock.wait(m_unq_lock, wait_on_refs);
 
     assert(unmap() == SRet_t::VALID);
-    truncate(file_size);
+    truncate(resize_to_pagesize(file_size));
     map();
 
     m_resizing = 0;
@@ -109,7 +113,7 @@ graphquery::database::storage::CDiskDriver::truncate(const int64_t file_size) no
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::map() noexcept
 {
-    this->m_memory_mapped_file = static_cast<char *>(mmap(nullptr, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
+    this->m_memory_mapped_file = static_cast<char *>(mmap(&m_memory_mapped_file, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
     if (this->m_memory_mapped_file == MAP_FAILED)
     {
         m_log_system->error(fmt::format("Error mapping file to memory"));
@@ -371,6 +375,13 @@ graphquery::database::storage::CDiskDriver::seek(const uint64_t offset)
         m_log_system->warning("File has not been initialised");
 
     return SRet_t::VALID;
+}
+
+int64_t
+graphquery::database::storage::CDiskDriver::resize_to_pagesize(const int64_t size) noexcept
+{
+    const uint32_t pages = ceil(size, PAGESIZE);
+    return pages * PAGESIZE;
 }
 
 uint64_t
