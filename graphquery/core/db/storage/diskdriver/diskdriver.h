@@ -21,6 +21,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <condition_variable>
+#include <unistd.h>
 
 #define KB(x) ((size_t) (x * (1 << 10)))
 #define MB(x) ((size_t) (x * (1 << 20)))
@@ -85,6 +86,8 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t map() noexcept;
         [[maybe_unused]] SRet_t truncate(int64_t) noexcept;
 
+        static int64_t resize_to_pagesize(int64_t size) noexcept;
+
         uint8_t m_resizing;
         uint32_t m_ref_counter;
         std::mutex m_resize_lock;
@@ -103,6 +106,7 @@ namespace graphquery::database::storage
         char * m_memory_mapped_file  = {}; //~ buffer address of the memory mapped file.
         std::filesystem::path m_path = {}; //~ Set path of the current context.
 
+        static constexpr int64_t PAGESIZE            = KB(4);
         const std::function<bool()> wait_on_resizing = [this]() -> bool { return m_resizing == 0; };
         const std::function<bool()> wait_on_refs     = [this]() -> bool { return m_ref_counter == 0; };
     };
