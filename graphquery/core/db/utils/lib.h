@@ -21,9 +21,14 @@ namespace graphquery::database
         return static_cast<T>(static_cast<u_t>(lhs) | static_cast<u_t>(rhs));
     }
 
-    inline int32_t abs(int32_t val) noexcept
+    inline int32_t abs(const int32_t val) noexcept
     {
-        int const mask = val >> sizeof(int) * CHAR_BIT - 1;
+        int const mask = val >> (sizeof(int) * CHAR_BIT - 1);
         return (val + mask) ^ mask;
+    }
+
+    inline int64_t ceil(const uint64_t _x, const uint64_t _y)
+    {
+        return 1 + ((_x - 1) / _y);
     }
 } // namespace graphquery::database
