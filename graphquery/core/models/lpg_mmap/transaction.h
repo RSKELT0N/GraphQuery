@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "lpg_mmap.h"
+#include "db/storage/config.h"
+#include "db/storage/graph_model.h"
 
 #include <filesystem>
 
@@ -56,7 +57,7 @@ namespace graphquery::database::storage
         } __attribute__((packed));
 
       public:
-        CTransaction(const std::filesystem::path & local_path, CMemoryModelMMAPLPG * lpg);
+        CTransaction(const std::filesystem::path & local_path, ILPGModel * lpg);
         ~CTransaction() = default;
 
         void close() noexcept;
@@ -67,7 +68,7 @@ namespace graphquery::database::storage
         void commit_rm_edge(uint64_t src, uint64_t dst, std::string_view label = "") noexcept;
 
         void commit_vertex(std::string_view label, const std::vector<ILPGModel::SProperty_t> & props, uint64_t optional_id = -1) noexcept;
-        void commit_edge(uint64_t src, uint64_t dst, std::string_view label, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) noexcept;
+        void commit_edge(uint64_t src, uint64_t dst, std::string_view label, const std::vector<ILPGModel::SProperty_t> & props) noexcept;
 
       private:
         using SVertexTransaction = STransaction<SVertexCommit>;
@@ -81,10 +82,10 @@ namespace graphquery::database::storage
         inline SRef_t<T> read_transaction(uint64_t seek);
         inline SRef_t<SHeaderBlock> read_transaction_header();
 
-        void process_vertex_transaction(SRef_t<SVertexTransaction> &, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept;
-        void process_edge_transaction(SRef_t<SEdgeTransaction> &, const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept;
+        void process_vertex_transaction(SRef_t<SVertexTransaction> &, const std::vector<ILPGModel::SProperty_t> & props) const noexcept;
+        void process_edge_transaction(SRef_t<SEdgeTransaction> &, const std::vector<ILPGModel::SProperty_t> & props) const noexcept;
 
-        CMemoryModelMMAPLPG * m_lpg;
+        ILPGModel * m_lpg;
         CDiskDriver m_transaction_file;
         static constexpr int64_t INITIAL_TRANSACTION_FILE_SIZE = KB(4);
         static constexpr const char * TRANSACTION_FILE_NAME    = "transactions";

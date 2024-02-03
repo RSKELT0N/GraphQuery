@@ -13,7 +13,7 @@ namespace graphquery::interact
         CFrameGraphDB(const bool & is_db_loaded,
                       const bool & is_graph_loaded,
                       std::shared_ptr<database::storage::ILPGModel *> graph,
-                      const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table);
+                      const std::unordered_map<std::string, database::storage::CDBStorage::SGraph_Entry_t> & graph_table);
         ~CFrameGraphDB() override;
 
         void render_frame() noexcept override;
@@ -27,6 +27,6 @@ namespace graphquery::interact
         const bool & m_is_db_loaded;
         const bool & m_is_graph_loaded;
         std::shared_ptr<database::storage::ILPGModel *> m_graph;
-        const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & m_graph_table;
+        const std::unordered_map<std::string, database::storage::CDBStorage::SGraph_Entry_t> & m_graph_table;
     };
 } // namespace graphquery::interact

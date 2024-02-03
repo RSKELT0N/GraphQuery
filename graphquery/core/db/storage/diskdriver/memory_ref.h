@@ -15,8 +15,10 @@ namespace graphquery::database::storage
     template<typename T>
     struct SRef_t
     {
-        SRef_t() = default;
-        ~SRef_t()
+        inline SRef_t() = default;
+        inline SRef_t(T * _t, uint32_t * _counter): ref(_t), counter(_counter) { ++(*counter); }
+
+        inline ~SRef_t()
         {
             if (counter != nullptr)
                 *counter -= *counter == 0 ? 0 : 1;
@@ -36,8 +38,6 @@ namespace graphquery::database::storage
             ++(*counter);
             return *this;
         }
-
-        SRef_t(T * _t, uint32_t * _counter): ref(_t), counter(_counter) { ++(*counter); }
 
         SRef_t(SRef_t && cpy) noexcept
         {

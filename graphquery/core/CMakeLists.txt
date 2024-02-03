@@ -29,7 +29,7 @@ target_compile_options(
         -Wextra
         -Wshadow
         -pthread
-        -O3)
+        -O0)
 
 target_link_libraries(${EXECUTABLE_NAME}
         PUBLIC

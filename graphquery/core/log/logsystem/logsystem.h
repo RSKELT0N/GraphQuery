@@ -128,6 +128,6 @@ namespace graphquery::logger
         ELogType m_level;                                              // ~ Log level of the logging system
         std::mutex m_mtx;                                              // ~ mutex instance for logging to different derived classes.
         std::unique_ptr<std::vector<std::shared_ptr<ILog>>> m_loggers; // ~ array of loggers, which the log system holds and calls (Log).
-        std::unique_ptr<std::vector<SLogEntry>> m_backlog;             // ~ backlog of all messages for loggers to be updated with when added.
+        std::shared_ptr<std::vector<SLogEntry>> m_backlog;             // ~ backlog of all messages for loggers to be updated with when added.
     };
 } // namespace graphquery::logger

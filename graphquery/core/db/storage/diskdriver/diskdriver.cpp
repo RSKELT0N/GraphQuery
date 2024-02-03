@@ -32,7 +32,6 @@ CDiskDriver()
 {
     if (this->m_initialised)
     {
-        (void) sync();
         close();
         this->m_initialised = false;
     }
@@ -96,7 +95,7 @@ graphquery::database::storage::CDiskDriver::truncate(const int64_t file_size) no
 
     if (ftruncate(this->m_file_descriptor, file_size) == -1)
     {
-        m_log_system->warning(fmt::format("Issue truncating the file to the specified size {}", errno));
+        m_log_system->warning(fmt::format("Issue truncating the file to the specified size, error: {}", errno));
         ::close(this->m_file_descriptor);
         return SRet_t::ERROR;
     }
@@ -113,7 +112,7 @@ graphquery::database::storage::CDiskDriver::truncate(const int64_t file_size) no
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::map() noexcept
 {
-    this->m_memory_mapped_file = static_cast<char *>(mmap(&m_memory_mapped_file, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
+    this->m_memory_mapped_file = static_cast<char *>(mmap(nullptr, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
     if (this->m_memory_mapped_file == MAP_FAILED)
     {
         m_log_system->error(fmt::format("Error mapping file to memory"));
@@ -258,6 +257,7 @@ graphquery::database::storage::CDiskDriver::close()
 {
     if (this->m_initialised)
     {
+        (void) sync();
         assert(unmap() == SRet_t::VALID);
         close_fd();
         this->m_initialised = false;
@@ -273,7 +273,7 @@ graphquery::database::storage::CDiskDriver::read(void * ptr, const int64_t size,
 {
     if (this->m_initialised)
     {
-        if (m_fd_info.st_size < static_cast<int64_t>(size * amt + m_seek_offset))
+        if (m_fd_info.st_size <= static_cast<int64_t>(size * amt + m_seek_offset))
             resize(static_cast<int64_t>(size * amt + m_seek_offset));
 
         memcpy(ptr, &this->m_memory_mapped_file[this->m_seek_offset], size * amt);
@@ -291,7 +291,7 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
 {
     if (this->m_initialised)
     {
-        if (m_fd_info.st_size < static_cast<int64_t>(size * amt + m_seek_offset))
+        if (m_fd_info.st_size <= static_cast<int64_t>(size * amt + m_seek_offset))
             resize(static_cast<int64_t>(size * amt + m_seek_offset) * 2);
 
         memcpy(&this->m_memory_mapped_file[this->m_seek_offset], ptr, size * amt);
@@ -305,12 +305,12 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
 }
 
 void *
-graphquery::database::storage::CDiskDriver::ref(const uint64_t seek) noexcept
+graphquery::database::storage::CDiskDriver::ref(const uint64_t seek, const uint64_t size) noexcept
 {
     static char * ptr = nullptr;
     if (this->m_initialised)
     {
-        if (m_fd_info.st_size < static_cast<int64_t>(seek))
+        if (m_fd_info.st_size <= static_cast<int64_t>(seek + size))
             resize(static_cast<int64_t>(seek) * 2);
 
         m_cv_lock.wait(m_unq_lock, wait_on_resizing);
@@ -326,7 +326,7 @@ graphquery::database::storage::CDiskDriver::ref_update(const uint64_t size) noex
     static char * ptr = nullptr;
     if (this->m_initialised)
     {
-        if (m_fd_info.st_size < static_cast<int64_t>(m_seek_offset))
+        if (m_fd_info.st_size <= static_cast<int64_t>(m_seek_offset + size))
             resize(static_cast<int64_t>(m_seek_offset) * 2);
 
         m_cv_lock.wait(m_unq_lock, wait_on_resizing);
@@ -369,7 +369,7 @@ graphquery::database::storage::CDiskDriver::seek(const uint64_t offset)
 int64_t
 graphquery::database::storage::CDiskDriver::resize_to_pagesize(const int64_t size) noexcept
 {
-    const uint32_t pages = ceil(size, PAGESIZE);
+    const uint32_t pages = ceilaferdiv(size, PAGESIZE);
     return pages * PAGESIZE;
 }
 

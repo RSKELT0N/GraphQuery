@@ -27,7 +27,7 @@ namespace graphquery::database
         return (val + mask) ^ mask;
     }
 
-    inline int64_t ceil(const uint64_t _x, const uint64_t _y)
+    inline int64_t ceilaferdiv(const uint64_t _x, const uint64_t _y)
     {
         return 1 + ((_x - 1) / _y);
     }

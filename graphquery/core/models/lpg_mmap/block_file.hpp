@@ -106,9 +106,9 @@ namespace graphquery::database::storage
         inline void store_metadata() noexcept;
         inline SRef_t<SBlockFileMetadata_t> read_metadata() noexcept;
         inline SRef_t<SDataBlock_t<T, N>> read_entry(uint32_t offset) noexcept;
-        void open(std::filesystem::path path, std::string_view file_name) noexcept;
+        void open(std::filesystem::path path, std::string_view file_name, bool init) noexcept;
 
-        uint32_t create_base_entry(uint32_t next_ref) noexcept;
+        uint32_t create_entry(uint32_t next_ref = END_INDEX) noexcept;
         void append_free_data_block(uint32_t block_offset) noexcept;
         void foreach_block(const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
         void foreach_block(uint32_t start_block, const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
@@ -176,7 +176,7 @@ graphquery::database::storage::CDatablockFile<T, N>::attain_data_block(const uin
 
     if (!head_free_block_opt.has_value())
     {
-        const auto entry_offset = create_base_entry(next_ref);
+        const auto entry_offset = create_entry(next_ref);
         return read_entry(entry_offset);
     }
 
@@ -209,9 +209,9 @@ graphquery::database::storage::CDatablockFile<T, N>::append_free_data_block(uint
     const auto head = read_metadata()->free_list.load();
 
     SRef_t<STypeDataBlock> data_block_ptr = read_entry(block_offset);
-    data_block_ptr->idx                 = block_offset;
+    data_block_ptr->idx                   = block_offset;
     data_block_ptr->state                 = 0;
-    data_block_ptr->next                = head;
+    data_block_ptr->next                  = head;
     data_block_ptr->version               = END_INDEX;
 
     read_metadata()->free_list = block_offset;
@@ -220,7 +220,7 @@ graphquery::database::storage::CDatablockFile<T, N>::append_free_data_block(uint
 template<typename T, uint8_t N>
     requires(N > 0)
 uint32_t
-graphquery::database::storage::CDatablockFile<T, N>::create_base_entry(uint32_t next_ref) noexcept
+graphquery::database::storage::CDatablockFile<T, N>::create_entry(uint32_t next_ref) noexcept
 {
     const uint32_t entry_offset = read_metadata()->data_block_c++;
     auto data_block_ptr         = read_entry(entry_offset);
@@ -275,11 +275,13 @@ graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const std::fu
 template<typename T, uint8_t N>
     requires(N > 0)
 void
-graphquery::database::storage::CDatablockFile<T, N>::open(std::filesystem::path path, std::string_view file_name) noexcept
+graphquery::database::storage::CDatablockFile<T, N>::open(std::filesystem::path path, const std::string_view file_name, bool init) noexcept
 {
     m_file.set_path(std::move(path));
     m_file.open(file_name);
-    store_metadata();
+
+    if (init)
+        store_metadata();
 }
 
 template<typename T, uint8_t N>
