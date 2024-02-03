@@ -8,7 +8,7 @@
 graphquery::interact::CFrameGraphDB::CFrameGraphDB(const bool & is_db_loaded,
                                                    const bool & is_graph_loaded,
                                                    std::shared_ptr<database::storage::ILPGModel *> graph,
-                                                   const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
+                                                   const std::unordered_map<std::string, database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
     m_is_db_loaded(is_db_loaded),
     m_is_graph_loaded(is_graph_loaded), m_graph(std::move(graph)), m_graph_table(graph_table)
 {
@@ -53,7 +53,8 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-            (*m_graph)->add_vertex("PERSON", {});
+            for (int i = 0; i < 10000; i++)
+                (*m_graph)->add_vertex("PERSON", {});
 
         if (ImGui::Button("Add Vertex (0)"))
             (*m_graph)->add_vertex(0, "PERSON", {});
@@ -89,9 +90,9 @@ graphquery::interact::CFrameGraphDB::render_graph_table() noexcept
                       {
                           ImGui::TableNextRow();
                           ImGui::TableSetColumnIndex(0);
-                          ImGui::Text("%s", graph.graph_name);
+                          ImGui::Text("%s", graph.second.graph_name);
                           ImGui::TableSetColumnIndex(1);
-                          ImGui::Text("%s", graph.graph_type);
+                          ImGui::Text("%s", graph.second.graph_type);
                       });
         ImGui::EndTable();
     }

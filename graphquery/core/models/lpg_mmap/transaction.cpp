@@ -1,9 +1,11 @@
 #include "transaction.h"
 
+#include "lpg_mmap.h"
+
 #include <sys/mman.h>
 #include <fcntl.h>
 
-graphquery::database::storage::CTransaction::CTransaction(const std::filesystem::path & local_path, CMemoryModelMMAPLPG * lpg):
+graphquery::database::storage::CTransaction::CTransaction(const std::filesystem::path & local_path, ILPGModel * lpg):
     m_lpg(lpg), m_transaction_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED)
 {
     m_transaction_file.set_path(local_path);
@@ -102,7 +104,7 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const uint64_t src, 
 
 void
 graphquery::database::storage::CTransaction::commit_vertex(const std::string_view label,
-                                                           const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props,
+                                                           const std::vector<ILPGModel::SProperty_t> & props,
                                                            const uint64_t optional_id) noexcept
 {
     const auto commit_addr = read_transaction_header()->eof_addr;
@@ -133,7 +135,7 @@ void
 graphquery::database::storage::CTransaction::commit_edge(const uint64_t src,
                                                          const uint64_t dst,
                                                          const std::string_view label,
-                                                         const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) noexcept
+                                                         const std::vector<ILPGModel::SProperty_t> & props) noexcept
 {
     const auto commit_addr = read_transaction_header()->eof_addr;
     read_transaction_header()->eof_addr += sizeof(SEdgeTransaction) + (props.size() * sizeof(ILPGModel::SProperty_t));
@@ -170,7 +172,7 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
     SRef_t<SVertexTransaction> v_transc = {};
     SRef_t<SEdgeTransaction> e_transc   = {};
 
-    std::vector<CMemoryModelMMAPLPG::SProperty_t> props = {};
+    std::vector<ILPGModel::SProperty_t> props = {};
 
     for (uint64_t i = 0; i < transaction_c; i++)
     {
@@ -211,23 +213,22 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
 
 void
 graphquery::database::storage::CTransaction::process_vertex_transaction(SRef_t<SVertexTransaction> & transaction,
-                                                                        const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept
+                                                                        const std::vector<ILPGModel::SProperty_t> & props) const noexcept
 {
     if (transaction->commit.remove == 0)
         if (transaction->commit.optional_id != ULONG_LONG_MAX)
-            (void) m_lpg->add_vertex_entry(transaction->commit.optional_id, transaction->commit.label, props);
+            (void) dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->add_vertex_entry(transaction->commit.optional_id, transaction->commit.label, props);
         else
-            (void) m_lpg->add_vertex_entry(transaction->commit.label, props);
+            (void) dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->add_vertex_entry(transaction->commit.label, props);
     else
-        (void) m_lpg->rm_vertex_entry(transaction->commit.optional_id);
+        (void) dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->rm_vertex_entry(transaction->commit.optional_id);
 }
 
 void
-graphquery::database::storage::CTransaction::process_edge_transaction(SRef_t<SEdgeTransaction> & transaction,
-                                                                      const std::vector<CMemoryModelMMAPLPG::SProperty_t> & props) const noexcept
+graphquery::database::storage::CTransaction::process_edge_transaction(SRef_t<SEdgeTransaction> & transaction, const std::vector<ILPGModel::SProperty_t> & props) const noexcept
 {
     if (transaction->commit.remove == 0)
-        (void) m_lpg->add_edge_entry(transaction->commit.src, transaction->commit.dst, transaction->commit.label, props);
+        (void) dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->add_edge_entry(transaction->commit.src, transaction->commit.dst, transaction->commit.label, props);
     else
-        (void) m_lpg->rm_edge_entry(transaction->commit.src, transaction->commit.dst);
+        (void) dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->rm_edge_entry(transaction->commit.src, transaction->commit.dst);
 }

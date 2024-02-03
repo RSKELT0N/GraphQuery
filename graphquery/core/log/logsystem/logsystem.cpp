@@ -12,7 +12,7 @@ graphquery::logger::CLogSystem::CLogSystem()
 {
     this->m_level   = ELogType::LOG_SYSTEM_LEVEL;
     this->m_loggers = std::make_unique<std::vector<std::shared_ptr<ILog>>>();
-    this->m_backlog = std::make_unique<std::vector<SLogEntry>>();
+    this->m_backlog = std::make_shared<std::vector<SLogEntry>>();
 }
 
 std::shared_ptr<graphquery::logger::CLogSystem>

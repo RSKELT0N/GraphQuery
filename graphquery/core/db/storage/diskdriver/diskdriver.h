@@ -41,7 +41,7 @@ namespace graphquery::database::storage
         template<typename T>
         inline SRef_t<T> ref(const uint64_t seek)
         {
-            auto reference = std::bit_cast<T *>(ref(seek));
+            auto reference = std::bit_cast<T *>(ref(seek, sizeof(T)));
             return SRef_t<T>(reference, &m_ref_counter);
         }
 
@@ -57,6 +57,7 @@ namespace graphquery::database::storage
 
         CDiskDriver(CDiskDriver &&)      = delete;
         CDiskDriver(const CDiskDriver &) = delete;
+        static constexpr int64_t PAGESIZE = KB(4);
 
         [[maybe_unused]] SRet_t close();
         [[maybe_unused]] SRet_t seek(uint64_t offset);
@@ -75,10 +76,10 @@ namespace graphquery::database::storage
         [[nodiscard]] static bool check_if_folder_exists(std::string_view file_path) noexcept;
         [[nodiscard]] static bool check_if_file_exists(std::string_view path, std::string_view file_name) noexcept;
         [[maybe_unused]] static SRet_t create_folder(const std::filesystem::path & path, std::string_view folder_name);
-        [[maybe_unused]] static SRet_t create_file(const std::filesystem::path & path, std::string_view file_name, int64_t file_size = KB(1));
+        [[maybe_unused]] static SRet_t create_file(const std::filesystem::path & path, std::string_view file_name, int64_t file_size = PAGESIZE);
 
       private:
-        [[maybe_unused]] void * ref(uint64_t seek) noexcept;
+        [[maybe_unused]] void * ref(uint64_t seek, uint64_t size) noexcept;
         [[maybe_unused]] void * ref_update(uint64_t size) noexcept;
         [[maybe_unused]] SRet_t unmap() const noexcept;
         [[maybe_unused]] SRet_t open_fd() noexcept;
@@ -86,7 +87,7 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t map() noexcept;
         [[maybe_unused]] SRet_t truncate(int64_t) noexcept;
 
-        static int64_t resize_to_pagesize(int64_t size) noexcept;
+        inline static int64_t resize_to_pagesize(int64_t size) noexcept;
 
         uint8_t m_resizing;
         uint32_t m_ref_counter;
@@ -106,7 +107,6 @@ namespace graphquery::database::storage
         char * m_memory_mapped_file  = {}; //~ buffer address of the memory mapped file.
         std::filesystem::path m_path = {}; //~ Set path of the current context.
 
-        static constexpr int64_t PAGESIZE            = KB(4);
         const std::function<bool()> wait_on_resizing = [this]() -> bool { return m_resizing == 0; };
         const std::function<bool()> wait_on_refs     = [this]() -> bool { return m_ref_counter == 0; };
     };
