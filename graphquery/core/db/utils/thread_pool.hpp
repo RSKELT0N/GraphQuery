@@ -13,8 +13,6 @@
 #include <array>
 #include <functional>
 
-#include "fmt/compile.h"
-
 namespace graphquery::database::utils
 {
     template<size_t N = 8>

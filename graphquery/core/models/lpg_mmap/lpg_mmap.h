@@ -20,6 +20,7 @@
 #include "db/utils/thread_pool.hpp"
 #include "db/storage/graph_model.h"
 #include "block_file.hpp"
+#include "transaction.h"
 
 #include <utility>
 #include <vector>
@@ -32,7 +33,7 @@ namespace graphquery::database::storage
 {
     class CMemoryModelMMAPLPG final : public ILPGModel
     {
-    public:
+      public:
         /****************************************************************
          * \enum EActionState_t
          * \brief Declares the possible return states for this class.
@@ -43,11 +44,11 @@ namespace graphquery::database::storage
          ***************************************************************/
         enum class EActionState_t : int8_t
         {
-            valid = 0,
+            valid   = 0,
             invalid = -1
         };
 
-    private:
+      private:
         /****************************************************************
          * \struct SGraphMetaData_t
          * \brief Describes the metadata for the graph, holding neccessary
@@ -149,7 +150,7 @@ namespace graphquery::database::storage
             std::atomic<uint32_t> properties_idx = END_INDEX;
         };
 
-    public:
+      public:
         CMemoryModelMMAPLPG();
         ~CMemoryModelMMAPLPG() override = default;
 
@@ -183,7 +184,7 @@ namespace graphquery::database::storage
         void add_vertex(uint64_t id, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
         void add_edge(uint64_t src, uint64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
 
-    private:
+      private:
         friend class CTransaction;
         using SVertexDataBlock   = SDataBlock_t<SVertexEntry_t, 1>;
         using SEdgeDataBlock     = SDataBlock_t<SEdgeEntry_t, DATABLOCK_EDGE_PAYLOAD_C>;
@@ -241,6 +242,7 @@ namespace graphquery::database::storage
         CDatablockFile<SVertexEntry_t, 1> m_vertices_file;
         CDatablockFile<SEdgeEntry_t, DATABLOCK_EDGE_PAYLOAD_C> m_edges_file;
         CDatablockFile<SProperty_t, DATABLOCK_PROPERTY_PAYLOAD_C> m_properties_file;
+        std::shared_ptr<CTransaction> m_transactions = {};
 
         utils::CThreadPool<8> m_thread_pool;
         static constexpr uint8_t VERTEX_LABELS_MAX_AMT = 128;

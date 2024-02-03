@@ -19,7 +19,8 @@ target_sources(
 target_compile_options(
         lpg_mmap
         PUBLIC
-        -fPIC)
+        -fPIC
+        -g)
 
 target_link_libraries(
         lpg_mmap

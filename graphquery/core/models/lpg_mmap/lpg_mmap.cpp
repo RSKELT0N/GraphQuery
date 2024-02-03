@@ -1,16 +1,9 @@
 #include "lpg_mmap.h"
 
-#include "transaction.h"
-
 #include <string_view>
 #include <optional>
 #include <ranges>
 #include <vector>
-
-namespace
-{
-    std::shared_ptr<graphquery::database::storage::CTransaction> transactions;
-}
 
 graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(): m_sync_needed(false), m_syncing(0), m_transaction_ref_c(0)
 {
@@ -22,9 +15,9 @@ graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(): m_syn
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::close() noexcept
 {
-    transactions->close();
-    (void) m_master_file.close();
-    (void) m_index_file.close();
+    m_transactions->close();
+    m_master_file.close();
+    m_index_file.close();
 }
 
 std::string_view
@@ -47,10 +40,10 @@ graphquery::database::storage::CMemoryModelMMAPLPG::save_graph() noexcept
         (void) m_edges_file.get_file().sync();
         (void) m_properties_file.get_file().sync();
 
+        m_transactions->reset();
         m_syncing = 0;
         m_cv_sync.notify_all();
 
-        transactions->reset();
         m_sync_needed = false;
         m_log_system->debug("Graph has been saved");
     }
@@ -63,24 +56,24 @@ graphquery::database::storage::CMemoryModelMMAPLPG::create_graph(std::filesystem
     this->m_master_file.set_path(path);
     this->m_index_file.set_path(path);
 
-    transactions = std::make_shared<CTransaction>(path, this);
+    m_transactions = std::make_shared<CTransaction>(path, this);
 
     //~ Create initial model files
     (void) CDiskDriver::create_file(path, MASTER_FILE_NAME);
+    (void) CDiskDriver::create_file(path, INDEX_FILE_NAME);
     (void) CDiskDriver::create_file(path, VERTICES_FILE_NAME);
     (void) CDiskDriver::create_file(path, EDGES_FILE_NAME);
-    (void) CDiskDriver::create_file(path, INDEX_FILE_NAME);
     (void) CDiskDriver::create_file(path, PROPERTIES_FILE_NAME);
 
     //~ Open mapping to model files
     (void) this->m_master_file.open(MASTER_FILE_NAME);
     (void) this->m_index_file.open(INDEX_FILE_NAME);
-    this->m_vertices_file.open(path, VERTICES_FILE_NAME);
-    this->m_edges_file.open(path, EDGES_FILE_NAME);
-    this->m_properties_file.open(path, PROPERTIES_FILE_NAME);
+    this->m_vertices_file.open(path, VERTICES_FILE_NAME, true);
+    this->m_edges_file.open(path, EDGES_FILE_NAME, true);
+    this->m_properties_file.open(path, PROPERTIES_FILE_NAME, true);
 
     //~ Initialise graph memory.
-    transactions->init();
+    m_transactions->init();
 
     store_graph_metadata();
     store_index_metadata();
@@ -96,18 +89,18 @@ graphquery::database::storage::CMemoryModelMMAPLPG::load_graph(std::filesystem::
     this->m_master_file.set_path(path);
     this->m_index_file.set_path(path);
 
-    transactions = std::make_shared<CTransaction>(path, this);
+    m_transactions = std::make_shared<CTransaction>(path, this);
 
     //~ Open mapping to model files
     (void) this->m_master_file.open(MASTER_FILE_NAME);
     (void) this->m_index_file.open(INDEX_FILE_NAME);
-    this->m_vertices_file.open(path, VERTICES_FILE_NAME);
-    this->m_edges_file.open(path, EDGES_FILE_NAME);
-    this->m_properties_file.open(path, PROPERTIES_FILE_NAME);
+    this->m_vertices_file.open(path, VERTICES_FILE_NAME, false);
+    this->m_edges_file.open(path, EDGES_FILE_NAME, false);
+    this->m_properties_file.open(path, PROPERTIES_FILE_NAME, false);
 
     //~ Load graph memory.
-    transactions->init();
-    transactions->handle_transactions();
+    m_transactions->init();
+    m_transactions->handle_transactions();
     read_index_list();
 }
 
@@ -371,7 +364,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const uint64_t id
         return;
     }
 
-    transactions->commit_vertex(label, transformed_properties, id);
+    m_transactions->commit_vertex(label, transformed_properties, id);
     m_sync_needed = true;
     transaction_epilogue();
 }
@@ -391,7 +384,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge(const uint64_t src,
         return;
     }
 
-    transactions->commit_edge(src, dst, label, transformed_properties);
+    m_transactions->commit_edge(src, dst, label, transformed_properties);
     m_sync_needed = true;
     transaction_epilogue();
 }
@@ -402,7 +395,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const std::string
     transaction_preamble();
     const auto transformed_properties = transform_properties(prop);
     (void) add_vertex_entry(label, transformed_properties);
-    transactions->commit_vertex(label, transformed_properties);
+    m_transactions->commit_vertex(label, transformed_properties);
 
     m_sync_needed = true;
     transaction_epilogue();
@@ -419,7 +412,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex(const uint64_t ver
         return;
     }
 
-    transactions->commit_rm_vertex(vertex_id);
+    m_transactions->commit_rm_vertex(vertex_id);
     m_sync_needed = true;
     transaction_epilogue();
 }
@@ -435,7 +428,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(const uint64_t src, 
         return;
     }
 
-    transactions->commit_rm_edge(src, dst);
+    m_transactions->commit_rm_edge(src, dst);
     transaction_epilogue();
     m_sync_needed = true;
 }
@@ -451,7 +444,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(uint64_t src, uint64
         return;
     }
 
-    transactions->commit_rm_edge(src, dst, label);
+    m_transactions->commit_rm_edge(src, dst, label);
     m_sync_needed = true;
     transaction_epilogue();
 }
@@ -741,17 +734,15 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::read_index_list() noexcept
 {
     define_vertex_lut();
-    const uint64_t vertices_amt = read_graph_metadata()->vertices_c;
+    const uint64_t block_c = m_vertices_file.read_metadata()->data_block_c;
 
     auto vertex_ptr = m_vertices_file.read_entry(0);
-    for (auto vertex_i = 0, vertex_offset = 0; vertex_i < vertices_amt; vertex_offset++)
+    for (uint64_t vertex_i = 0; vertex_i < block_c; vertex_i++, ++vertex_ptr)
     {
         if (!vertex_ptr->state.any())
             continue;
 
-        m_label_map[vertex_ptr->payload.metadata.label_id][vertex_ptr->payload.metadata.id] = vertex_offset;
-        vertex_i++;
-        vertex_ptr++;
+        m_label_map[vertex_ptr->payload.metadata.label_id][vertex_ptr->payload.metadata.id] = vertex_i;
     }
 }
 
