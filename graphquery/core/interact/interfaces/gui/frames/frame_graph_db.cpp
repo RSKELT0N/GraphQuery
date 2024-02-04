@@ -53,6 +53,7 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 #ifndef NDEBUG
     if (m_is_graph_loaded)
     {
+        const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
             (*m_graph)->add_vertex("PERSON", {{"First Name", "Skelton"}});
 

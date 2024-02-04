@@ -51,6 +51,7 @@ namespace graphquery::database::storage
         [[nodiscard]] std::filesystem::path get_path() const noexcept;
         [[nodiscard]] static bool check_if_file_exists(std::string_view file_path) noexcept;
         [[nodiscard]] static bool check_if_folder_exists(std::string_view file_path) noexcept;
+        [[nodiscard]] static bool check_if_file_exists(std::string_view path, std::string_view file_name) noexcept;
         [[maybe_unused]] static SRet_t create_folder(const std::filesystem::path & path, std::string_view folder_name);
         [[maybe_unused]] static SRet_t create_file(const std::filesystem::path & path, std::string_view file_name, int64_t file_size);
 

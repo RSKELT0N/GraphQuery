@@ -11,6 +11,11 @@ target_include_directories(
         PUBLIC
         ${PROJECT_SOURCE_DIR}/graphquery/core)
 
+target_compile_options(
+        pr
+        PUBLIC
+        -fPIC)
+
 target_sources(
         pr
         PUBLIC

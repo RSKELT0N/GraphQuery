@@ -46,7 +46,8 @@ namespace graphquery::database::storage
         void close() noexcept;
         void load(std::string_view db_name);
         void set_up(std::string_view db_name);
-        void init(std::filesystem::path file_path);
+        void init(const std::filesystem::path & path, std::string_view db_name);
+        bool check_if_graph_exists(std::string_view graph_name) const noexcept;
         void create_graph(const std::string & name, const std::string & type) noexcept;
         void open_graph(std::string name, std::string type) noexcept;
 
@@ -56,7 +57,6 @@ namespace graphquery::database::storage
         [[nodiscard]] const bool & get_is_db_loaded() const noexcept;
         [[nodiscard]] const bool & get_is_graph_loaded() const noexcept;
         [[nodiscard]] std::string get_db_info() const noexcept;
-        void test() noexcept;
 
       private:
         void store_db_graph_table() noexcept;
@@ -67,7 +67,7 @@ namespace graphquery::database::storage
         void define_db_superblock() noexcept;
 
         SGraph_Entry_t define_graph(std::string name, std::string type) noexcept;
-        [[nodiscard]] SGraph_Entry_t define_graph_entry(const std::string & name, const std::string & type) noexcept;
+        [[nodiscard]] static SGraph_Entry_t define_graph_entry(const std::string & name, const std::string & type) noexcept;
         [[nodiscard]] bool define_graph_model(const std::string & name, const std::string & type) noexcept;
         void create_graph_entry(const std::string & name, const std::string & type) noexcept;
 

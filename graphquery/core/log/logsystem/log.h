@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <string_view>
 
 namespace graphquery::logger
@@ -18,7 +17,6 @@ namespace graphquery::logger
         ***************************************************************/
         ILog() = default;
 
-      public:
         /****************************************************************
         ** \brief (Rule of five)
         ***************************************************************/
@@ -28,7 +26,6 @@ namespace graphquery::logger
         ILog & operator=(const ILog &) = default;
         ILog & operator=(ILog &&)      = default;
 
-      protected:
         /****************************************************************
         ** \brief Virtual debug function for the logging system to call
         **        to render output towards the derived class.
@@ -61,7 +58,6 @@ namespace graphquery::logger
          **************************************************************/
         virtual void error(std::string_view) noexcept = 0;
 
-      protected:
         // ~ friend reference of the logging system (can call protected/private
         // functionality)
         friend class CLogSystem;

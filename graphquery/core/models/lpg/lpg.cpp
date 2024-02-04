@@ -2,6 +2,7 @@
 
 #include "transaction.h"
 
+#include <atomic>
 #include <fcntl.h>
 #include <iostream>
 #include <string_view>
@@ -9,6 +10,8 @@
 #include <optional>
 #include <ranges>
 #include <vector>
+
+#include "fmt/chrono.h"
 
 namespace
 {
@@ -69,7 +72,7 @@ graphquery::database::storage::CMemoryModelLPG::save_graph() noexcept
 }
 
 void
-graphquery::database::storage::CMemoryModelLPG::create_graph(std::filesystem::path path, std::string_view graph) noexcept
+graphquery::database::storage::CMemoryModelLPG::create_graph(std::filesystem::path path, const std::string_view graph) noexcept
 {
     this->m_graph_name = graph;
     this->m_master_file.set_path(path);
@@ -138,9 +141,11 @@ graphquery::database::storage::CMemoryModelLPG::remove_marked_vertices() noexcep
     for (const auto vertex : m_marked_vertices)
     {
         const auto vertex_label_offset = m_vertex_label_lut[vertex->metadata.label_id];
-        m_labelled_vertices[vertex_label_offset].erase(vertex);
+        m_all_vertex_properties.erase(std::next(m_all_vertex_properties.begin(), static_cast<int64_t>(vertex->properties_ref)));
         m_vertex_lut[vertex_label_offset].erase(vertex->metadata.id);
+        m_labelled_vertices[vertex_label_offset].erase(vertex);
     }
+    m_marked_vertices.clear();
 }
 
 void
@@ -162,7 +167,7 @@ graphquery::database::storage::CMemoryModelLPG::remove_unused_labels() noexcept
         {
             m_edge_labels.erase(it);
             m_edge_label_lut.erase(it->label_id);
-            m_graph_metadata.edge_label_c--;
+            --m_graph_metadata.edge_label_c;
         }
     }
 }
@@ -194,7 +199,7 @@ graphquery::database::storage::CMemoryModelLPG::define_edge_label_map() noexcept
 {
     m_edge_label_lut.reserve(m_graph_metadata.edge_label_c);
 
-    for (size_t offset                                   = 0; offset < m_edge_labels.size(); offset++)
+    for (size_t offset = 0; offset < m_edge_labels.size(); offset++)
         m_edge_label_lut[m_edge_labels[offset].label_id] = offset;
 }
 
@@ -224,19 +229,21 @@ graphquery::database::storage::CMemoryModelLPG::store_labelled_vertices() noexce
 {
     m_connections_file.seek(DEFAULT_FILE_START_ADDR);
     m_vertices_prop_file.seek(DEFAULT_FILE_START_ADDR);
+    uint64_t v_idx = {};
 
-    for (int label_id = 0; label_id < m_graph_metadata.vertex_label_c; label_id++)
+    for (int label_id = 0; label_id < m_graph_metadata.vertex_label_c.load(); label_id++)
     {
-        for (auto & [metadata, edge_labels, edges] : m_labelled_vertices[label_id])
+        for (auto & [metadata, edge_labels, edges, v_properties_ref] : m_labelled_vertices[label_id])
         {
             m_connections_file.write(&metadata, sizeof(SVertex), 1);
             m_connections_file.write(&edge_labels[0], sizeof(SVertexEdgeLabelEntry), metadata.edge_label_c);
 
             for (const auto & labelled_edges : edges)
-                for (const auto & [metadata] : labelled_edges)
+                for (const auto & [metadata, e_properties_ref] : labelled_edges)
                     m_connections_file.write(&metadata, sizeof(SEdge), 1);
 
-            const auto & properties = m_all_vertex_properties[m_vertex_lut[metadata.label_id][metadata.id]];
+            v_properties_ref  = v_idx++;
+            auto & properties = m_all_vertex_properties[v_properties_ref];
             m_vertices_prop_file.write(&properties.ref_id, sizeof(uint64_t), 1);
             m_vertices_prop_file.write(&properties.property_c, sizeof(uint16_t), 1);
             m_vertices_prop_file.write(&properties.properties[0], sizeof(SProperty), properties.property_c);
@@ -285,14 +292,14 @@ graphquery::database::storage::CMemoryModelLPG::read_labelled_vertices() noexcep
     m_labelled_vertices.resize(m_graph_metadata.vertex_label_c);
     m_all_vertex_properties.resize(m_graph_metadata.vertices_c);
 
-    int64_t prop_idx = {};
-    int64_t vertex_c = {};
+    int64_t prop_idx   = {};
+    int64_t vertex_idx = {};
 
     for (const auto & [lv_str, lv_count, lv_id] : m_vertex_labels)
     {
-        vertex_c = {};
+        vertex_idx = {};
         m_labelled_vertices[lv_id].resize(lv_count);
-        for (auto & [metadata, edge_labels, edges] : m_labelled_vertices[lv_id])
+        for (auto & [metadata, edge_labels, edges, v_properties_ref] : m_labelled_vertices[lv_id])
         {
             m_connections_file.read(&metadata, sizeof(SVertex), 1);
             edge_labels.resize(metadata.edge_label_c);
@@ -304,17 +311,18 @@ graphquery::database::storage::CMemoryModelLPG::read_labelled_vertices() noexcep
             for (auto & [le_id, le_count, pos] : edge_labels)
             {
                 edges[le_id].resize(le_count);
-                for (auto & [metadata] : edges[le_id])
+                for (auto & [metadata, e_properties_ref] : edges[le_id])
                     m_connections_file.read(&metadata, sizeof(SEdge), 1);
                 pos = edge_label_i++;
             }
 
-            m_vertex_lut[metadata.label_id][metadata.id] = vertex_c++;
-            m_vertices_prop_file.read(&m_all_vertex_properties[prop_idx].ref_id, sizeof(uint64_t), 1);
-            m_vertices_prop_file.read(&m_all_vertex_properties[prop_idx].property_c, sizeof(uint16_t), 1);
-            m_all_vertex_properties[prop_idx].properties.resize(m_all_vertex_properties[prop_idx].property_c);
-            m_vertices_prop_file.read(&m_all_vertex_properties[prop_idx].properties[0], sizeof(SProperty), m_all_vertex_properties[prop_idx].property_c);
-            prop_idx++;
+            v_properties_ref                             = prop_idx++;
+            m_vertex_lut[metadata.label_id][metadata.id] = vertex_idx++;
+
+            m_vertices_prop_file.read(&m_all_vertex_properties[v_properties_ref].ref_id, sizeof(uint64_t), 1);
+            m_vertices_prop_file.read(&m_all_vertex_properties[v_properties_ref].property_c, sizeof(uint16_t), 1);
+            m_all_vertex_properties[v_properties_ref].properties.resize(m_all_vertex_properties[v_properties_ref].property_c);
+            m_vertices_prop_file.read(&m_all_vertex_properties[v_properties_ref].properties[0], sizeof(SProperty), m_all_vertex_properties[v_properties_ref].property_c);
         }
     }
 }
@@ -424,7 +432,7 @@ graphquery::database::storage::CMemoryModelLPG::create_vertex_label(const std::s
 
     m_labelled_vertices.emplace_back();
     m_vertex_lut.emplace_back();
-    m_graph_metadata.vertex_label_c++;
+    ++m_graph_metadata.vertex_label_c;
 
     return label_id;
 }
@@ -437,7 +445,7 @@ graphquery::database::storage::CMemoryModelLPG::create_edge_label(const std::str
 
     m_edge_label_lut[edge_label_entry.label_id] = static_cast<int64_t>(m_edge_labels.size());
     m_edge_labels.emplace_back(edge_label_entry);
-    m_graph_metadata.edge_label_c++;
+    ++m_graph_metadata.edge_label_c;
 
     return label_id;
 }
@@ -491,26 +499,44 @@ graphquery::database::storage::CMemoryModelLPG::check_if_vertex_edge_label_exist
     return label->pos;
 }
 
-std::optional<std::vector<graphquery::database::storage::CMemoryModelLPG::SVertexContainer>::iterator>
-graphquery::database::storage::CMemoryModelLPG::get_vertex_by_id(const uint64_t id) noexcept
+bool
+graphquery::database::storage::CMemoryModelLPG::check_if_vertex_exists(uint64_t id) noexcept
 {
     const auto label = std::find_if(m_vertex_lut.begin(), m_vertex_lut.end(), [&id](auto & bucket) { return bucket.contains(id); });
 
-    if (label == m_vertex_lut.end())
+    if (label == m_vertex_lut.end()) // ~ not found in any label type
+        return false;
+
+    return true;
+}
+
+std::optional<std::vector<graphquery::database::storage::CMemoryModelLPG::SVertexContainer>::iterator>
+graphquery::database::storage::CMemoryModelLPG::get_vertex_by_id(const uint64_t id) noexcept
+{
+    const auto label = std::find_if(m_vertex_labels.begin(),
+                                    m_vertex_labels.end(),
+                                    [this, &id](const SLabel & label) { return this->m_vertex_lut[this->m_vertex_label_lut[label.label_id]].contains(id); });
+
+    if (label == m_vertex_labels.end())
         return std::nullopt;
 
-    const uint64_t offset = (*label)[id];
+    const auto & label_offset = m_vertex_label_lut[label->label_id];
+    const auto offset         = static_cast<int64_t>(m_vertex_lut[label_offset][id]);
 
     if (offset == ULONG_LONG_MAX)
         return std::nullopt;
 
-    return m_labelled_vertices[std::distance(m_vertex_lut.begin(), label)].begin() + static_cast<int64_t>(offset);
+    return m_labelled_vertices[label_offset].begin() + offset;
 }
 
 graphquery::database::storage::CMemoryModelLPG::EActionState
 graphquery::database::storage::CMemoryModelLPG::add_vertex_entry(const uint64_t id, const std::string_view label, const std::vector<SProperty> & prop) noexcept
 {
     access_preamble();
+    //~ Check if vertex ID is present
+    if (check_if_vertex_exists(id))
+        return EActionState::invalid;
+
     //~ Assign vertex label
     SVertexContainer vertex  = {};
     const SLabel & label_ref = get_vertex_label(label);
@@ -518,15 +544,19 @@ graphquery::database::storage::CMemoryModelLPG::add_vertex_entry(const uint64_t 
     const auto & vertex_label_offset = m_vertex_label_lut[label_ref.label_id];
     vertex.metadata.label_id         = m_vertex_labels[vertex_label_offset].label_id;
 
-    //~ Check if vertex ID is present
-    if (get_vertex_by_id(id).has_value())
-        return EActionState::invalid;
-
     vertex.metadata.id = id;
 
     //~ Add vertex to DB
     ++m_graph_metadata.vertices_c;
-    m_all_vertex_properties.emplace_back(id, prop.size(), prop);
+    vertex.properties_ref = m_all_vertex_properties.size();
+    m_all_vertex_properties.emplace_back(id, prop);
+
+    SPropertyContainer tmp = {};
+    tmp.ref_id             = id;
+    tmp.property_c         = prop.size();
+    tmp.properties         = prop;
+
+    m_all_vertex_properties.emplace_back(tmp);
 
     m_vertex_labels[vertex_label_offset].item_c++;
     m_labelled_vertices[vertex_label_offset].push_back(vertex);
@@ -551,7 +581,15 @@ graphquery::database::storage::CMemoryModelLPG::add_vertex_entry(const std::stri
 
     //~ Add vertex to DB
     ++m_graph_metadata.vertices_c;
-    m_all_vertex_properties.emplace_back(vertex.metadata.id, prop.size(), prop);
+    vertex.properties_ref = m_all_vertex_properties.size();
+    m_all_vertex_properties.emplace_back(vertex.metadata.id, prop);
+
+    SPropertyContainer tmp = {};
+    tmp.ref_id             = vertex.metadata.id;
+    tmp.property_c         = prop.size();
+    tmp.properties         = prop;
+
+    m_all_vertex_properties.emplace_back(tmp);
 
     m_vertex_labels[vertex_label_offset].item_c++;
     m_labelled_vertices[vertex_label_offset].emplace_back(vertex);
@@ -575,11 +613,10 @@ graphquery::database::storage::CMemoryModelLPG::add_edge_entry(const uint64_t sr
     //~ src vertex reference
     const auto src_vertex_opt = get_vertex_by_id(src);
 
-    if (!src_vertex_opt.has_value())
-        [[unlikely]]
-            return EActionState::invalid;
+    if (!src_vertex_opt.has_value()) [[unlikely]]
+        return EActionState::invalid;
 
-    const auto & src_vertex = src_vertex_opt.value();
+    auto & src_vertex = src_vertex_opt.value();
 
     //~ Assign edge info
     const SLabel & label_ref         = get_edge_label(label);
@@ -591,13 +628,11 @@ graphquery::database::storage::CMemoryModelLPG::add_edge_entry(const uint64_t sr
 
     if (std::find_if(src_vertex->labelled_edges[edge_label_offset].begin(),
                      src_vertex->labelled_edges[edge_label_offset].end(),
-                     [&dst](const auto & _edge) { return _edge.metadata.dst == dst; }) != src_vertex->labelled_edges[edge_label_offset].end())
-        [[unlikely]]
-            return EActionState::invalid;
+                     [&dst](const auto & edge) { return edge.metadata.dst == dst; }) != src_vertex->labelled_edges[edge_label_offset].end()) [[unlikely]]
+        return EActionState::invalid;
 
     //~ Update graph header
-    m_graph_metadata.edges_c++;
-    m_edge_labels[edge_label_offset].item_c++;
+    ++m_graph_metadata.edges_c;
 
     //~ Update vertex with new edge
     src_vertex->labelled_edges[vertex_edge_label_ref.pos].emplace_back(edge);
@@ -614,9 +649,8 @@ graphquery::database::storage::CMemoryModelLPG::rm_vertex_entry(const uint64_t v
     access_preamble();
     const auto src_vertex_opt = get_vertex_by_id(vertex_id);
 
-    if (!src_vertex_opt.has_value())
-        [[unlikely]]
-            return EActionState::invalid;
+    if (!src_vertex_opt.has_value()) [[unlikely]]
+        return EActionState::invalid;
 
     auto src_vertex = src_vertex_opt.value();
 
@@ -626,16 +660,16 @@ graphquery::database::storage::CMemoryModelLPG::rm_vertex_entry(const uint64_t v
     //~ Update vertex metadata
     const uint16_t & v_idx         = m_vertex_label_lut[src_vertex->metadata.label_id];
     m_vertex_lut[v_idx][vertex_id] = ULONG_LONG_MAX;
-    m_graph_metadata.vertices_c--;
+    --m_graph_metadata.vertices_c;
     m_vertex_labels[v_idx].item_c--;
 
     //~ Update edge metadata
-    m_graph_metadata.edges_c -= m_graph_metadata.edges_c >= src_vertex->metadata.neighbour_c ? src_vertex->metadata.neighbour_c : 0;
+    m_graph_metadata.edges_c = std::min(m_graph_metadata.edges_c - src_vertex->metadata.neighbour_c, 0UL);
 
     for (const auto [count, id, pos] : src_vertex->edge_labels)
         m_edge_labels[m_edge_label_lut[id]].item_c -= m_edge_labels[m_edge_label_lut[id]].item_c >= count ? count : 0;
 
-    m_marked_vertices.emplace(src_vertex);
+    m_marked_vertices.insert(src_vertex);
 
     m_flush_needed = true;
     return EActionState::valid;
@@ -647,12 +681,11 @@ graphquery::database::storage::CMemoryModelLPG::rm_edge_entry(const uint64_t src
     access_preamble();
     const auto src_vertex_opt = get_vertex_by_id(src_vertex_id);
 
-    if (!src_vertex_opt.has_value())
-        [[unlikely]]
-            return EActionState::invalid;
+    if (!src_vertex_opt.has_value()) [[unlikely]]
+        return EActionState::invalid;
 
     const auto & src_vertex = src_vertex_opt.value();
-    size_t erased           = {}, total = {};
+    size_t erased = {}, total = {};
 
     for (auto & [count, id, pos] : src_vertex->edge_labels)
     {
@@ -672,8 +705,8 @@ graphquery::database::storage::CMemoryModelLPG::rm_edge_entry(const uint64_t src
         erased = {};
     }
 
-    m_graph_metadata.edges_c -= m_graph_metadata.edges_c >= total ? total : 0;
-    src_vertex->metadata.neighbour_c -= src_vertex->metadata.neighbour_c >= erased ? erased : 0;
+    m_graph_metadata.edges_c         = std::min(m_graph_metadata.edges_c - total, 0UL);
+    src_vertex->metadata.neighbour_c = std::min(src_vertex->metadata.neighbour_c - erased, 0UL);
 
     m_flush_needed = true;
     return EActionState::valid;
@@ -685,9 +718,8 @@ graphquery::database::storage::CMemoryModelLPG::rm_edge_entry(const std::string_
     access_preamble();
     const auto src_vertex_opt = get_vertex_by_id(src_vertex_id);
 
-    if (!src_vertex_opt.has_value())
-        [[unlikely]]
-            return EActionState::invalid;
+    if (!src_vertex_opt.has_value()) [[unlikely]]
+        return EActionState::invalid;
 
     const auto & src_vertex     = src_vertex_opt.value();
     const auto & edge_label_ref = check_if_edge_label_exists(label);
@@ -812,7 +844,7 @@ graphquery::database::storage::CMemoryModelLPG::get_num_edges() const
     return this->m_graph_metadata.edges_c;
 }
 
-std::optional<graphquery::database::storage::ILPGModel::SVertex>
+std::optional<graphquery::database::storage::CMemoryModelLPG::SVertex>
 graphquery::database::storage::CMemoryModelLPG::get_vertex(const uint64_t vertex_id)
 {
     const auto src_vertex_opt = get_vertex_by_id(vertex_id);
@@ -827,26 +859,28 @@ graphquery::database::storage::CMemoryModelLPG::get_vertex(const uint64_t vertex
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SEdge>
-graphquery::database::storage::CMemoryModelLPG::get_edge(uint64_t src, uint64_t dst)
+graphquery::database::storage::CMemoryModelLPG::get_edges(uint64_t src, uint64_t dst)
 {
-    std::vector<SEdge> ret    = {};
-    const auto src_vertex_opt = get_vertex_by_id(src);
+    std::vector<SEdge> ret                             = {};
+    std::vector<SVertexContainer>::iterator src_vertex = {};
 
-    if (!src_vertex_opt.has_value())
+    if (const auto src_vertex_opt = get_vertex_by_id(src); !src_vertex_opt.has_value())
     {
         m_log_system->warning(fmt::format("Issue retrieving edge({}) from vertex({})", dst, src));
-        return ret;
+        return {};
     }
+    else
+        src_vertex = src_vertex_opt.value();
 
-    const auto & src_vertex = src_vertex_opt.value();
+    std::for_each(src_vertex->labelled_edges.begin(),
+                  src_vertex->labelled_edges.end(),
+                  [&ret, &dst](const auto & label_edges) -> void
+                  {
+                      const auto _edge = std::find_if(label_edges.begin(), label_edges.end(), [&dst](const auto & edge) { return edge.metadata.dst == dst; });
 
-    for (const auto & label_edges : src_vertex->labelled_edges)
-    {
-        const auto edge = std::find_if(label_edges.begin(), label_edges.end(), [&dst](const auto & edge) { return edge.metadata.dst == dst; });
-
-        if (edge != label_edges.end())
-            ret.emplace_back(edge->metadata);
-    }
+                      if (_edge != label_edges.end())
+                          ret.emplace_back(_edge->metadata);
+                  });
 
     return ret;
 }
@@ -875,7 +909,7 @@ graphquery::database::storage::CMemoryModelLPG::get_edge(uint64_t src, uint64_t 
 
     const auto edge = std::find_if(src_vertex->labelled_edges[vertex_edge_label_ref.value()].begin(),
                                    src_vertex->labelled_edges[vertex_edge_label_ref.value()].end(),
-                                   [&dst](const auto & edge) { return edge.metadata.dst == dst; });
+                                   [&dst](const auto & labelled_edge) { return labelled_edge.metadata.dst == dst; });
 
     if (edge == src_vertex->labelled_edges[vertex_edge_label_ref.value()].end())
         return std::nullopt;
@@ -883,12 +917,73 @@ graphquery::database::storage::CMemoryModelLPG::get_edge(uint64_t src, uint64_t 
     return edge->metadata;
 }
 
+std::vector<graphquery::database::storage::ILPGModel::SEdge>
+graphquery::database::storage::CMemoryModelLPG::get_edges(const uint64_t src, const std::string_view edge_label, const std::string_view vertex_label)
+{
+    std::vector<SEdge> ret          = {};
+    const auto src_vertex_opt       = get_vertex_by_id(src);
+
+    if (!src_vertex_opt.has_value())
+        return ret;
+
+    const auto & src_vertex     = src_vertex_opt.value();
+    const auto & edge_label_ref = check_if_edge_label_exists(edge_label);
+
+    if (!edge_label_ref.has_value())
+        return ret;
+
+    const auto & vertex_edge_label_ref = check_if_vertex_edge_label_exists(*src_vertex, edge_label_ref.value());
+
+    if (!vertex_edge_label_ref.has_value())
+        return ret;
+
+    auto vrtx_label_id_search = check_if_vertex_label_exists(vertex_label);
+
+    std::for_each(src_vertex->labelled_edges[vertex_edge_label_ref.value()].begin(),
+                  src_vertex->labelled_edges[vertex_edge_label_ref.value()].end(),
+                  [this, &vrtx_label_id_search, &ret](const SEdgeContainer & labelled_edge)
+                  {
+                      const auto dst_vertex = get_vertex_by_id(labelled_edge.metadata.dst).value();
+
+                      if (dst_vertex->metadata.label_id == vrtx_label_id_search)
+                          ret.push_back(labelled_edge.metadata);
+                  });
+
+    return ret;
+}
+
+std::vector<graphquery::database::storage::ILPGModel::SEdge>
+graphquery::database::storage::CMemoryModelLPG::get_edges(const std::vector<SEdge> & edges, std::string_view edge_label, std::string_view vertex_label)
+{
+    static std::vector<SEdge> ret = {};
+
+    for (const SEdge & edge : edges)
+    {
+        const std::vector<SVertexContainer>::iterator vertex = get_vertex_by_id(edge.dst).value();
+        auto neighbours                                      = get_edges(edge.dst, edge_label, vertex_label);
+        ret.insert(ret.end(), neighbours.begin(), neighbours.end());
+    }
+    return ret;
+}
+
+std::vector<graphquery::database::storage::ILPGModel::SEdge>
+graphquery::database::storage::CMemoryModelLPG::get_edges(uint64_t src, std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs)
+{
+    static const std::vector<std::pair<std::string_view, std::string_view>> vrtx_lbl_cpy(edge_vertex_label_pairs);
+    std::vector<SEdge> base = get_edges(src, vrtx_lbl_cpy[0].first, vrtx_lbl_cpy[0].second);
+
+    for (int i = 1; i < vrtx_lbl_cpy.size(); i++)
+        base = get_edges(base, vrtx_lbl_cpy[i].first, vrtx_lbl_cpy[i].second);
+
+    return base;
+}
+
 void
-graphquery::database::storage::CMemoryModelLPG::calc_outdegree(std::shared_ptr<uint32_t[]> arr) noexcept
+graphquery::database::storage::CMemoryModelLPG::calc_outdegree(const std::shared_ptr<uint32_t[]> arr) noexcept
 {
     for (uint16_t label = 0; label < m_graph_metadata.vertex_label_c; label++)
     {
-        for (int64_t vertex = 0; vertex < m_vertex_labels[0].item_c; vertex++)
+        for (int64_t vertex = 0; vertex < m_vertex_labels[label].item_c; vertex++)
         {
             arr[vertex] = m_labelled_vertices[label][vertex].metadata.neighbour_c;
         }
@@ -912,9 +1007,33 @@ graphquery::database::storage::CMemoryModelLPG::edgemap(const std::unique_ptr<an
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SVertex>
-graphquery::database::storage::CMemoryModelLPG::get_vertices_by_label(std::string_view label_id)
+graphquery::database::storage::CMemoryModelLPG::get_vertices_by_label(const std::string_view label)
 {
+    // const std::optional<uint16_t> exists = check_if_vertex_label_exists(label);
+    //
+    // if (!exists.has_value())
+    //     return {};
+    //
+    // const uint16_t label_id = exists.value();
+    //
+    // return {m_labelled_vertices[m_vertex_label_lut[label_id]].begin(), m_labelled_vertices[m_vertex_label_lut[label_id]].end()};
     return {};
+}
+
+std::optional<graphquery::database::storage::ILPGModel::SPropertyContainer>
+graphquery::database::storage::CMemoryModelLPG::get_vertex_properties(uint64_t id)
+{
+    const auto vertex = get_vertex(id);
+
+    if (!vertex.has_value())
+    {
+        m_log_system->warning(fmt::format("Canont retreive properties of vertex({}) that does not exist", id));
+        return std::nullopt;
+    }
+
+    const auto vertex_label_off = m_vertex_label_lut[vertex.value().label_id];
+
+    return m_all_vertex_properties[m_vertex_lut[vertex_label_off][id]];
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SVertex>
@@ -937,9 +1056,8 @@ graphquery::database::storage::CMemoryModelLPG::transform_properties(const std::
 
 extern "C"
 {
-LIB_EXPORT void
-create_graph_model(graphquery::database::storage::ILPGModel ** graph_model)
-{
-    *graph_model = new graphquery::database::storage::CMemoryModelLPG();
-}
+    LIB_EXPORT void create_graph_model(graphquery::database::storage::ILPGModel ** graph_model)
+    {
+        *graph_model = new graphquery::database::storage::CMemoryModelLPG();
+    }
 }
