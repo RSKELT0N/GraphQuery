@@ -4,6 +4,8 @@
 #include <optional>
 #include <ranges>
 #include <vector>
+#include <cstdarg>
+#include <set>
 
 graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(): m_sync_needed(false), m_syncing(0), m_transaction_ref_c(0)
 {
@@ -174,6 +176,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_edge_entry(const uint3
         {
             payload_offset = i;
             data_block_ptr->state.set(i);
+            break;
         }
     }
 
@@ -199,12 +202,13 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_property_entry(const S
     const uint32_t entry_offset               = data_block_ptr->idx;
 
     size_t payload_offset = 0;
-    for (int i = 0; i < data_block_ptr->state.size(); i++)
+    for (size_t i = 0; i < data_block_ptr->state.size(); i++)
     {
         if (data_block_ptr->state.test(i) == 0)
         {
             payload_offset = i;
             data_block_ptr->state.set(i);
+            break;
         }
     }
 
@@ -552,12 +556,11 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept
 {
     const auto datablock_c = m_vertices_file.read_metadata()->data_block_c.load();
+    auto curr_vertex_ptr   = m_vertices_file.read_entry(0);
 
-    for (uint32_t i = 0; i < datablock_c; i++)
+    for (uint32_t i = 0; i < datablock_c; i++, ++curr_vertex_ptr)
     {
-        auto curr_vertex_ptr = m_vertices_file.read_entry(i);
-
-        if (unlikely(curr_vertex_ptr->state == EIndexValue_t::MARKED_DELETED))
+        if (unlikely(!curr_vertex_ptr->state.any()))
             continue;
 
         uint32_t edge_ref = curr_vertex_ptr->payload.edge_idx;
@@ -646,27 +649,54 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const uint64_t src
                      [this, &vertex_label_id, &edge_label_id](const SEdge_t & edge) -> bool
                      {
                          auto dst_vertex_ptr = get_vertex_by_id(edge.dst).value();
+
+                         if (!dst_vertex_ptr->state.any())
+                             return false;
+
                          return edge.label_id == edge_label_id && dst_vertex_ptr->payload.metadata.label_id == vertex_label_id;
                      });
+}
+
+std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
+graphquery::database::storage::CMemoryModelMMAPLPG::get_recursive_edges(const uint64_t src,
+                                                                        const std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs)
+{
+    std::set vertices_to_process = {src};
+    std::vector<SEdge_t> ret     = {};
+
+    for (const auto & curr_label_pair : edge_vertex_label_pairs)
+    {
+        ret.clear();
+        for (const auto & i : vertices_to_process)
+        {
+            auto retrieved_edges = get_edges(i, curr_label_pair.first, curr_label_pair.second);
+            ret.insert(ret.begin(), retrieved_edges.begin(), retrieved_edges.end());
+        }
+        vertices_to_process.clear();
+
+        for (const auto & curr_result : ret)
+            vertices_to_process.emplace(curr_result.dst);
+    }
+    return ret;
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SProperty_t>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_properties(const uint64_t id)
 {
-    const auto src_vertex_exists = get_vertex_by_id(id);
-    std::vector<SProperty_t> ret = {};
+    SRef_t<SVertexDataBlock> src_vertex = {};
+    std::vector<SProperty_t> ret        = {};
 
-    if (unlikely(!src_vertex_exists.has_value()))
+    if (auto src_vertex_exists = get_vertex_by_id(id); unlikely(!src_vertex_exists.has_value()))
         return ret;
+    else
+        src_vertex = std::move(src_vertex_exists.value());
 
-    auto src_vertex = src_vertex_exists.value();
     ret.reserve(src_vertex->payload.metadata.property_c);
-
     auto property_ref_cpy = src_vertex->payload.properties_idx.load();
 
-    while (property_ref_cpy != EIndexValue_t::END_INDEX)
+    while (property_ref_cpy != END_INDEX)
     {
-        auto property_ptr = m_properties_file.read_entry(src_vertex->payload.properties_idx);
+        auto property_ptr = m_properties_file.read_entry(property_ref_cpy);
 
         for (size_t i = 0; i < property_ptr->state.size(); i++)
         {
@@ -677,6 +707,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_properties(const 
         property_ref_cpy = property_ptr->next;
     }
 
+    ret.shrink_to_fit();
     return ret;
 }
 
@@ -685,12 +716,11 @@ graphquery::database::storage::CMemoryModelMMAPLPG::calc_outdegree(const std::sh
 {
     int64_t vertex_c       = 0;
     const auto datablock_c = m_vertices_file.read_metadata()->data_block_c.load();
+    auto curr_vertex_ptr   = m_vertices_file.read_entry(0);
 
-    for (uint32_t i = 0; i < datablock_c; i++)
+    for (uint32_t i = 0; i < datablock_c; i++, ++curr_vertex_ptr)
     {
-        auto curr_vertex_ptr = m_vertices_file.read_entry(i);
-
-        if (unlikely(curr_vertex_ptr->state == EIndexValue_t::MARKED_DELETED))
+        if (unlikely(!curr_vertex_ptr->state.any()))
             continue;
 
         outdeg[vertex_c++] = curr_vertex_ptr->payload.metadata.neighbour_c;
@@ -725,9 +755,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::define_vertex_lut() noexcept
     auto label_ptr = read_vertex_label_entry(0);
 
     for (uint16_t i = 0; i < label_c; i++, ++label_ptr)
-    {
         m_label_map[label_ptr->label_id].resize(label_ptr->item_c);
-    }
 }
 
 void
@@ -771,11 +799,6 @@ graphquery::database::storage::CMemoryModelMMAPLPG::read_edge_label_entry(const 
     static const auto label_size = read_graph_metadata()->label_size.load();
     const auto effective_addr    = base_addr + (label_size * offset);
     return m_master_file.ref<SLabel_t>(effective_addr);
-}
-
-std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
-graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(uint64_t src, std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs)
-{
 }
 
 graphquery::database::storage::CMemoryModelMMAPLPG::EActionState_t

@@ -1,8 +1,8 @@
 #include "db/system.h"
 
 #ifndef NDEBUG
-#define DB_NAME    "DB0"
-#define GRAPH_NAME "GR7"
+#define DB_NAME    "DB2"
+#define GRAPH_NAME "GR1"
 #endif
 
 int
@@ -14,7 +14,7 @@ main([[maybe_unused]] const int argc, [[maybe_unused]] char * argv[])
     graphquery::database::_log_system->info("GraphQuery has been initialised");
 
 #ifndef NDEBUG
-    graphquery::database::_db_storage->init("/home/ryans/Documents/Projects/data", DB_NAME);
+    graphquery::database::_db_storage->init("/Users/ryanskelton/OutsideSync/Programming/data/", DB_NAME);
 
     if (graphquery::database::_db_storage->check_if_graph_exists(GRAPH_NAME))
         graphquery::database::_db_storage->open_graph(GRAPH_NAME);
