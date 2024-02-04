@@ -12,10 +12,13 @@
 
 #pragma once
 
+#include <atomic>
+
 #include "config.h"
 #include "memory_model.h"
 
 #include <cstdint>
+#include <functional>
 #include <vector>
 #include <optional>
 
@@ -30,74 +33,93 @@ namespace graphquery::database::storage
         ILPGModel()           = default;
         ~ILPGModel() override = default;
 
-        struct SLabel
+        struct SEdge_t
         {
-            char label_s[CFG_LPG_LABEL_LENGTH] = {};
-            uint64_t item_c                    = {};
-            uint16_t label_id                  = {};
+            std::atomic<uint64_t> src        = {};
+            std::atomic<uint64_t> dst        = {};
+            std::atomic<uint16_t> label_id   = {};
+            std::atomic<uint16_t> property_c = {};
+
+            SEdge_t() = default;
+            SEdge_t(const SEdge_t & cpy)
+            {
+                this->src        = cpy.src.load();
+                this->dst        = cpy.dst.load();
+                this->label_id   = cpy.label_id.load();
+                this->property_c = cpy.property_c.load();
+            }
+
+            SEdge_t & operator=(const SEdge_t & cpy)
+            {
+                this->src        = cpy.src.load();
+                this->dst        = cpy.dst.load();
+                this->label_id   = cpy.label_id.load();
+                this->property_c = cpy.property_c.load();
+                return *this;
+            }
         };
 
-        struct SVertexEdgeLabelEntry
+        struct SVertex_t
         {
-            uint64_t item_c       = {};
-            uint16_t label_id_ref = {};
-            uint16_t pos          = {};
+            std::atomic<uint64_t> id           = {};
+            std::atomic<uint32_t> neighbour_c  = {};
+            std::atomic<uint16_t> property_c   = {};
+            std::atomic<uint16_t> label_id     = {};
+            std::atomic<uint16_t> edge_label_c = {};
+
+            SVertex_t() = default;
+            SVertex_t(const SVertex_t & cpy)
+            {
+                this->id           = cpy.id.load();
+                this->neighbour_c  = cpy.neighbour_c.load();
+                this->property_c   = cpy.property_c.load();
+                this->label_id     = cpy.label_id.load();
+                this->edge_label_c = cpy.edge_label_c.load();
+            }
+
+            SVertex_t & operator=(const SVertex_t & cpy)
+            {
+                this->id           = cpy.id.load();
+                this->neighbour_c  = cpy.neighbour_c.load();
+                this->property_c   = cpy.property_c.load();
+                this->label_id     = cpy.label_id.load();
+                this->edge_label_c = cpy.edge_label_c.load();
+                return *this;
+            }
         };
 
-        struct SEdge
-        {
-            uint64_t dst      = {};
-            uint16_t label_id = {};
-        };
-
-        struct SVertex
-        {
-            uint64_t id           = {};
-            uint16_t label_id     = {};
-            uint16_t edge_label_c = {};
-            uint32_t neighbour_c  = {};
-        };
-
-        struct SProperty
+        struct SProperty_t
         {
             char key[CFG_LPG_PROPERTY_KEY_LENGTH]     = {0};
             char value[CFG_LPG_PROPERTY_VALUE_LENGTH] = {0};
 
-            SProperty() = default;
+            SProperty_t() = default;
 
-            SProperty(const std::string_view k, const std::string_view v)
+            SProperty_t(const std::string_view k, const std::string_view v)
             {
                 strncpy(key, k.data(), CFG_LPG_PROPERTY_KEY_LENGTH);
                 strncpy(value, v.data(), CFG_LPG_PROPERTY_VALUE_LENGTH);
             }
         };
 
-        struct SPropertyContainer
-        {
-            uint64_t ref_id                   = {};
-            uint16_t property_c               = {};
-            std::vector<SProperty> properties = {};
+        [[nodiscard]] virtual uint64_t get_num_edges()                                                                                                     = 0;
+        [[nodiscard]] virtual uint64_t get_num_vertices()                                                                                                  = 0;
+        virtual std::optional<SVertex_t> get_vertex(uint64_t vertex_id)                                                                                    = 0;
+        virtual std::vector<SProperty_t> get_vertex_properties(uint64_t id)                                                                                = 0;
+        virtual std::vector<SEdge_t> get_edges_by_label(std::string_view label_id)                                                                         = 0;
+        virtual std::vector<SVertex_t> get_vertices_by_label(std::string_view label_id)                                                                    = 0;
+        virtual std::vector<SVertex_t> get_vertices(std::function<bool(const SVertex_t &)>)                                                                = 0;
 
-            SPropertyContainer() = default;
-            SPropertyContainer(const uint64_t _id, const std::vector<SProperty> & props): ref_id(_id), property_c(props.size()), properties(props) {}
-        };
-
-        [[nodiscard]] virtual uint64_t get_num_edges() const                                                                                                      = 0;
-        [[nodiscard]] virtual uint64_t get_num_vertices() const                                                                                                   = 0;
-        virtual std::optional<SVertex> get_vertex(uint64_t vertex_id)                                                                                             = 0;
-        virtual std::vector<SEdge> get_edges(uint64_t src, uint64_t dst)                                                                                          = 0;
-        virtual std::vector<SVertex> get_edges_by_label(std::string_view label_id)                                                                                = 0;
-        virtual std::vector<SVertex> get_vertices_by_label(std::string_view label_id)                                                                             = 0;
-        virtual std::optional<SEdge> get_edge(uint64_t src, uint64_t dst, std::string_view edge_label)                                                            = 0;
-        virtual std::vector<SEdge> get_edges(uint64_t src, std::string_view edge_label, std::string_view vertex_label)                                            = 0;
-        virtual std::vector<SEdge> get_edges(uint64_t src, std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs)          = 0;
-        virtual std::optional<SPropertyContainer> get_vertex_properties(uint64_t id)                                                                              = 0;
+        virtual std::vector<SEdge_t> get_edges(uint64_t src, uint64_t dst)                                                                                           = 0;
+        virtual std::vector<SEdge_t> get_edges(std::function<bool(const SEdge_t &)>)                                                                       = 0;
+        virtual std::vector<SEdge_t> get_edges(uint64_t src, std::function<bool(const SEdge_t &)>)                                                         = 0;
+        virtual std::optional<SEdge_t> get_edge(uint64_t src, uint64_t dst, std::string_view edge_label)                                                             = 0;
+        virtual std::vector<SEdge_t> get_edges(uint64_t src, std::string_view edge_label, std::string_view vertex_label)                                             = 0;
+        virtual std::vector<SEdge_t> get_recursive_edges(uint64_t src, std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs) = 0;
 
         virtual void rm_vertex(uint64_t vertex_id)                                                                                                                   = 0;
         virtual void rm_edge(uint64_t src, uint64_t dst)                                                                                                             = 0;
         virtual void rm_edge(uint64_t src, uint64_t dst, std::string_view)                                                                                           = 0;
-        virtual void update_edge(uint64_t edge_id, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)                                = 0;
-        virtual void update_vertex(uint64_t vertex_id, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)                            = 0;
         virtual void add_vertex(uint64_t id, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)              = 0;
         virtual void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)                           = 0;
         virtual void add_edge(uint64_t src, uint64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) = 0;

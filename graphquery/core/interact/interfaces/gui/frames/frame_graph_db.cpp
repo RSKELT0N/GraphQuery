@@ -1,7 +1,6 @@
 #include "frame_graph_db.h"
 
 #include "db/system.h"
-#include "models/lpg/lpg.h"
 
 #include <algorithm>
 #include <utility>
@@ -9,7 +8,7 @@
 graphquery::interact::CFrameGraphDB::CFrameGraphDB(const bool & is_db_loaded,
                                                    const bool & is_graph_loaded,
                                                    std::shared_ptr<database::storage::ILPGModel *> graph,
-                                                   const std::vector<database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
+                                                   const std::unordered_map<std::string, database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
     m_is_db_loaded(is_db_loaded),
     m_is_graph_loaded(is_graph_loaded), m_graph(std::move(graph)), m_graph_table(graph_table)
 {
@@ -50,18 +49,18 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     ImGui::Separator();
     ImGui::Text("%s", database::_db_storage->get_db_info().c_str());
 
-#ifndef NDEBUG
     if (m_is_graph_loaded)
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-            (*m_graph)->add_vertex("PERSON", {{"First Name", "Skelton"}});
+            for (int i = 0; i < 10000; i++)
+                (*m_graph)->add_vertex("PERSON", {});
 
         if (ImGui::Button("Add Vertex (0)"))
             (*m_graph)->add_vertex(0, "PERSON", {});
 
         if (ImGui::Button("Add Edge"))
-            (*m_graph)->add_edge(0, 1, "PERSON", {});
+            (*m_graph)->add_edge(0, 1, "KNOWS", {});
 
         if (ImGui::Button("Remove Vertex"))
             (*m_graph)->rm_vertex(0);
@@ -69,7 +68,6 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
         if (ImGui::Button("Remove Edge"))
             (*m_graph)->rm_edge(0, 1, "PERSON");
     }
-#endif
 }
 
 void
@@ -92,9 +90,9 @@ graphquery::interact::CFrameGraphDB::render_graph_table() noexcept
                       {
                           ImGui::TableNextRow();
                           ImGui::TableSetColumnIndex(0);
-                          ImGui::Text("%s", graph.graph_name);
+                          ImGui::Text("%s", graph.second.graph_name);
                           ImGui::TableSetColumnIndex(1);
-                          ImGui::Text("%s", graph.graph_type);
+                          ImGui::Text("%s", graph.second.graph_type);
                       });
         ImGui::EndTable();
     }

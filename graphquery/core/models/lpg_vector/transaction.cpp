@@ -3,7 +3,7 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 
-graphquery::database::storage::CTransaction::CTransaction(const std::filesystem::path & local_path, CMemoryModelLPG * lpg):
+graphquery::database::storage::CTransaction::CTransaction(const std::filesystem::path & local_path, CMemoryModelVectorLPG * lpg):
     m_lpg(lpg), m_transaction_file(O_RDWR, PROT_READ | PROT_WRITE, MAP_SHARED)
 {
     m_transaction_file.set_path(local_path);
@@ -35,6 +35,13 @@ graphquery::database::storage::CTransaction::reset() noexcept
 }
 
 void
+graphquery::database::storage::CTransaction::store_transaction_header()
+{
+    m_transaction_file.seek(TRANSACTION_HEADER_START_ADDR);
+    m_transaction_file.write(&m_header_block, sizeof(SHeaderBlock), 1);
+}
+
+void
 graphquery::database::storage::CTransaction::set_up()
 {
     CDiskDriver::create_file(m_transaction_file.get_path(), TRANSACTION_FILE_NAME, TRANSACTION_FILE_SIZE);
@@ -57,13 +64,6 @@ graphquery::database::storage::CTransaction::define_transaction_header()
     m_header_block               = {};
     m_header_block.transaction_c = 0;
     m_header_block.eof_addr      = TRANSACTIONS_START_ADDR;
-}
-
-void
-graphquery::database::storage::CTransaction::store_transaction_header()
-{
-    m_transaction_file.seek(TRANSACTION_HEADER_START_ADDR);
-    m_transaction_file.write(&m_header_block, sizeof(SHeaderBlock), 1);
 }
 
 void
@@ -101,7 +101,7 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const uint64_t src, 
 
 void
 graphquery::database::storage::CTransaction::commit_vertex(const std::string_view label,
-                                                           const std::vector<CMemoryModelLPG::SProperty> & props,
+                                                           const std::vector<CMemoryModelVectorLPG::SProperty_t> & props,
                                                            const uint64_t optional_id) noexcept
 {
     m_transaction_file.seek(m_header_block.eof_addr);
@@ -124,7 +124,7 @@ void
 graphquery::database::storage::CTransaction::commit_edge(const uint64_t src,
                                                          const uint64_t dst,
                                                          const std::string_view label,
-                                                         const std::vector<CMemoryModelLPG::SProperty> & props) noexcept
+                                                         const std::vector<CMemoryModelVectorLPG::SProperty_t> & props) noexcept
 {
     m_transaction_file.seek(m_header_block.eof_addr);
 
@@ -149,7 +149,7 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
     auto v_transc = SVertexTransaction();
     auto e_transc = SEdgeTransaction();
 
-    std::vector<CMemoryModelLPG::SProperty> props = {};
+    std::vector<CMemoryModelVectorLPG::SProperty_t> props = {};
 
     for (uint32_t i = 0; i < m_header_block.transaction_c; i++)
     {
@@ -192,7 +192,7 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
 
 void
 graphquery::database::storage::CTransaction::process_vertex_transaction(const SVertexTransaction & transaction,
-                                                                        const std::vector<CMemoryModelLPG::SProperty> & props) const noexcept
+                                                                        const std::vector<CMemoryModelVectorLPG::SProperty_t> & props) const noexcept
 {
     if (transaction.remove == 0)
         if (transaction.optional_id != ULONG_LONG_MAX)
@@ -205,7 +205,7 @@ graphquery::database::storage::CTransaction::process_vertex_transaction(const SV
 
 void
 graphquery::database::storage::CTransaction::process_edge_transaction(const SEdgeTransaction & transaction,
-                                                                      const std::vector<CMemoryModelLPG::SProperty> & props) const noexcept
+                                                                      const std::vector<CMemoryModelVectorLPG::SProperty_t> & props) const noexcept
 {
     if (transaction.remove == 0)
         (void) m_lpg->add_edge_entry(transaction.src, transaction.dst, transaction.label, props);

@@ -12,6 +12,9 @@
 #include <cstdint>
 #include <chrono>
 
+#define likely(x)   __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
+
 namespace graphquery::database::storage
 {
     //~ Current configuration of database and graph entry.
@@ -20,8 +23,8 @@ namespace graphquery::database::storage
     static constexpr uint8_t CFG_LPG_PROPERTY_VALUE_LENGTH = 20; //~ Length for a graph entry name
 
     static constexpr uint8_t CFG_GRAPH_NAME_LENGTH       = 20; //~ Length for a graph entry name
-    static constexpr uint8_t CFG_GRAPH_MODEL_TYPE_LENGTH = 10; //~ Length for a graph model type
+    static constexpr uint8_t CFG_GRAPH_MODEL_TYPE_LENGTH = 20; //~ Length for a graph model type
 
     //~ System config
-    static constexpr auto CFG_SYSTEM_HEARTBEAT_INTERVAL = std::chrono::seconds(15);
+    static constexpr auto CFG_SYSTEM_HEARTBEAT_INTERVAL = std::chrono::seconds(30);
 } // namespace graphquery::database::storage

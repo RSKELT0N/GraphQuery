@@ -12,7 +12,7 @@ graphquery::logger::CLogSystem::CLogSystem()
 {
     this->m_level   = ELogType::LOG_SYSTEM_LEVEL;
     this->m_loggers = std::make_unique<std::vector<std::shared_ptr<ILog>>>();
-    this->m_backlog = std::make_unique<std::vector<SLogEntry>>();
+    this->m_backlog = std::make_shared<std::vector<SLogEntry>>();
 }
 
 std::shared_ptr<graphquery::logger::CLogSystem>
@@ -37,7 +37,7 @@ graphquery::logger::CLogSystem::debug(const std::string_view out) noexcept
     std::scoped_lock<std::mutex> lock(m_mtx);
     if (this->m_level <= ELogType::debug)
     {
-        std::string formatted = format_output(ELogType::debug, out);
+        std::string formatted = format_output(ELogType::debug, out.data());
         const auto & ref      = m_backlog->emplace_back(ELogType::debug, formatted);
         render_output(ref);
     }
@@ -49,7 +49,7 @@ graphquery::logger::CLogSystem::info(const std::string_view out) noexcept
     std::scoped_lock<std::mutex> lock(m_mtx);
     if (this->m_level <= ELogType::info)
     {
-        std::string formatted = format_output(ELogType::info, out);
+        std::string formatted = format_output(ELogType::info, out.data());
         const auto & ref      = m_backlog->emplace_back(ELogType::info, formatted);
         render_output(ref);
     }
@@ -61,7 +61,7 @@ graphquery::logger::CLogSystem::warning(const std::string_view out) noexcept
     std::scoped_lock<std::mutex> lock(m_mtx);
     if (this->m_level <= ELogType::warning)
     {
-        std::string formatted = format_output(ELogType::warning, out);
+        std::string formatted = format_output(ELogType::warning, out.data());
         const auto & ref      = m_backlog->emplace_back(ELogType::warning, formatted);
         render_output(ref);
     }
@@ -72,7 +72,7 @@ graphquery::logger::CLogSystem::error(const std::string_view out) noexcept
     std::scoped_lock<std::mutex> lock(m_mtx);
     if (this->m_level <= ELogType::error)
     {
-        std::string formatted = format_output(ELogType::error, out);
+        std::string formatted = format_output(ELogType::error, out.data());
         const auto & ref      = m_backlog->emplace_back(ELogType::error, formatted);
         render_output(ref);
     }
@@ -105,7 +105,7 @@ graphquery::logger::CLogSystem::render_output(ILog & logger, const SLogEntry & l
 }
 
 std::string
-graphquery::logger::CLogSystem::format_output(ELogType type, std::string_view out) const noexcept
+graphquery::logger::CLogSystem::format_output(ELogType type, std::string out) const noexcept
 {
     // ~ Get the current time of the log call.
     std::stringstream ss;

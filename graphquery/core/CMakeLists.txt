@@ -27,7 +27,9 @@ target_compile_options(
         -Werror
         -Wpedantic
         -Wextra
-        -Wshadow)
+        -Wshadow
+        -pthread
+        -O3)
 
 target_link_libraries(${EXECUTABLE_NAME}
         PUBLIC

@@ -22,3 +22,4 @@
 [submodule "graphquery/external/libcypher-parser"]
 	path = graphquery/external/libcypher-parser
 	url = https://github.com/cleishm/libcypher-parser.git
+
