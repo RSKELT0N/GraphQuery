@@ -170,8 +170,8 @@ graphquery::database::storage::CDBStorage::close_graph() noexcept
     (*m_loaded_graph)->save_graph();
     (*m_loaded_graph)->close();
     m_graph_model_lib.reset();
+    m_loaded_graph.reset();
     _log_system->info(fmt::format("Graph has been unloaded from memory and changes have been synced"));
-    delete (*m_loaded_graph);
 }
 
 void
