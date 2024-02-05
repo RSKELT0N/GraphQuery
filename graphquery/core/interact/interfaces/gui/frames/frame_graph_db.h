@@ -21,7 +21,7 @@ namespace graphquery::interact
       private:
         void render_state() noexcept;
         void render_db_info() noexcept;
-        void render_graph_table() noexcept;
+        void render_graph_table() const noexcept;
         void render_loaded_graph() noexcept;
 
         const bool & m_is_db_loaded;

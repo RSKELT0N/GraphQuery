@@ -2,7 +2,7 @@
 
 #ifndef NDEBUG
 #define DB_NAME    "DB0"
-#define GRAPH_NAME "GR6"
+#define GRAPH_NAME "GR14"
 #endif
 
 int

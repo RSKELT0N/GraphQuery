@@ -53,23 +53,10 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-        {
             (*m_graph)->add_vertex(0, "PERSON", {});
-            (*m_graph)->add_vertex(1, "PERSON", {});
-            (*m_graph)->add_vertex(2, "PERSON", {});
-            (*m_graph)->add_edge(0, 1, "FRIENDS", {});
-            (*m_graph)->add_edge(0, 2, "FRIENDS", {});
-            (*m_graph)->add_vertex(3, "MESSAGE", {});
-            (*m_graph)->add_vertex(4, "MESSAGE", {});
-            (*m_graph)->add_edge(1, 3, "AUTHOR", {});
-            (*m_graph)->add_edge(2, 4, "AUTHOR", {});
-        }
 
         if (ImGui::Button("Query"))
-        {
-            auto tt = (*m_graph)->get_recursive_edges(0, {{"FRIENDS", "PERSON"}, {"AUTHOR", "MESSAGE"}});
             (*m_graph)->add_vertex(0, "PERSON", {});
-        }
 
         if (ImGui::Button("Add Vertex (0)"))
             (*m_graph)->add_vertex(0, "PERSON", {});
@@ -86,7 +73,7 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 }
 
 void
-graphquery::interact::CFrameGraphDB::render_graph_table() noexcept
+graphquery::interact::CFrameGraphDB::render_graph_table() const noexcept
 {
     static constexpr uint8_t columns       = 2;
     static constexpr uint8_t column_width  = 100;

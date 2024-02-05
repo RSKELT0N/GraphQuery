@@ -131,8 +131,7 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SEdgeEntry_t
         {
-            SEdge_t metadata                     = {};
-            std::atomic<uint32_t> properties_idx = END_INDEX;
+            SEdge_t metadata = {};
         };
 
         /****************************************************************
@@ -145,9 +144,8 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SVertexEntry_t
         {
-            SVertex_t metadata                   = {};
-            std::atomic<uint32_t> edge_idx       = END_INDEX;
-            std::atomic<uint32_t> properties_idx = END_INDEX;
+            SVertex_t metadata             = {};
+            std::atomic<uint32_t> edge_idx = END_INDEX;
         };
 
       public:
@@ -166,7 +164,8 @@ namespace graphquery::database::storage
         [[nodiscard]] inline uint64_t get_num_vertices() override;
         [[nodiscard]] std::string_view get_name() noexcept override;
         [[nodiscard]] std::optional<SVertex_t> get_vertex(uint64_t vertex_id) override;
-        [[nodiscard]] std::vector<SProperty_t> get_vertex_properties(uint64_t id) override;
+        [[nodiscard]] std::vector<SProperty_t> get_properties_by_vertex_id(uint64_t id) override;
+        [[nodiscard]] std::vector<SProperty_t> get_properties_by_property_id(uint32_t id) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_label(std::string_view label) override;
         [[nodiscard]] std::vector<SVertex_t> get_vertices_by_label(std::string_view label) override;
 
@@ -176,6 +175,10 @@ namespace graphquery::database::storage
         [[nodiscard]] std::vector<SVertex_t> get_vertices(std::function<bool(const SVertex_t &)> pred) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::function<bool(const SEdge_t &)>) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(uint64_t src, std::function<bool(const SEdge_t &)>) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::function<bool(const SEdge_t &)>) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, std::function<bool(const SEdge_t &)>) override;
+        [[nodiscard]] std::unordered_set<uint64_t> get_edge_dst_vertices(uint64_t src, std::function<bool(const SEdge_t &)>) override;
+        [[nodiscard]] std::unordered_set<uint64_t> get_edge_dst_vertices(uint64_t src, std::string_view edge_label, std::string_view vertex_label) override;
         [[nodiscard]] std::vector<SEdge_t> get_recursive_edges(uint64_t src,
                                                                std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs) override;
 
