@@ -264,6 +264,24 @@ graphquery::database::storage::CDiskDriver::sync() const noexcept
 }
 
 graphquery::database::storage::CDiskDriver::SRet_t
+graphquery::database::storage::CDiskDriver::async() const noexcept
+{
+    if (this->m_initialised)
+    {
+        if (msync(m_memory_mapped_file, static_cast<size_t>(m_fd_info.st_size), MS_ASYNC) == -1)
+        {
+            m_log_system->warning("Issue syncing the buffer");
+            return SRet_t::ERROR;
+        }
+
+        return SRet_t::VALID;
+    }
+
+    m_log_system->warning("File has not been initialised");
+    return SRet_t::ERROR;
+}
+
+graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::close()
 {
     if (this->m_initialised)

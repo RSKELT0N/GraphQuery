@@ -51,10 +51,10 @@ graphquery::database::storage::CTransaction::load()
 void
 graphquery::database::storage::CTransaction::define_transaction_header()
 {
-    auto header_ptr                     = read_transaction_header();
-    header_ptr->transaction_c           = 0;
-    header_ptr->transactions_start_addr = TRANSACTIONS_START_ADDR;
-    header_ptr->eof_addr                = TRANSACTIONS_START_ADDR;
+    auto header_ptr = read_transaction_header();
+    utils::atomic_store(&header_ptr->transaction_c, 0ULL);
+    utils::atomic_store(&header_ptr->transactions_start_addr, TRANSACTIONS_START_ADDR);
+    utils::atomic_store(&header_ptr->eof_addr, TRANSACTIONS_START_ADDR);
 }
 
 template<typename T>
@@ -73,9 +73,9 @@ graphquery::database::storage::CTransaction::read_transaction_header()
 void
 graphquery::database::storage::CTransaction::commit_rm_vertex(const uint64_t id) noexcept
 {
-    const auto commit_addr = read_transaction_header()->eof_addr;
-    read_transaction_header()->eof_addr += sizeof(SVertexTransaction);
-    read_transaction_header()->transaction_c++;
+    auto transaction_hdr   = read_transaction_header();
+    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint64_t>(sizeof(SVertexTransaction)));
+    utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     auto transaction_ptr = read_transaction<SVertexTransaction>(commit_addr);
 
@@ -88,9 +88,9 @@ graphquery::database::storage::CTransaction::commit_rm_vertex(const uint64_t id)
 void
 graphquery::database::storage::CTransaction::commit_rm_edge(const uint64_t src, const uint64_t dst, const std::string_view label) noexcept
 {
-    const auto commit_addr = read_transaction_header()->eof_addr;
-    read_transaction_header()->eof_addr += sizeof(SEdgeTransaction);
-    read_transaction_header()->transaction_c++;
+    auto transaction_hdr   = read_transaction_header();
+    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint64_t>(sizeof(SEdgeTransaction)));
+    utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     auto transaction_ptr = read_transaction<SEdgeTransaction>(commit_addr);
 
@@ -107,9 +107,10 @@ graphquery::database::storage::CTransaction::commit_vertex(const std::string_vie
                                                            const std::vector<ILPGModel::SProperty_t> & props,
                                                            const uint64_t optional_id) noexcept
 {
-    const auto commit_addr = read_transaction_header()->eof_addr;
-    read_transaction_header()->eof_addr += sizeof(SVertexTransaction) + (props.size() * sizeof(ILPGModel::SProperty_t));
-    read_transaction_header()->transaction_c++;
+    auto transaction_hdr = read_transaction_header();
+    const auto commit_addr =
+        utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint64_t>(sizeof(SVertexTransaction) + (props.size() * sizeof(ILPGModel::SProperty_t))));
+    utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     SRef_t<SVertexTransaction> transaction_ptr = read_transaction<SVertexTransaction>(commit_addr);
 
@@ -137,9 +138,10 @@ graphquery::database::storage::CTransaction::commit_edge(const uint64_t src,
                                                          const std::string_view label,
                                                          const std::vector<ILPGModel::SProperty_t> & props) noexcept
 {
-    const auto commit_addr = read_transaction_header()->eof_addr;
-    read_transaction_header()->eof_addr += sizeof(SEdgeTransaction) + (props.size() * sizeof(ILPGModel::SProperty_t));
-    read_transaction_header()->transaction_c++;
+    auto transaction_hdr = read_transaction_header();
+    const auto commit_addr =
+        utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint64_t>(sizeof(SEdgeTransaction) + (props.size() * sizeof(ILPGModel::SProperty_t))));
+    utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     SRef_t<SEdgeTransaction> transaction_ptr = read_transaction<SEdgeTransaction>(commit_addr);
 
@@ -166,7 +168,7 @@ void
 graphquery::database::storage::CTransaction::handle_transactions() noexcept
 {
     m_transaction_file.seek(TRANSACTIONS_START_ADDR);
-    const uint64_t transaction_c = read_transaction_header()->transaction_c;
+    const uint64_t transaction_c = utils::atomic_load(&read_transaction_header()->transaction_c);
 
     SRef_t<ETransactionType> type;
     SRef_t<SVertexTransaction> v_transc = {};

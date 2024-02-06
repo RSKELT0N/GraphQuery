@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include <atomic>
-
 #include "memory_ref.h"
 #include "log/logsystem/logsystem.h"
 
@@ -69,6 +67,7 @@ namespace graphquery::database::storage
         void resize(int64_t file_size) noexcept;
         void set_path(std::filesystem::path file_path) noexcept;
         [[nodiscard]] SRet_t sync() const noexcept;
+        [[nodiscard]] SRet_t async() const noexcept;
         [[nodiscard]] char operator[](int64_t idx) const noexcept;
         [[nodiscard]] bool check_if_initialised() const noexcept;
         [[nodiscard]] std::filesystem::path get_path() const noexcept;

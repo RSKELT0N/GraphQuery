@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "atomic_intrinsics.h"
 #include "lib.h"
+#include "atomic_intrinsics.h"
 
 #include <complex>
 

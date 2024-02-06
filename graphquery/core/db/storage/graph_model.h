@@ -12,10 +12,9 @@
 
 #pragma once
 
-#include <atomic>
-
 #include "config.h"
 #include "memory_model.h"
+#include "db/utils/atomic_intrinsics.h"
 
 #include <cstdint>
 #include <functional>
@@ -36,61 +35,61 @@ namespace graphquery::database::storage
 
         struct SEdge_t
         {
-            std::atomic<uint64_t> src         = {};
-            std::atomic<uint64_t> dst         = {};
-            std::atomic<uint32_t> property_id = {};
-            std::atomic<uint16_t> label_id    = {};
-            std::atomic<uint16_t> property_c  = {};
+            uint64_t src         = {};
+            uint64_t dst         = {};
+            uint32_t property_id = {};
+            uint16_t label_id    = {};
+            uint16_t property_c  = {};
 
             SEdge_t() = default;
             SEdge_t(const SEdge_t & cpy)
             {
-                this->src         = cpy.src.load();
-                this->dst         = cpy.dst.load();
-                this->property_id = cpy.property_id.load();
-                this->label_id    = cpy.label_id.load();
-                this->property_c  = cpy.property_c.load();
+                this->src         = cpy.src;
+                this->dst         = cpy.dst;
+                this->property_id = cpy.property_id;
+                this->label_id    = cpy.label_id;
+                this->property_c  = cpy.property_c;
             }
 
             SEdge_t & operator=(const SEdge_t & cpy)
             {
-                this->src         = cpy.src.load();
-                this->dst         = cpy.dst.load();
-                this->property_id = cpy.property_id.load();
-                this->label_id    = cpy.label_id.load();
-                this->property_c  = cpy.property_c.load();
+                this->src         = cpy.src;
+                this->dst         = cpy.dst;
+                this->property_id = cpy.property_id;
+                this->label_id    = cpy.label_id;
+                this->property_c  = cpy.property_c;
                 return *this;
             }
         };
 
         struct SVertex_t
         {
-            std::atomic<uint64_t> id           = {};
-            std::atomic<uint32_t> neighbour_c  = {};
-            std::atomic<uint32_t> property_id  = {};
-            std::atomic<uint16_t> property_c   = {};
-            std::atomic<uint16_t> label_id     = {};
-            std::atomic<uint16_t> edge_label_c = {};
+            uint64_t id           = {};
+            uint32_t neighbour_c  = {};
+            uint32_t property_id  = {};
+            uint16_t property_c   = {};
+            uint16_t label_id     = {};
+            uint16_t edge_label_c = {};
 
             SVertex_t() = default;
             SVertex_t(const SVertex_t & cpy)
             {
-                this->id           = cpy.id.load();
-                this->neighbour_c  = cpy.neighbour_c.load();
-                this->property_id  = cpy.property_id.load();
-                this->property_c   = cpy.property_c.load();
-                this->label_id     = cpy.label_id.load();
-                this->edge_label_c = cpy.edge_label_c.load();
+                this->id           = cpy.id;
+                this->neighbour_c  = cpy.neighbour_c;
+                this->property_id  = cpy.property_id;
+                this->property_c   = cpy.property_c;
+                this->label_id     = cpy.label_id;
+                this->edge_label_c = cpy.edge_label_c;
             }
 
             SVertex_t & operator=(const SVertex_t & cpy)
             {
-                this->id           = cpy.id.load();
-                this->neighbour_c  = cpy.neighbour_c.load();
-                this->property_id  = cpy.property_id.load();
-                this->property_c   = cpy.property_c.load();
-                this->label_id     = cpy.label_id.load();
-                this->edge_label_c = cpy.edge_label_c.load();
+                this->id           = cpy.id;
+                this->neighbour_c  = cpy.neighbour_c;
+                this->property_id  = cpy.property_id;
+                this->property_c   = cpy.property_c;
+                this->label_id     = cpy.label_id;
+                this->edge_label_c = cpy.edge_label_c;
                 return *this;
             }
         };

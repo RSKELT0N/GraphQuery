@@ -18,7 +18,7 @@ namespace graphquery::database::utils
 #endif
 
     template<typename T>
-    T atomic_add(T * variable, T value)
+    inline T atomic_fetch_add(T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_add(variable, value, __ATOMIC_ACQ_REL);
@@ -28,7 +28,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    T atomic_sub(T * variable, T value)
+    inline T atomic_fetch_sub(T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_sub(variable, value, __ATOMIC_ACQ_REL);
@@ -38,7 +38,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    T atomic_xor(T * variable, T value)
+    inline T atomic_fetch_xor(T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_xor(variable, value, __ATOMIC_ACQ_REL);
@@ -48,7 +48,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    T atomic_and(T * variable, T value)
+    inline T atomic_fetch_and(T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_and(variable, value, __ATOMIC_ACQ_REL);
@@ -58,7 +58,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    T atomic_or(T * variable, T value)
+    inline T atomic_fetch_or(T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_or(variable, value, __ATOMIC_ACQ_REL);
@@ -68,7 +68,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    T atomic_nand(T * variable, T value)
+    inline T atomic_fetch_nand(T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_nand(variable, value, __ATOMIC_ACQ_REL);
@@ -79,7 +79,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    bool atomic_cas(T * variable, T expected, T new_value)
+    inline bool atomic_fetch_cas(T * variable, T expected, T new_value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_compare_exchange_n(variable, expected, new_value);
@@ -89,19 +89,19 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    T atomic_inc(T * variable)
+    inline T atomic_fetch_inc(T * variable)
     {
-        return atomic_add(variable, static_cast<T>(1));
+        return atomic_fetch_add(variable, static_cast<T>(1));
     }
 
     template<typename T>
-    T atomic_dec(T * variable)
+    inline T atomic_fetch_dec(T * variable)
     {
-        return atomic_sub(variable, static_cast<T>(1));
+        return atomic_fetch_sub(variable, static_cast<T>(1));
     }
 
     template<typename T>
-    T atomic_exchange(T * variable, T new_value)
+    inline T atomic_exchange(T * variable, T new_value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __sync_lock_test_and_set(variable, new_value);
@@ -111,10 +111,10 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    T atomic_load(const T * variable)
+    inline T atomic_load(const T * variable)
     {
 #if defined(__GNUC__) || defined(__clang__)
-        return __atomic_load_n(variable, __ATOMIC_ACQ_REL);
+        return __atomic_load_n(variable, __ATOMIC_RELAXED);
 #elif defined(_MSC_VER)
         _ReadBarrier();
         return *variable;
@@ -122,10 +122,21 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    void atomic_store(T * variable, T value)
+    inline void atomic_store(T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
-        __atomic_store_n(variable, value, __ATOMIC_ACQ_REL);
+        __atomic_store_n(variable, value, __ATOMIC_RELAXED);
+#elif defined(_MSC_VER)
+        *variable = value;
+        _WriteBarrier();
+#endif
+    }
+
+    template<typename T, typename I>
+    inline void atomic_store(T * variable, I value)
+    {
+#if defined(__GNUC__) || defined(__clang__)
+        __atomic_store_n(variable, value, __ATOMIC_RELAXED);
 #elif defined(_MSC_VER)
         *variable = value;
         _WriteBarrier();

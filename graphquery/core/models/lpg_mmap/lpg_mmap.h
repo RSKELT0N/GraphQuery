@@ -68,13 +68,13 @@ namespace graphquery::database::storage
         {
             char graph_name[CFG_GRAPH_NAME_LENGTH]        = {};
             char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH]  = {};
-            std::atomic<uint64_t> vertices_c              = {};
-            std::atomic<uint64_t> edges_c                 = {};
-            std::atomic<uint64_t> vertex_label_table_addr = {};
-            std::atomic<uint64_t> edge_label_table_addr   = {};
-            std::atomic<uint64_t> label_size              = {};
-            std::atomic<uint16_t> vertex_label_c          = {};
-            std::atomic<uint16_t> edge_label_c            = {};
+            uint64_t vertices_c                           = {};
+            uint64_t edges_c                              = {};
+            uint64_t vertex_label_table_addr              = {};
+            uint64_t edge_label_table_addr                = {};
+            uint64_t label_size                           = {};
+            uint16_t vertex_label_c                       = {};
+            uint16_t edge_label_c                         = {};
         };
 
         /****************************************************************
@@ -88,9 +88,9 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SIndexMetadata_t
         {
-            std::atomic<uint64_t> index_list_start_addr = {};
-            std::atomic<uint32_t> index_c               = {};
-            std::atomic<uint32_t> index_size            = {};
+            uint64_t index_list_start_addr = {};
+            uint32_t index_c               = {};
+            uint32_t index_size            = {};
         };
 
         /****************************************************************
@@ -104,8 +104,8 @@ namespace graphquery::database::storage
         struct SLabel_t
         {
             char label_s[CFG_LPG_LABEL_LENGTH] = {};
-            std::atomic<uint64_t> item_c       = {};
-            std::atomic<uint16_t> label_id     = {};
+            uint64_t item_c                    = {};
+            uint16_t label_id                  = {};
         };
 
         /****************************************************************
@@ -118,8 +118,8 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SIndexEntry_t
         {
-            std::atomic<uint64_t> id     = {};
-            std::atomic<uint32_t> offset = END_INDEX;
+            uint64_t id     = {};
+            uint32_t offset = END_INDEX;
         };
 
         /****************************************************************
@@ -145,7 +145,7 @@ namespace graphquery::database::storage
         struct SVertexEntry_t
         {
             SVertex_t metadata             = {};
-            std::atomic<uint32_t> edge_idx = END_INDEX;
+            uint32_t edge_idx              = END_INDEX;
         };
 
       public:

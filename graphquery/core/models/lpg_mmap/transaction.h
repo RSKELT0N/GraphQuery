@@ -89,7 +89,7 @@ namespace graphquery::database::storage
         CDiskDriver m_transaction_file;
         static constexpr int64_t INITIAL_TRANSACTION_FILE_SIZE = KB(4);
         static constexpr const char * TRANSACTION_FILE_NAME    = "transactions";
-        static constexpr int64_t TRANSACTION_HEADER_START_ADDR = 0x00000000;
-        static constexpr int64_t TRANSACTIONS_START_ADDR       = sizeof(SHeaderBlock);
+        static constexpr uint64_t TRANSACTION_HEADER_START_ADDR = 0x00000000;
+        static constexpr uint64_t TRANSACTIONS_START_ADDR       = sizeof(SHeaderBlock);
     };
 } // namespace graphquery::database::storage
