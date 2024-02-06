@@ -109,20 +109,23 @@ namespace graphquery::database::storage
             }
         };
 
-        [[nodiscard]] virtual uint64_t get_num_edges()                                      = 0;
-        [[nodiscard]] virtual uint64_t get_num_vertices()                                   = 0;
-        virtual std::optional<SVertex_t> get_vertex(uint64_t vertex_id)                     = 0;
-        virtual std::vector<SProperty_t> get_properties_by_vertex_id(uint64_t id)           = 0;
-        virtual std::vector<SProperty_t> get_properties_by_property_id(uint32_t id)         = 0;
-        virtual std::vector<SEdge_t> get_edges_by_label(std::string_view label_id)          = 0;
-        virtual std::vector<SVertex_t> get_vertices_by_label(std::string_view label_id)     = 0;
-        virtual std::vector<SVertex_t> get_vertices(std::function<bool(const SVertex_t &)>) = 0;
+        [[nodiscard]] virtual uint64_t get_num_edges()                                                      = 0;
+        [[nodiscard]] virtual uint64_t get_num_vertices()                                                   = 0;
+        virtual std::optional<SVertex_t> get_vertex(uint64_t vertex_id)                                     = 0;
+        virtual std::vector<SProperty_t> get_properties_by_vertex_id(uint64_t id)                           = 0;
+        virtual std::unordered_map<std::string, std::string> get_properties_by_vertex_id_map(uint64_t id)   = 0;
+        virtual std::vector<SProperty_t> get_properties_by_property_id(uint32_t id)                         = 0;
+        virtual std::unordered_map<std::string, std::string> get_properties_by_property_id_map(uint32_t id) = 0;
+        virtual std::vector<SEdge_t> get_edges_by_label(std::string_view label_id)                          = 0;
+        virtual std::vector<SVertex_t> get_vertices_by_label(std::string_view label_id)                     = 0;
+        virtual std::vector<SVertex_t> get_vertices(std::function<bool(const SVertex_t &)>)                 = 0;
 
         virtual std::vector<SEdge_t> get_edges(uint64_t src, uint64_t dst)                                                                                           = 0;
         virtual std::vector<SEdge_t> get_edges(std::function<bool(const SEdge_t &)>)                                                                                 = 0;
         virtual std::vector<SEdge_t> get_edges(uint64_t src, std::function<bool(const SEdge_t &)>)                                                                   = 0;
         virtual std::unordered_set<uint64_t> get_edge_dst_vertices(uint64_t src, std::function<bool(const SEdge_t &)>)                                               = 0;
         virtual std::optional<SEdge_t> get_edge(uint64_t src, uint64_t dst, std::string_view edge_label)                                                             = 0;
+        virtual std::optional<SEdge_t> get_edge(uint64_t src, std::string_view edge_label, std::string_view vertex_label)                                                             = 0;
         virtual std::vector<SEdge_t> get_edges(uint64_t src, std::string_view edge_label, std::string_view vertex_label)                                             = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::function<bool(const SEdge_t &)>)                                                  = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, std::function<bool(const SEdge_t &)>)                     = 0;

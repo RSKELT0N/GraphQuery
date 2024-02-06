@@ -11,7 +11,6 @@
 
 #include "atomic_intrinsics.h"
 #include "lib.h"
-#include "fmt/core.h"
 
 #include <complex>
 

@@ -14,6 +14,7 @@
 
 #include "db/storage/graph_model.h"
 
+#include <map>
 #include <utility>
 
 namespace graphquery::database::query
@@ -39,7 +40,7 @@ namespace graphquery::database::query
         *  \param _person_id uint64_t _person_id - ID of person
         *  \param _max_date uint64_t - max date threshold
         ***************************************************************/
-        void interaction_complex_2(uint64_t _person_id, uint64_t _max_date) const noexcept;
+        [[nodiscard]] std::vector<std::map<std::string, std::string>> interaction_complex_2(uint64_t _person_id, uint64_t _max_date) const noexcept;
 
         /****************************************************************
          ** \brief Provided a person ID, find the most recent comments that
@@ -49,7 +50,7 @@ namespace graphquery::database::query
          *
          *  \param _person_id uint64_t - ID of person
          ***************************************************************/
-        void interation_complex_8(uint64_t _person_id) const noexcept;
+        [[nodiscard]] std::vector<std::map<std::string, std::string>> interation_complex_8(uint64_t _person_id) const noexcept;
 
         /****************************************************************
          ** \brief Creates an edge between two nodes (person, post),
