@@ -1,5 +1,7 @@
 #include "lpg_mmap.h"
 
+#include "db/utils/lib.h"
+
 #include <string_view>
 #include <optional>
 #include <ranges>
@@ -19,7 +21,6 @@ graphquery::database::storage::CMemoryModelMMAPLPG::close() noexcept
 {
     m_transactions->close();
     m_master_file.close();
-    m_index_file.close();
 }
 
 std::string_view
@@ -37,7 +38,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::save_graph() noexcept
         utils::atomic_store(&m_syncing, 1);
 
         (void) m_master_file.async();
-        (void) m_index_file.async();
+        (void) m_global_index_file.get_file().async();
         (void) m_vertices_file.get_file().async();
         (void) m_edges_file.get_file().async();
         (void) m_properties_file.get_file().async();
@@ -55,21 +56,18 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::create_graph(std::filesystem::path path, const std::string_view graph) noexcept
 {
     this->m_graph_name = graph;
+    this->m_graph_path = path;
+
     this->m_master_file.set_path(path);
-    this->m_index_file.set_path(path);
 
     m_transactions = std::make_shared<CTransaction>(path, this);
 
     //~ Create initial model files
     (void) CDiskDriver::create_file(path, MASTER_FILE_NAME);
-    (void) CDiskDriver::create_file(path, INDEX_FILE_NAME);
-    (void) CDiskDriver::create_file(path, VERTICES_FILE_NAME);
-    (void) CDiskDriver::create_file(path, EDGES_FILE_NAME);
-    (void) CDiskDriver::create_file(path, PROPERTIES_FILE_NAME);
 
     //~ Open mapping to model files
     (void) this->m_master_file.open(MASTER_FILE_NAME);
-    (void) this->m_index_file.open(INDEX_FILE_NAME);
+    this->m_global_index_file.open(path, INDEX_FILE_NAME, true);
     this->m_vertices_file.open(path, VERTICES_FILE_NAME, true);
     this->m_edges_file.open(path, EDGES_FILE_NAME, true);
     this->m_properties_file.open(path, PROPERTIES_FILE_NAME, true);
@@ -78,7 +76,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::create_graph(std::filesystem
     m_transactions->init();
 
     store_graph_metadata();
-    store_index_metadata();
+    m_global_index_file.store_metadata();
     m_vertices_file.store_metadata();
     m_edges_file.store_metadata();
     m_properties_file.store_metadata();
@@ -88,14 +86,15 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::load_graph(std::filesystem::path path, std::string_view graph) noexcept
 {
     this->m_graph_name = graph;
+    this->m_graph_path = path;
+
     this->m_master_file.set_path(path);
-    this->m_index_file.set_path(path);
 
     m_transactions = std::make_shared<CTransaction>(path, this);
 
     //~ Open mapping to model files
     (void) this->m_master_file.open(MASTER_FILE_NAME);
-    (void) this->m_index_file.open(INDEX_FILE_NAME);
+    this->m_global_index_file.open(path, INDEX_FILE_NAME, false);
     this->m_vertices_file.open(path, VERTICES_FILE_NAME, false);
     this->m_edges_file.open(path, EDGES_FILE_NAME, false);
     this->m_properties_file.open(path, PROPERTIES_FILE_NAME, false);
@@ -151,11 +150,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const uin
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::store_index_entry(uint64_t id, const uint16_t label_id, const uint32_t vertex_offset) noexcept
 {
-    auto index_ptr = read_index_entry(id);
-
-    index_ptr->id     = id;
-    index_ptr->offset = vertex_offset;
-
+    m_global_index_file.store_entry(id, vertex_offset);
     m_label_map[label_id].emplace_back(id);
 }
 
@@ -220,15 +215,6 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_property_entry(const S
 }
 
 void
-graphquery::database::storage::CMemoryModelMMAPLPG::store_index_metadata() noexcept
-{
-    auto metadata                   = read_index_metadata();
-    metadata->index_c               = 0;
-    metadata->index_size            = sizeof(SIndexEntry_t);
-    metadata->index_list_start_addr = sizeof(SIndexMetadata_t);
-}
-
-void
 graphquery::database::storage::CMemoryModelMMAPLPG::transaction_preamble() noexcept
 {
     m_cv_sync.wait(m_unq_lock, wait_on_syncing);
@@ -267,6 +253,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::create_vertex_label(const st
     label_ptr.ref->item_c   = 0;
     label_ptr.ref->label_id = label_id;
     m_label_map.emplace_back();
+
     return label_id;
 }
 
@@ -325,6 +312,9 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const std::
     utils::atomic_fetch_inc(&read_vertex_label_entry(vertex_label_id)->item_c);
 
     const auto entry_offset = store_vertex_entry(vertex_id, vertex_label_id, props);
+
+    if (entry_offset == 71)
+        fmt::print("t");
     store_index_entry(vertex_id, vertex_label_id, entry_offset);
 
     return EActionState_t::valid;
@@ -939,7 +929,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::calc_outdegree(const std::sh
 std::optional<graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SVertexDataBlock>>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_id(const uint64_t id) noexcept
 {
-    auto index_ptr = read_index_entry(id);
+    auto index_ptr = m_global_index_file.read_entry(id);
     return m_vertices_file.read_entry(index_ptr->offset);
 }
 
@@ -947,12 +937,6 @@ graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryMode
 graphquery::database::storage::CMemoryModelMMAPLPG::read_graph_metadata() noexcept
 {
     return m_master_file.ref<SGraphMetaData_t>(METADATA_START_ADDR);
-}
-
-graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SIndexMetadata_t>
-graphquery::database::storage::CMemoryModelMMAPLPG::read_index_metadata() noexcept
-{
-    return m_index_file.ref<SIndexMetadata_t>(METADATA_START_ADDR);
 }
 
 void
@@ -981,15 +965,6 @@ graphquery::database::storage::CMemoryModelMMAPLPG::read_index_list() noexcept
 
         m_label_map[vertex_ptr->payload.metadata.label_id][vertex_ptr->payload.metadata.id] = vertex_i;
     }
-}
-
-graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SIndexEntry_t>
-graphquery::database::storage::CMemoryModelMMAPLPG::read_index_entry(const uint32_t offset) noexcept
-{
-    static const auto base_addr  = read_index_metadata()->index_list_start_addr;
-    static const auto index_size = read_index_metadata()->index_size;
-    const auto effective_addr    = base_addr + index_size * offset;
-    return m_index_file.ref<SIndexEntry_t>(effective_addr);
 }
 
 graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SLabel_t>

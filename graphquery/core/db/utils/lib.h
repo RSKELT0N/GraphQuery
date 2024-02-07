@@ -31,4 +31,22 @@ namespace graphquery::database
     {
         return 1 + ((_x - 1) / _y);
     }
+
+    // Converts a string to lowercase
+    inline std::string to_lower_case(std::string to_convert)
+    {
+        for (char & i : to_convert)
+            i = i | 32;
+
+        return to_convert;
+    }
+
+    // Converts a string to lowercase
+    inline std::string to_upper_case(std::string to_convert)
+    {
+        for (char & i : to_convert)
+            i = i & ~32;
+
+        return to_convert;
+    }
 } // namespace graphquery::database

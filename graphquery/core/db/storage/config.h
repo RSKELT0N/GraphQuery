@@ -19,8 +19,8 @@ namespace graphquery::database::storage
 {
     //~ Current configuration of database and graph entry.
     static constexpr uint8_t CFG_LPG_LABEL_LENGTH          = 20; //~ Length for a graph entry name
-    static constexpr uint8_t CFG_LPG_PROPERTY_KEY_LENGTH   = 20; //~ Length for a graph entry name
-    static constexpr uint8_t CFG_LPG_PROPERTY_VALUE_LENGTH = 20; //~ Length for a graph entry name
+    static constexpr uint8_t CFG_LPG_PROPERTY_KEY_LENGTH   = 10; //~ Length for a graph entry name
+    static constexpr uint8_t CFG_LPG_PROPERTY_VALUE_LENGTH = 30; //~ Length for a graph entry name
 
     static constexpr uint8_t CFG_GRAPH_NAME_LENGTH       = 20; //~ Length for a graph entry name
     static constexpr uint8_t CFG_GRAPH_MODEL_TYPE_LENGTH = 20; //~ Length for a graph model type

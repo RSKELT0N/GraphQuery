@@ -14,7 +14,6 @@
 
 #include "config.h"
 #include "memory_model.h"
-#include "db/utils/atomic_intrinsics.h"
 
 #include <cstdint>
 #include <functional>
@@ -124,7 +123,7 @@ namespace graphquery::database::storage
         virtual std::vector<SEdge_t> get_edges(uint64_t src, std::function<bool(const SEdge_t &)>)                                                                   = 0;
         virtual std::unordered_set<uint64_t> get_edge_dst_vertices(uint64_t src, std::function<bool(const SEdge_t &)>)                                               = 0;
         virtual std::optional<SEdge_t> get_edge(uint64_t src, uint64_t dst, std::string_view edge_label)                                                             = 0;
-        virtual std::optional<SEdge_t> get_edge(uint64_t src, std::string_view edge_label, std::string_view vertex_label)                                                             = 0;
+        virtual std::optional<SEdge_t> get_edge(uint64_t src, std::string_view edge_label, std::string_view vertex_label)                                            = 0;
         virtual std::vector<SEdge_t> get_edges(uint64_t src, std::string_view edge_label, std::string_view vertex_label)                                             = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::function<bool(const SEdge_t &)>)                                                  = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, std::function<bool(const SEdge_t &)>)                     = 0;

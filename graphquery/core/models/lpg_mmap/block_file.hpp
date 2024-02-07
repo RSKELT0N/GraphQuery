@@ -106,7 +106,7 @@ namespace graphquery::database::storage
         inline void store_metadata() noexcept;
         inline SRef_t<SBlockFileMetadata_t> read_metadata() noexcept;
         inline SRef_t<SDataBlock_t<T, N>> read_entry(uint32_t offset) noexcept;
-        void open(std::filesystem::path path, std::string_view file_name, bool init) noexcept;
+        void open(std::filesystem::path path, std::string_view file_name, bool create) noexcept;
 
         uint32_t create_entry(uint32_t next_ref = END_INDEX) noexcept;
         void append_free_data_block(uint32_t block_offset) noexcept;
@@ -277,13 +277,13 @@ graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const std::fu
 template<typename T, uint8_t N>
     requires(N > 0)
 void
-graphquery::database::storage::CDatablockFile<T, N>::open(std::filesystem::path path, const std::string_view file_name, bool init) noexcept
+graphquery::database::storage::CDatablockFile<T, N>::open(std::filesystem::path path, const std::string_view file_name, const bool create) noexcept
 {
+    if (create)
+        CDiskDriver::create_file(path, file_name);
+
     m_file.set_path(std::move(path));
     m_file.open(file_name);
-
-    if (init)
-        store_metadata();
 }
 
 template<typename T, uint8_t N>

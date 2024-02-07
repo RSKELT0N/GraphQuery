@@ -20,6 +20,7 @@
 #include "db/utils/thread_pool.hpp"
 #include "db/storage/graph_model.h"
 #include "block_file.hpp"
+#include "index_file.hpp"
 #include "transaction.h"
 
 #include <utility>
@@ -66,31 +67,15 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SGraphMetaData_t
         {
-            char graph_name[CFG_GRAPH_NAME_LENGTH]        = {};
-            char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH]  = {};
-            uint64_t vertices_c                           = {};
-            uint64_t edges_c                              = {};
-            uint64_t vertex_label_table_addr              = {};
-            uint64_t edge_label_table_addr                = {};
-            uint64_t label_size                           = {};
-            uint16_t vertex_label_c                       = {};
-            uint16_t edge_label_c                         = {};
-        };
-
-        /****************************************************************
-         * \struct SIndexMetadata_t
-         * \brief Describes the metadata for the index table, holding neccessary
-         *        information to access the index file correctly.
-         *
-         * \param index_c uint64_t               - amount of indices stored
-         * \param index_list_start_addr uint64_t - start addr of index list
-         * \param index_size uint32_t            - size of one index
-         ***************************************************************/
-        struct SIndexMetadata_t
-        {
-            uint64_t index_list_start_addr = {};
-            uint32_t index_c               = {};
-            uint32_t index_size            = {};
+            char graph_name[CFG_GRAPH_NAME_LENGTH]       = {};
+            char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH] = {};
+            uint64_t vertices_c                          = {};
+            uint64_t edges_c                             = {};
+            uint64_t vertex_label_table_addr             = {};
+            uint64_t edge_label_table_addr               = {};
+            uint64_t label_size                          = {};
+            uint16_t vertex_label_c                      = {};
+            uint16_t edge_label_c                        = {};
         };
 
         /****************************************************************
@@ -106,20 +91,6 @@ namespace graphquery::database::storage
             char label_s[CFG_LPG_LABEL_LENGTH] = {};
             uint64_t item_c                    = {};
             uint16_t label_id                  = {};
-        };
-
-        /****************************************************************
-         * \struct SIndexEntry_t
-         * \brief Structure of an index entry to the index table.
-         *
-         * \param id uint64_t       - generic identifier for the payload
-         * \param offset uint64_t   - respective offset for the payload
-         * \param label_id uint16_t - generic label id for the index container
-         ***************************************************************/
-        struct SIndexEntry_t
-        {
-            uint64_t id     = {};
-            uint32_t offset = END_INDEX;
         };
 
         /****************************************************************
@@ -144,8 +115,8 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SVertexEntry_t
         {
-            SVertex_t metadata             = {};
-            uint32_t edge_idx              = END_INDEX;
+            SVertex_t metadata = {};
+            uint32_t edge_idx  = END_INDEX;
         };
 
       public:
@@ -203,15 +174,12 @@ namespace graphquery::database::storage
         void read_index_list() noexcept;
         void define_vertex_lut() noexcept;
         void store_graph_metadata() noexcept;
-        void store_index_metadata() noexcept;
         uint32_t store_property_entry(const SProperty_t & prop, uint32_t next_ref) noexcept;
         void store_index_entry(uint64_t id, uint16_t label_id, uint32_t vertex_offset) noexcept;
         uint32_t store_vertex_entry(uint64_t id, uint16_t label_id, const std::vector<SProperty_t> & props) noexcept;
         uint32_t store_edge_entry(uint32_t next_ref, uint64_t src, uint64_t dst, uint16_t label_id, const std::vector<SProperty_t> & props) noexcept;
 
         inline SRef_t<SGraphMetaData_t> read_graph_metadata() noexcept;
-        inline SRef_t<SIndexMetadata_t> read_index_metadata() noexcept;
-        inline SRef_t<SIndexEntry_t> read_index_entry(uint32_t offset) noexcept;
         inline SRef_t<SLabel_t> read_vertex_label_entry(uint32_t offset) noexcept;
         inline SRef_t<SLabel_t> read_edge_label_entry(uint32_t offset) noexcept;
 
@@ -234,6 +202,7 @@ namespace graphquery::database::storage
 
         bool m_sync_needed;
         std::string m_graph_name;
+        std::string m_graph_path;
         std::vector<std::vector<uint64_t>> m_label_map;
 
         uint8_t m_syncing;
@@ -245,7 +214,7 @@ namespace graphquery::database::storage
 
         //~ Disk/file drivers for graph mapping from disk to memory
         CDiskDriver m_master_file;
-        CDiskDriver m_index_file;
+        CIndexFile m_global_index_file;
         CDatablockFile<SVertexEntry_t, 1> m_vertices_file;
         CDatablockFile<SEdgeEntry_t, DATABLOCK_EDGE_PAYLOAD_C> m_edges_file;
         CDatablockFile<SProperty_t, DATABLOCK_PROPERTY_PAYLOAD_C> m_properties_file;
@@ -257,12 +226,11 @@ namespace graphquery::database::storage
         static constexpr uint64_t METADATA_START_ADDR  = 0x00000000;
 
         static constexpr const char * MASTER_FILE_NAME     = "master";
-        static constexpr const char * INDEX_FILE_NAME      = "index";
+        static constexpr const char * INDEX_FILE_NAME      = "global_index";
         static constexpr const char * VERTICES_FILE_NAME   = "vertices";
         static constexpr const char * EDGES_FILE_NAME      = "edges";
         static constexpr const char * PROPERTIES_FILE_NAME = "properties";
 
-        static constexpr uint64_t INDEX_LIST_START_ADDR    = sizeof(SIndexMetadata_t);
         static constexpr uint64_t VERTEX_LABELS_START_ADDR = METADATA_START_ADDR + sizeof(SGraphMetaData_t);
         static constexpr uint64_t EDGE_LABELS_START_ADDR   = METADATA_START_ADDR + sizeof(SGraphMetaData_t) + sizeof(SLabel_t) * VERTEX_LABELS_MAX_AMT;
 
