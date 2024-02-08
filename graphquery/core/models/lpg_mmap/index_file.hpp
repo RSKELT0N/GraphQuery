@@ -68,11 +68,13 @@ namespace graphquery::database::storage
     };
 } // namespace graphquery::database::storage
 
-inline graphquery::database::storage::CIndexFile::CIndexFile()
+inline graphquery::database::storage::CIndexFile::
+CIndexFile()
 {
 }
 
-inline graphquery::database::storage::CIndexFile::~CIndexFile()
+inline graphquery::database::storage::CIndexFile::~
+CIndexFile()
 {
     (void) m_file.close();
 }
@@ -98,12 +100,14 @@ graphquery::database::storage::CIndexFile::read_entry(const uint32_t offset) noe
 inline void
 graphquery::database::storage::CIndexFile::store_entry(const uint32_t id, const uint32_t offset) noexcept
 {
-    auto index_ptr = read_entry(id);
+    auto index_ptr     = read_entry(id);
+    const auto index_c = utils::atomic_load(&read_metadata()->index_c);
 
     utils::atomic_store(&index_ptr->id, id);
     utils::atomic_store(&index_ptr->offset, offset);
 
-    utils::atomic_fetch_inc(&read_metadata()->index_c);
+    if (id >= index_c)
+        utils::atomic_fetch_inc(&read_metadata()->index_c);
 }
 
 inline graphquery::database::storage::SRef_t<graphquery::database::storage::CIndexFile::SIndexMetadata_t>

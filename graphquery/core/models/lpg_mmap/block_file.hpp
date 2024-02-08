@@ -62,8 +62,8 @@ namespace graphquery::database::storage
     template<typename T>
     struct SDataBlock_t<T, 1>
     {
-        uint32_t idx         = {};
-        std::bitset<1> state = {};
+        uint32_t idx         = END_INDEX;
+        std::bitset<1> state = {0};
         uint32_t next        = END_INDEX;
         uint32_t version     = END_INDEX;
         T payload            = {};
@@ -223,8 +223,7 @@ template<typename T, uint8_t N>
 uint32_t
 graphquery::database::storage::CDatablockFile<T, N>::create_entry(uint32_t next_ref) noexcept
 {
-    auto metadata               = read_metadata();
-    const uint32_t entry_offset = utils::atomic_fetch_inc(&metadata->data_block_c);
+    const uint32_t entry_offset = utils::atomic_fetch_inc(&read_metadata()->data_block_c);
     auto data_block_ptr         = read_entry(entry_offset);
 
     data_block_ptr->idx     = entry_offset;

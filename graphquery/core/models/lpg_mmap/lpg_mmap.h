@@ -7,6 +7,11 @@
  *        directly accessing memory map for graph writes/reads.
  *
  *        (under development)
+ *
+ *        TODO: Change edge src and dst to internal offset.
+ *        TODO: When add new vertex, append to next block of current vertex offset.
+ *        TODO: Same for searching for vertex, keep iterating next until id and label id match.
+ *        TODO: Once implemented, fix all queries and transactions to support new API.
  ************************************************************/
 
 #pragma once
@@ -125,42 +130,41 @@ namespace graphquery::database::storage
 
         void close() noexcept override;
         void save_graph() noexcept override;
-        void rm_vertex(uint64_t vertex_id) override;
-        void rm_edge(uint64_t src, uint64_t dst) override;
+        void rm_vertex(const SNodeID & src) override;
+        void rm_edge(const SNodeID & src, const SNodeID & dst) override;
         void calc_outdegree(std::shared_ptr<uint32_t[]>) noexcept override;
-        void rm_edge(uint64_t src, uint64_t dst, std::string_view) override;
+        void rm_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label) override;
         void edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept override;
 
         [[nodiscard]] inline uint64_t get_num_edges() override;
         [[nodiscard]] inline uint64_t get_num_vertices() override;
         [[nodiscard]] std::string_view get_name() noexcept override;
-        [[nodiscard]] std::optional<SVertex_t> get_vertex(uint64_t vertex_id) override;
-        [[nodiscard]] std::vector<SProperty_t> get_properties_by_vertex_id(uint64_t id) override;
-        [[nodiscard]] std::unordered_map<std::string, std::string> get_properties_by_vertex_id_map(uint64_t id) override;
+        [[nodiscard]] std::optional<SVertex_t> get_vertex(const SNodeID & src) override;
+        [[nodiscard]] std::vector<SProperty_t> get_properties_by_vertex(const SNodeID & src) override;
+        [[nodiscard]] std::unordered_map<std::string, std::string> get_properties_by_vertex_map(const SNodeID & src) override;
         [[nodiscard]] std::vector<SProperty_t> get_properties_by_property_id(uint32_t id) override;
         [[nodiscard]] std::unordered_map<std::string, std::string> get_properties_by_property_id_map(uint32_t id) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_label(std::string_view label) override;
         [[nodiscard]] std::vector<SVertex_t> get_vertices_by_label(std::string_view label) override;
 
-        [[nodiscard]] std::vector<SEdge_t> get_edges(uint64_t src, uint64_t dst) override;
-        [[nodiscard]] std::optional<SEdge_t> get_edge(uint64_t src, uint64_t dst, std::string_view edge_label) override;
-        [[nodiscard]] std::optional<SEdge_t> get_edge(uint64_t src, std::string_view edge_label, std::string_view vertex_label) override;
-        [[nodiscard]] std::vector<SEdge_t> get_edges(uint64_t src, std::string_view edge_label, std::string_view vertex_label) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges(const SNodeID & src, const SNodeID & dst) override;
+        [[nodiscard]] std::optional<SEdge_t> get_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label) override;
+        [[nodiscard]] std::optional<SEdge_t> get_edge(const SNodeID & src, std::string_view edge_label, std::string_view vertex_label) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges(const SNodeID & src, std::string_view edge_label, std::string_view vertex_label) override;
         [[nodiscard]] std::vector<SVertex_t> get_vertices(std::function<bool(const SVertex_t &)> pred) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::function<bool(const SEdge_t &)>) override;
-        [[nodiscard]] std::vector<SEdge_t> get_edges(uint64_t src, std::function<bool(const SEdge_t &)>) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges(uint64_t src, uint16_t src_label_id, std::function<bool(const SEdge_t &)>) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::function<bool(const SEdge_t &)>) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, std::function<bool(const SEdge_t &)>) override;
-        [[nodiscard]] std::unordered_set<uint64_t> get_edge_dst_vertices(uint64_t src, std::function<bool(const SEdge_t &)>) override;
-        [[nodiscard]] std::unordered_set<uint64_t> get_edge_dst_vertices(uint64_t src, std::string_view edge_label, std::string_view vertex_label) override;
-        [[nodiscard]] std::vector<SEdge_t> get_recursive_edges(uint64_t src,
-                                                               std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs) override;
+        [[nodiscard]] std::unordered_set<uint64_t> get_edge_dst_vertices(const SNodeID & src, std::function<bool(const SEdge_t &)>) override;
+        [[nodiscard]] std::unordered_set<uint64_t> get_edge_dst_vertices(const SNodeID & src, std::string_view edge_label, std::string_view vertex_label) override;
+        [[nodiscard]] std::vector<SEdge_t> get_recursive_edges(const SNodeID & src, std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs) override;
 
         void load_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void create_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
-        void add_vertex(uint64_t id, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
-        void add_edge(uint64_t src, uint64_t dst, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
+        void add_vertex(const SNodeID & src, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
+        void add_edge(const SNodeID & src, const SNodeID & dst, std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) override;
 
       private:
         friend class CTransaction;
@@ -171,39 +175,42 @@ namespace graphquery::database::storage
         void inline transaction_preamble() noexcept;
         void inline transaction_epilogue() noexcept;
 
+        SRef_t<SVertexDataBlock> get_vertex_by_offset(uint32_t offset) noexcept;
+        uint32_t get_vertex_head_offset(uint64_t id);
         void read_index_list() noexcept;
         void define_vertex_lut() noexcept;
         void store_graph_metadata() noexcept;
         uint32_t store_property_entry(const SProperty_t & prop, uint32_t next_ref) noexcept;
         void store_index_entry(uint64_t id, uint16_t label_id, uint32_t vertex_offset) noexcept;
-        uint32_t store_vertex_entry(uint64_t id, uint16_t label_id, const std::vector<SProperty_t> & props) noexcept;
-        uint32_t store_edge_entry(uint32_t next_ref, uint64_t src, uint64_t dst, uint16_t label_id, const std::vector<SProperty_t> & props) noexcept;
+        uint32_t store_vertex_entry(uint64_t id, uint16_t label_id, const std::vector<SProperty_t> & props, uint32_t next_ref) noexcept;
+        uint32_t store_edge_entry(uint32_t next_ref, uint64_t src, uint64_t dst, uint16_t dst_label_id, uint16_t edge_label_id, const std::vector<SProperty_t> & props) noexcept;
 
         inline SRef_t<SGraphMetaData_t> read_graph_metadata() noexcept;
         inline SRef_t<SLabel_t> read_vertex_label_entry(uint32_t offset) noexcept;
         inline SRef_t<SLabel_t> read_edge_label_entry(uint32_t offset) noexcept;
 
-        [[nodiscard]] EActionState_t rm_vertex_entry(uint64_t vertex_id) noexcept;
-        [[nodiscard]] EActionState_t rm_edge_entry(uint64_t src_vertex_id, uint64_t dst_vertex_id) noexcept;
-        [[nodiscard]] EActionState_t rm_edge_entry(std::string_view, uint64_t src_vertex_id, uint64_t dst_vertex_id) noexcept;
+        [[nodiscard]] EActionState_t rm_vertex_entry(const SNodeID & src) noexcept;
+        [[nodiscard]] EActionState_t rm_edge_entry(const SNodeID & src, const SNodeID & dst) noexcept;
+        [[nodiscard]] EActionState_t rm_edge_entry(const SNodeID & src, const SNodeID & dst, std::string_view edge_label) noexcept;
 
         [[nodiscard]] EActionState_t add_vertex_entry(uint64_t id, std::string_view label, const std::vector<SProperty_t> & props) noexcept;
         [[nodiscard]] EActionState_t add_vertex_entry(std::string_view label, const std::vector<SProperty_t> & props) noexcept;
-        [[nodiscard]] EActionState_t add_edge_entry(uint64_t src, uint64_t dst, std::string_view label, const std::vector<SProperty_t> & props) noexcept;
+        [[nodiscard]] EActionState_t add_edge_entry(const SNodeID & src, const SNodeID & dst, std::string_view edge_label, const std::vector<SProperty_t> & props) noexcept;
 
         [[nodiscard]] uint16_t create_edge_label(std::string_view) noexcept;
         [[nodiscard]] uint16_t create_vertex_label(std::string_view) noexcept;
         [[nodiscard]] uint64_t get_unassigned_vertex_id(size_t label_idx) const noexcept;
         [[nodiscard]] inline std::optional<uint16_t> check_if_edge_label_exists(std::string_view) noexcept;
         [[nodiscard]] inline std::optional<uint16_t> check_if_vertex_label_exists(std::string_view) noexcept;
-        [[nodiscard]] std::optional<SRef_t<SVertexDataBlock>> get_vertex_by_id(uint64_t id) noexcept;
+        [[nodiscard]] std::optional<SRef_t<SVertexDataBlock>> get_vertex_by_id(uint64_t id, uint16_t label_id) noexcept;
 
         static std::vector<SProperty_t> transform_properties(const std::vector<std::pair<std::string_view, std::string_view>> &) noexcept;
 
         bool m_sync_needed;
         std::string m_graph_name;
         std::string m_graph_path;
-        std::vector<std::vector<uint64_t>> m_label_map;
+        std::vector<std::vector<uint64_t>> m_label_vertex;
+        std::unordered_map<std::string, uint16_t> m_label_map;
 
         uint8_t m_syncing;
         std::mutex m_sync_lock;

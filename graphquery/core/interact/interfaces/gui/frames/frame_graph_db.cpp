@@ -53,23 +53,22 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-            for (int i = 0; i < 100000; i++)
-                (*m_graph)->add_vertex("PERSON", {});
+            (*m_graph)->add_vertex("Person", {});
 
         if (ImGui::Button("Query"))
-            (*m_graph)->add_vertex(0, "PERSON", {});
+            (*m_graph)->add_vertex({0, "Dog"}, {});
 
         if (ImGui::Button("Add Vertex (0)"))
-            (*m_graph)->add_vertex(0, "PERSON", {});
+            (*m_graph)->add_vertex({0, "Person"}, {});
 
         if (ImGui::Button("Add Edge"))
-            (*m_graph)->add_edge(0, 1, "KNOWS", {});
+            (*m_graph)->add_edge({0, "Person"}, {1, "Person"}, "KNOWS", {});
 
         if (ImGui::Button("Remove Vertex"))
-            (*m_graph)->rm_vertex(0);
+            (*m_graph)->rm_vertex({0, "Person"});
 
         if (ImGui::Button("Remove Edge"))
-            (*m_graph)->rm_edge(0, 1, "PERSON");
+            (*m_graph)->rm_edge({0, "Person"}, {1, "Person"}, "PERSON");
     }
 }
 

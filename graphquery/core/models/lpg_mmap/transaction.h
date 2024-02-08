@@ -30,7 +30,7 @@ namespace graphquery::database::storage
             uint64_t transaction_c           = {};
             uint64_t transactions_start_addr = {};
             uint64_t eof_addr                = {};
-        } __attribute__((packed));
+        };
 
         struct SVertexCommit
         {
@@ -43,18 +43,18 @@ namespace graphquery::database::storage
         struct SEdgeCommit
         {
             char label[CFG_LPG_LABEL_LENGTH] = {""};
-            uint64_t src                     = {0};
-            uint64_t dst                     = {0};
+            ILPGModel::SNodeID src           = {};
+            ILPGModel::SNodeID dst           = {};
             uint16_t property_c              = {0};
             uint8_t remove                   = {0};
-        } __attribute__((packed));
+        };
 
         template<typename T>
         struct STransaction
         {
             ETransactionType type = ETransactionType::vertex;
             T commit              = {};
-        } __attribute__((packed));
+        };
 
       public:
         CTransaction(const std::filesystem::path & local_path, ILPGModel * lpg);
@@ -64,11 +64,11 @@ namespace graphquery::database::storage
         void init() noexcept;
         void reset() noexcept;
         void handle_transactions() noexcept;
-        void commit_rm_vertex(uint64_t id) noexcept;
-        void commit_rm_edge(uint64_t src, uint64_t dst, std::string_view label = "") noexcept;
+        void commit_rm_vertex(const ILPGModel::SNodeID & src) noexcept;
+        void commit_rm_edge(const ILPGModel::SNodeID & src, const ILPGModel::SNodeID & dst, std::string_view label = "") noexcept;
 
         void commit_vertex(std::string_view label, const std::vector<ILPGModel::SProperty_t> & props, uint64_t optional_id = -1) noexcept;
-        void commit_edge(uint64_t src, uint64_t dst, std::string_view label, const std::vector<ILPGModel::SProperty_t> & props) noexcept;
+        void commit_edge(const ILPGModel::SNodeID & src, const ILPGModel::SNodeID & dst, std::string_view label, const std::vector<ILPGModel::SProperty_t> & props) noexcept;
 
       private:
         using SVertexTransaction = STransaction<SVertexCommit>;
@@ -87,8 +87,8 @@ namespace graphquery::database::storage
 
         ILPGModel * m_lpg;
         CDiskDriver m_transaction_file;
-        static constexpr int64_t INITIAL_TRANSACTION_FILE_SIZE = KB(4);
-        static constexpr const char * TRANSACTION_FILE_NAME    = "transactions";
+        static constexpr int64_t INITIAL_TRANSACTION_FILE_SIZE  = KB(4);
+        static constexpr const char * TRANSACTION_FILE_NAME     = "transactions";
         static constexpr uint64_t TRANSACTION_HEADER_START_ADDR = 0x00000000;
         static constexpr uint64_t TRANSACTIONS_START_ADDR       = sizeof(SHeaderBlock);
     };
