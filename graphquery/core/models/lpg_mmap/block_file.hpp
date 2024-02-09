@@ -36,8 +36,8 @@ namespace graphquery::database::storage
      * \brief Structure of a data block holding a generic payload,
      *        entry to a datablock file.
      *
-     * \param idx_state uint64_t - index of the data block
-     * \param next uint64_t      - state of the next linked block.
+     * \param idx_state uint32_t - index of the data block
+     * \param next uint32_t      - state of the next linked block.
      * \param payload std::array<T, N> - stored payload contained in data block
      ***************************************************************/
     template<typename T, uint8_t N>
@@ -55,8 +55,8 @@ namespace graphquery::database::storage
      * \struct SDataBlock_t
      * \brief Specialization for N = 1.
      *
-     * \param idx_state uint64_t - index of the data block
-     * \param next uint64_t      - state of the next linked block.
+     * \param idx_state uint32_t - index of the data block
+     * \param next uint32_t      - state of the next linked block.
      * \param payload T          - stored payload contained in data block
      ***************************************************************/
     template<typename T>
@@ -80,14 +80,14 @@ namespace graphquery::database::storage
          *        holding neccessary information to access the index file
          *        correctly.
          *
-         * \param data_block_c uint64_t       - amount of currently stored data blocks
-         * \param data_blocks_offset uint64_t - start addr of data block entries
+         * \param data_block_c uint32_t       - amount of currently stored data blocks
+         * \param data_blocks_offset uint32_t - start addr of data block entries
          * \param data_block_size uint32_t    - size of one data block
          * \param free_list uint32_t          - linked list of free data blocks
          ***************************************************************/
         struct SBlockFileMetadata_t
         {
-            uint64_t data_blocks_start_addr = {};
+            uint32_t data_blocks_start_addr = {};
             uint32_t data_block_c           = {};
             uint32_t data_block_size        = {};
             uint32_t free_list              = END_INDEX;
@@ -117,7 +117,7 @@ namespace graphquery::database::storage
 
       private:
         CDiskDriver m_file;
-        static constexpr uint64_t METADATA_START_ADDR = 0x00000000;
+        static constexpr uint32_t METADATA_START_ADDR = 0x00000000;
     };
 } // namespace graphquery::database::storage
 
@@ -261,10 +261,10 @@ template<typename T, uint8_t N>
 void
 graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> & apply)
 {
-    const uint64_t datablock_c = read_metadata()->data_block_c;
+    const uint32_t datablock_c = read_metadata()->data_block_c;
     auto block_ptr             = read_entry(0);
 
-    for (uint64_t i = 0; i < datablock_c; i++, ++block_ptr)
+    for (uint32_t i = 0; i < datablock_c; i++, ++block_ptr)
     {
         if (unlikely(block_ptr->state.any()))
             continue;

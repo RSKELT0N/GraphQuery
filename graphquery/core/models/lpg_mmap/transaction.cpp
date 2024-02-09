@@ -59,7 +59,7 @@ graphquery::database::storage::CTransaction::define_transaction_header()
 
 template<typename T>
 graphquery::database::storage::SRef_t<T>
-graphquery::database::storage::CTransaction::read_transaction(const uint64_t seek)
+graphquery::database::storage::CTransaction::read_transaction(const uint32_t seek)
 {
     return m_transaction_file.ref<T>(seek);
 }
@@ -74,7 +74,7 @@ void
 graphquery::database::storage::CTransaction::commit_rm_vertex(const ILPGModel::SNodeID & src) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
-    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint64_t>(sizeof(SVertexTransaction)));
+    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint32_t>(sizeof(SVertexTransaction)));
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     auto transaction_ptr = read_transaction<SVertexTransaction>(commit_addr);
@@ -90,7 +90,7 @@ void
 graphquery::database::storage::CTransaction::commit_rm_edge(const ILPGModel::SNodeID & src, const ILPGModel::SNodeID & dst, const std::string_view label) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
-    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint64_t>(sizeof(SEdgeTransaction)));
+    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint32_t>(sizeof(SEdgeTransaction)));
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     auto transaction_ptr = read_transaction<SEdgeTransaction>(commit_addr);
@@ -104,10 +104,10 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const ILPGModel::SNo
 }
 
 void
-graphquery::database::storage::CTransaction::commit_vertex(const std::string_view label, const std::vector<ILPGModel::SProperty_t> & props, const uint64_t optional_id) noexcept
+graphquery::database::storage::CTransaction::commit_vertex(const std::string_view label, const std::vector<ILPGModel::SProperty_t> & props, const uint32_t optional_id) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
-    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint64_t>(sizeof(SVertexTransaction) + (props.size() * sizeof(ILPGModel::SProperty_t))));
+    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint32_t>(sizeof(SVertexTransaction) + (props.size() * sizeof(ILPGModel::SProperty_t))));
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     //~ Lose reference to transaction_hdr
@@ -123,7 +123,7 @@ graphquery::database::storage::CTransaction::commit_vertex(const std::string_vie
 
     transaction_ptr.~SRef_t<SVertexTransaction>(); //~ Remove reference to transaction file.
 
-    uint64_t property_addr = commit_addr + sizeof(SVertexTransaction);
+    uint32_t property_addr = commit_addr + sizeof(SVertexTransaction);
     for (const auto & [key, value] : props)
     {
         auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(property_addr);
@@ -140,7 +140,7 @@ graphquery::database::storage::CTransaction::commit_edge(const ILPGModel::SNodeI
                                                          const std::vector<ILPGModel::SProperty_t> & props) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
-    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint64_t>(sizeof(SEdgeTransaction) + (props.size() * sizeof(ILPGModel::SProperty_t))));
+    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint32_t>(sizeof(SEdgeTransaction) + (props.size() * sizeof(ILPGModel::SProperty_t))));
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     //~ Lose reference to transaction_hdr
@@ -157,7 +157,7 @@ graphquery::database::storage::CTransaction::commit_edge(const ILPGModel::SNodeI
 
     transaction_ptr.~SRef_t<SEdgeTransaction>(); //~ Remove reference to transaction file.
 
-    uint64_t property_addr = commit_addr + sizeof(SVertexTransaction);
+    uint32_t property_addr = commit_addr + sizeof(SVertexTransaction);
     for (const auto & [key, value] : props)
     {
         auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(property_addr);
@@ -171,7 +171,7 @@ void
 graphquery::database::storage::CTransaction::handle_transactions() noexcept
 {
     m_transaction_file.seek(TRANSACTIONS_START_ADDR);
-    const uint64_t transaction_c = utils::atomic_load(&read_transaction_header()->transaction_c);
+    const uint32_t transaction_c = utils::atomic_load(&read_transaction_header()->transaction_c);
 
     SRef_t<ETransactionType> type;
     SRef_t<SVertexTransaction> v_transc = {};
@@ -179,7 +179,7 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
 
     std::vector<ILPGModel::SProperty_t> props = {};
 
-    for (uint64_t i = 0; i < transaction_c; i++)
+    for (uint32_t i = 0; i < transaction_c; i++)
     {
         type = m_transaction_file.ref_update<ETransactionType>();
         switch (*type)

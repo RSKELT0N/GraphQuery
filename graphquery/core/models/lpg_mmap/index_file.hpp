@@ -23,13 +23,13 @@ namespace graphquery::database::storage
          * \brief Describes the metadata for the index table, holding neccessary
          *        information to access the index file correctly.
          *
-         * \param index_c uint64_t               - amount of indices stored
-         * \param index_list_start_addr uint64_t - start addr of index list
+         * \param index_c uint32_t               - amount of indices stored
+         * \param index_list_start_addr uint32_t - start addr of index list
          * \param index_size uint32_t            - size of one index
          ***************************************************************/
         struct SIndexMetadata_t
         {
-            uint64_t index_list_start_addr = {};
+            uint32_t index_list_start_addr = {};
             uint32_t index_c               = {};
             uint32_t index_size            = {};
         };
@@ -38,13 +38,13 @@ namespace graphquery::database::storage
          * \struct SIndexEntry_t
          * \brief Structure of an index entry to the index table.
          *
-         * \param id uint64_t       - generic identifier for the payload
-         * \param offset uint64_t   - respective offset for the payload
+         * \param id uint32_t       - generic identifier for the payload
+         * \param offset uint32_t   - respective offset for the payload
          * \param label_id uint16_t - generic label id for the index container
          ***************************************************************/
         struct SIndexEntry_t
         {
-            uint64_t id     = {};
+            uint32_t id     = {};
             uint32_t offset = END_INDEX;
         };
 
@@ -64,7 +64,7 @@ namespace graphquery::database::storage
 
       private:
         CDiskDriver m_file;
-        static constexpr uint64_t METADATA_START_ADDR = 0x00000000;
+        static constexpr uint32_t METADATA_START_ADDR = 0x00000000;
     };
 } // namespace graphquery::database::storage
 

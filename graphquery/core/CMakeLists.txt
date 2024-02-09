@@ -29,8 +29,7 @@ target_compile_options(
         -Wextra
         -Wshadow
         -pthread
-        -O3
-        -fopenmp)
+        -O3)
 
 target_link_libraries(${EXECUTABLE_NAME}
         PUBLIC
