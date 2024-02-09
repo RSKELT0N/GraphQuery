@@ -142,9 +142,10 @@ namespace graphquery::database::storage
         virtual std::vector<SEdge_t> get_edges(const std::function<bool(const SEdge_t &)> &)                                                             = 0;
         virtual std::vector<SVertex_t> get_vertices(const std::function<bool(const SVertex_t &)> &)                                                      = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, const std::function<bool(const SEdge_t &)> &)                              = 0;
-        virtual std::vector<SEdge_t> get_edges(uint32_t src, uint16_t src_label_id, const std::function<bool(const SEdge_t &)> &)                        = 0;
         virtual std::unordered_set<uint32_t> get_edge_dst_vertices(const SNodeID & src, const std::function<bool(const SEdge_t &)> &)                    = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, const std::function<bool(const SEdge_t &)> &) = 0;
+        virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, const SNodeID & dst)                          = 0;
+        virtual std::vector<SEdge_t> get_edges(uint32_t vertex_id, std::string_view edge_label, std::string_view vertex_label)                           = 0;
 
         virtual void rm_vertex(const SNodeID & vertex_id)                                                                                                                               = 0;
         virtual void rm_edge(const SNodeID & src, const SNodeID & dst)                                                                                                                  = 0;

@@ -220,7 +220,7 @@ void
 graphquery::database::storage::CTransaction::process_vertex_transaction(SRef_t<SVertexTransaction> & transaction, const std::vector<ILPGModel::SProperty_t> & props) const noexcept
 {
     if (transaction->commit.remove == 0)
-        if (transaction->commit.optional_id != ULONG_LONG_MAX)
+        if (transaction->commit.optional_id != UINT_MAX)
             (void) dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->add_vertex_entry(transaction->commit.optional_id, transaction->commit.label, props);
         else
             (void) dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->add_vertex_entry(transaction->commit.label, props);

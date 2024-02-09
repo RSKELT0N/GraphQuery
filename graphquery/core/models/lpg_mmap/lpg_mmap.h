@@ -159,8 +159,9 @@ namespace graphquery::database::storage
 
         [[nodiscard]] std::vector<SEdge_t> get_edges(const std::function<bool(const SEdge_t &)> & pred) override;
         [[nodiscard]] std::vector<SVertex_t> get_vertices(const std::function<bool(const SVertex_t &)> & pred) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, const SNodeID & dst) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges(uint32_t vertex_id, std::string_view edge_label, std::string_view vertex_label) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, const std::function<bool(const SEdge_t &)> & pred) override;
-        [[nodiscard]] std::vector<SEdge_t> get_edges(uint32_t src, uint16_t src_label_id, const std::function<bool(const SEdge_t &)> & pred) override;
         [[nodiscard]] std::unordered_set<uint32_t> get_edge_dst_vertices(const SNodeID & src, const std::function<bool(const SEdge_t &)> & pred) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, const std::function<bool(const SEdge_t &)> & pred) override;
 
@@ -180,7 +181,7 @@ namespace graphquery::database::storage
         void inline transaction_epilogue() noexcept;
 
         std::optional<SRef_t<SVertexDataBlock>> get_vertex(uint32_t id, std::string_view label);
-        SRef_t<SVertexDataBlock> get_vertex_by_offset(uint32_t offset) noexcept;
+        std::optional<SRef_t<SVertexDataBlock>> get_vertex_by_offset(uint32_t offset) noexcept;
         uint32_t get_vertex_head_offset(uint32_t id);
         void read_index_list() noexcept;
         void define_vertex_lut() noexcept;
@@ -205,9 +206,13 @@ namespace graphquery::database::storage
         [[nodiscard]] uint16_t create_edge_label(std::string_view) noexcept;
         [[nodiscard]] uint16_t create_vertex_label(std::string_view) noexcept;
         [[nodiscard]] uint32_t get_unassigned_vertex_id(size_t label_idx) const noexcept;
-        [[nodiscard]] inline std::optional<uint16_t> check_if_edge_label_exists(std::string_view) noexcept;
-        [[nodiscard]] inline std::optional<uint16_t> check_if_vertex_label_exists(std::string_view) noexcept;
+        [[nodiscard]] inline std::optional<uint16_t> check_if_edge_label_exists(const std::string_view &) noexcept;
+        [[nodiscard]] inline std::optional<uint16_t> check_if_vertex_label_exists(const std::string_view &) noexcept;
+
         [[nodiscard]] std::optional<SRef_t<SVertexDataBlock>> get_vertex_by_id(uint32_t id, uint16_t label_id) noexcept;
+        [[nodiscard]] std::vector<uint32_t> get_vertices_offset_by_label(std::string_view label);
+        [[nodiscard]] std::vector<SEdge_t> get_edges(uint32_t vertex_id, const std::function<bool(const SEdge_t &)> & pred);
+        [[nodiscard]] std::vector<SEdge_t> get_edges(uint32_t src, uint16_t src_label_id, const std::function<bool(const SEdge_t &)> & pred);
 
         static std::vector<SProperty_t> transform_properties(const std::vector<std::pair<std::string_view, std::string_view>> &) noexcept;
 

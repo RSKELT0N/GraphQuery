@@ -16,14 +16,8 @@ graphquery::database::query::CQueryEngine::interaction_complex_2(const uint32_t 
     std::unordered_set<uint32_t> _friends = get_graph()->get_edge_dst_vertices({_person_id, "Person"}, "KNOWS", "Person");
 
     //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
-    std::vector<storage::ILPGModel::SEdge_t> message_creators = get_graph()->get_edges("Message",
-                                                                                       [&_friends](const storage::ILPGModel::SEdge_t & edge) -> bool
-                                                                                       {
-                                                                                           if (!_friends.contains(edge.dst))
-                                                                                               return false;
-
-                                                                                           return true;
-                                                                                       });
+    std::vector<storage::ILPGModel::SEdge_t> message_creators =
+        get_graph()->get_edges("Message", "HAS_CREATOR", [&_friends](const storage::ILPGModel::SEdge_t & edge) -> bool { return _friends.contains(edge.dst); });
 
     //~ Generating Map of properties
     std::vector<std::map<std::string, std::string>> properties_map;
@@ -65,7 +59,7 @@ std::vector<std::map<std::string, std::string>>
 graphquery::database::query::CQueryEngine::interation_complex_8(const uint32_t _person_id) const noexcept
 {
     //~ MATCH (start:Person {id: $personId})<-[:HAS_CREATOR]-(:Message)
-    std::vector<storage::ILPGModel::SEdge_t> person_comments = get_graph()->get_edges("Message", "HAS_CREATOR", [&_person_id](const auto & edge) -> bool { return edge.dst == _person_id; });
+    std::vector<storage::ILPGModel::SEdge_t> person_comments = get_graph()->get_edges("Message", "HAS_CREATOR", {_person_id, "Person"});
 
     std::unordered_set<uint32_t> uniq_messages = {};
     uniq_messages.reserve(person_comments.size());
@@ -79,10 +73,10 @@ graphquery::database::query::CQueryEngine::interation_complex_8(const uint32_t _
     std::vector<storage::ILPGModel::SEdge_t> comment_creators = {};
 
     // ~ (comment:Comment)-[:HAS_CREATOR]->(person:Person)
-    for (const storage::ILPGModel::SEdge_t & edge : comments)
+    for ([[maybe_unused]] const storage::ILPGModel::SEdge_t & edge : comments)
     {
-        if (auto comment_creator_person = get_graph()->get_edge(edge.src, "HAS_CREATOR", "Person"); comment_creator_person.has_value())
-            comment_creators.emplace_back(comment_creator_person.value());
+        auto comment_creator_person = get_graph()->get_edges(edge.src, "HAS_CREATOR", "Person");
+        comment_creators.insert(comment_creators.begin(), comment_creator_person.begin(), comment_creator_person.end());
     }
 
     //~ Generating Map of properties
@@ -156,22 +150,22 @@ void
 graphquery::database::query::CQueryEngine::interation_short_2([[maybe_unused]] const uint32_t _person_id) const noexcept
 {
     //~ MATCH (:Person {id: $personId})<-[:HAS_CREATOR]-(message)
-    auto person_comments = get_graph()->get_edges("Message", "HAS_CREATOR", [&_person_id](const auto & edge) -> bool { return edge.dst == _person_id; });
+    auto person_comments = get_graph()->get_edges("Message", "HAS_CREATOR", {_person_id, "Person"});
     //~ MATCH (message)-[:REPLY_OF*0..]->(post:Post)
     std::vector<storage::ILPGModel::SEdge_t> posts = {};
 
-    for (const auto & edge : person_comments)
+    for ([[maybe_unused]] const auto & edge : person_comments)
     {
-        if (auto post = get_graph()->get_edge(edge.src, "REPLY_OF", "Post"); post.has_value())
-            posts.emplace_back(post.value());
+        auto post = get_graph()->get_edges(edge.src, "REPLY_OF", "Post");
+        posts.insert(posts.begin(), post.begin(), post.end());
     }
     //~ (post)-[:HAS_CREATOR]->(person)
     std::vector<storage::ILPGModel::SEdge_t> creator_of_posts = {};
 
-    for (const auto & post : posts)
+    for ([[maybe_unused]] const auto & post : posts)
     {
-        if (auto creator = get_graph()->get_edge(post.dst, "HAS_CREATOR", "Person"); creator.has_value())
-            creator_of_posts.emplace_back(creator.value());
+        auto creator = get_graph()->get_edges(post.dst, "HAS_CREATOR", "Person");
+        creator_of_posts.insert(creator_of_posts.begin(), creator.begin(), creator.end());
     }
 
     //~ Generating Map of properties
@@ -181,15 +175,15 @@ void
 graphquery::database::query::CQueryEngine::interation_short_7([[maybe_unused]] const uint32_t _message_id) const noexcept
 {
     //~ MATCH (m:Message {id: $messageId })<-[:REPLY_OF]-(c:Comment)
-    auto message_comments = get_graph()->get_edges("Message", "REPLY_OF", [&_message_id](const auto & edge) -> bool { return edge.dst == _message_id; });
+    auto message_comments = get_graph()->get_edges("Comment", "REPLY_OF", {_message_id, "Message"});
 
     //~ (c:Comment)-[:HAS_CREATOR]->(p:Person)
     std::vector<storage::ILPGModel::SEdge_t> creator_of_comments = {};
 
-    for (const storage::ILPGModel::SEdge_t & edge : message_comments)
+    for ([[maybe_unused]] const storage::ILPGModel::SEdge_t & edge : message_comments)
     {
-        if (auto creator = get_graph()->get_edge(edge.src, "HAS_CREATOR", "Person"); creator.has_value())
-            creator_of_comments.emplace_back(creator.value());
+        auto creator = get_graph()->get_edges(edge.src, "HAS_CREATOR", "Person");
+        creator_of_comments.insert(creator_of_comments.begin(), creator.begin(), creator.end());
     }
 
     //~ Generating Map of properties

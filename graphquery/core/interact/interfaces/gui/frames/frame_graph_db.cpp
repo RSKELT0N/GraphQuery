@@ -53,17 +53,27 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-            for (int i = 0; i < 1000000; i++)
+            for (int i = 0; i < 5; i++)
                 (*m_graph)->add_vertex("Person", {});
 
         if (ImGui::Button("Query"))
-            (*m_graph)->add_vertex({0, "Dog"}, {});
+        {
+            //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
+            std::unordered_set<uint32_t> _friends = (*m_graph)->get_edge_dst_vertices({0, "Person"}, "KNOWS", "Person");
+            for (const auto _friend : _friends)
+            {
+                database::_log_system->info(fmt::format("FOUND: {}", _friend));
+            }
+        }
 
         if (ImGui::Button("Add Vertex (0)"))
-            (*m_graph)->add_vertex({0, "Person"}, {});
+            (*m_graph)->add_vertex({20, "Dog"}, {});
 
         if (ImGui::Button("Add Edge"))
+        {
             (*m_graph)->add_edge({0, "Person"}, {1, "Person"}, "KNOWS", {});
+            (*m_graph)->add_edge({0, "Person"}, {20, "Dog"}, "KNOWS", {});
+        }
 
         if (ImGui::Button("Remove Vertex"))
             (*m_graph)->rm_vertex({0, "Person"});
