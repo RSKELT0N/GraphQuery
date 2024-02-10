@@ -26,6 +26,7 @@ target_compile_options(
         -Wall
         -Werror
         -Wpedantic
+        -Wshadow
         -Wextra
         -lpthread
         -O3)
