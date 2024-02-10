@@ -195,6 +195,20 @@ graphquery::database::storage::CDBStorage::create_graph(const std::string_view n
         _log_system->warning("Database has not been loaded for a graph to added");
 }
 
+void
+graphquery::database::storage::CDBStorage::load_dataset([[maybe_unused]] const std::filesystem::path & dataset_path) noexcept
+{
+    bool initial_snapshot_exists = std::filesystem::exists(dataset_path / "initial_snapshot");
+    bool deletes_exists          = std::filesystem::exists(dataset_path / "deletes");
+    bool inserts_exists          = std::filesystem::exists(dataset_path / "inserts");
+
+    if (!(initial_snapshot_exists && deletes_exists && inserts_exists))
+    {
+        _log_system->warning(fmt::format("Dataset path {} does the follow LDBC SNB directory structure", dataset_path.string()));
+        return;
+    }
+}
+
 const std::unordered_map<std::string, graphquery::database::storage::CDBStorage::SGraph_Entry_t> &
 graphquery::database::storage::CDBStorage::get_graph_table() const noexcept
 {

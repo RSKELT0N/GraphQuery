@@ -57,6 +57,7 @@ namespace graphquery::database::storage
         void open_graph(std::string_view name) noexcept;
         void init(const std::filesystem::path & path, std::string_view db_name);
         void create_graph(std::string_view name, std::string_view type) noexcept;
+        void load_dataset(const std::filesystem::path & dataset_path) noexcept;
         [[nodiscard]] bool check_if_graph_exists(std::string_view graph_name) const noexcept;
 
         void close_graph() noexcept;

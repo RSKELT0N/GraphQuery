@@ -10,9 +10,7 @@ namespace graphquery::interact
     class CFrameMenuBar : public IFrame
     {
       public:
-        CFrameMenuBar(const bool & is_db_loaded,
-                      const bool & is_graph_loaded,
-                      const std::unordered_map<std::string, database::storage::CDBStorage::SGraph_Entry_t> & graph_table);
+        CFrameMenuBar(const bool & is_db_loaded, const bool & is_graph_loaded, const std::unordered_map<std::string, database::storage::CDBStorage::SGraph_Entry_t> & graph_table);
         ~CFrameMenuBar() override;
 
         void render_frame() noexcept override;
@@ -23,6 +21,8 @@ namespace graphquery::interact
         void render_create_menu() noexcept;
         void render_open_menu() noexcept;
         void render_open_db() noexcept;
+        void render_load_menu() noexcept;
+        void render_load_dataset() noexcept;
 
         void set_create_graph_state(bool) noexcept;
         void render_create_graph() noexcept;
@@ -43,12 +43,17 @@ namespace graphquery::interact
         void render_open_graph_list() noexcept;
         void render_open_graph_button() noexcept;
 
+        void setup_db_master_file_explorer() noexcept;
+        void setup_db_folder_location_file_explorer() noexcept;
+        void setup_dataset_folder_location_explorer() noexcept;
+
         const bool & m_is_db_loaded;
         const bool & m_is_graph_loaded;
         const std::unordered_map<std::string, database::storage::CDBStorage::SGraph_Entry_t> & m_graph_table;
 
         ImGui::FileBrowser m_db_master_file_explorer;
         ImGui::FileBrowser m_db_folder_location_explorer;
+        ImGui::FileBrowser m_dataset_folder_location_explorer;
 
         int m_open_graph_choice                 = {};
         std::filesystem::path m_created_db_path = {};

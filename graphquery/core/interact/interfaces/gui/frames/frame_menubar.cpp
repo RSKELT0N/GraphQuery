@@ -14,15 +14,33 @@ graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded,
     m_is_db_loaded(is_db_loaded),
     m_is_graph_loaded(is_graph_loaded), m_graph_table(graph_table)
 {
+    setup_db_master_file_explorer();
+    setup_db_folder_location_file_explorer();
+    setup_dataset_folder_location_explorer();
+}
+
+void
+graphquery::interact::CFrameMenuBar::setup_db_master_file_explorer() noexcept
+{
     this->m_db_master_file_explorer = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir);
 
     this->m_db_master_file_explorer.SetTitle("Open Database");
     this->m_db_master_file_explorer.SetTypeFilters({".gdb"});
+}
 
-    this->m_db_folder_location_explorer =
-        ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir | ImGuiFileBrowserFlags_SelectDirectory);
-
+void
+graphquery::interact::CFrameMenuBar::setup_db_folder_location_file_explorer() noexcept
+{
+    this->m_db_folder_location_explorer = ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir | ImGuiFileBrowserFlags_SelectDirectory);
     this->m_db_folder_location_explorer.SetTitle("Select Location Path");
+}
+
+void
+graphquery::interact::CFrameMenuBar::setup_dataset_folder_location_explorer() noexcept
+{
+    this->m_dataset_folder_location_explorer = this->m_dataset_folder_location_explorer =
+        ImGui::FileBrowser(ImGuiFileBrowserFlags_CloseOnEsc | ImGuiFileBrowserFlags_CreateNewDir | ImGuiFileBrowserFlags_SelectDirectory);
+    this->m_dataset_folder_location_explorer.SetTitle("Select Dataset Path");
 }
 
 void
@@ -33,6 +51,7 @@ graphquery::interact::CFrameMenuBar::render_frame() noexcept
         render_create_menu();
         render_open_menu();
         render_close_menu();
+        render_load_menu();
         ImGui::EndMainMenuBar();
     }
 
@@ -40,6 +59,7 @@ graphquery::interact::CFrameMenuBar::render_frame() noexcept
     render_create_graph();
     render_open_db();
     render_open_graph();
+    render_load_dataset();
 }
 
 void
@@ -100,6 +120,32 @@ graphquery::interact::CFrameMenuBar::render_open_db() noexcept
 
         database::_db_storage->init(root_path, db_master_file_path.stem().string());
         m_db_master_file_explorer.ClearSelected();
+    }
+}
+
+void
+graphquery::interact::CFrameMenuBar::render_load_menu() noexcept
+{
+    if (m_is_graph_loaded && ImGui::BeginMenu("Load", "Ctrl+d"))
+    {
+        if (ImGui::MenuItem("Dataset"))
+            this->m_dataset_folder_location_explorer.Open();
+
+        ImGui::EndMenu();
+    }
+}
+
+void
+graphquery::interact::CFrameMenuBar::render_load_dataset() noexcept
+{
+    m_dataset_folder_location_explorer.Display();
+
+    if (m_dataset_folder_location_explorer.HasSelected())
+    {
+        const std::filesystem::path dataset_folder_path = m_dataset_folder_location_explorer.GetSelected();
+
+        database::_db_storage->load_dataset(dataset_folder_path);
+        m_dataset_folder_location_explorer.ClearSelected();
     }
 }
 
