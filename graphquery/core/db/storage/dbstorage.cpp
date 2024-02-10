@@ -1,11 +1,13 @@
 #include "dbstorage.h"
 
 #include "db/system.h"
+#include "csv-parser/csv.h"
 
 #include <string_view>
 #include <cassert>
 
-graphquery::database::storage::CDBStorage::CDBStorage()
+graphquery::database::storage::CDBStorage::
+CDBStorage()
 {
     m_loaded_graph = std::make_shared<ILPGModel *>();
 }
@@ -123,11 +125,7 @@ graphquery::database::storage::CDBStorage::get_db_info() noexcept
     static const time_t time         = superblock_ptr->timestamp;
     static const auto time_formatted = ctime(&time);
 
-    return fmt::format("Version: {}\nDate Created: {}CheckSum: {}\nGraphs: {}\n",
-                       superblock_ptr->version,
-                       time_formatted,
-                       superblock_ptr->magic_check_sum,
-                       superblock_ptr->db_info.graph_table_c);
+    return fmt::format("Version: {}\nDate Created: {}CheckSum: {}\nGraphs: {}\n", superblock_ptr->version, time_formatted, superblock_ptr->magic_check_sum, superblock_ptr->db_info.graph_table_c);
 }
 
 void
@@ -198,66 +196,78 @@ graphquery::database::storage::CDBStorage::create_graph(const std::string_view n
 void
 graphquery::database::storage::CDBStorage::load_dataset([[maybe_unused]] const std::filesystem::path & dataset_path) noexcept
 {
-    bool initial_snapshot_exists = std::filesystem::exists(dataset_path / "initial_snapshot");
-    bool deletes_exists          = std::filesystem::exists(dataset_path / "deletes");
-    bool inserts_exists          = std::filesystem::exists(dataset_path / "inserts");
+#if NDEBUG
+    const bool folders_exist = std::filesystem::exists(dataset_path / "initial_snapshot") | std::filesystem::exists(dataset_path / "deletes") | std::filesystem::exists(dataset_path / "inserts");
 
-    if (!(initial_snapshot_exists && deletes_exists && inserts_exists))
+    if (!folders_exist)
     {
         _log_system->warning(fmt::format("Dataset path {} does the follow LDBC SNB directory structure", dataset_path.string()));
         return;
     }
-}
+#endif
 
-const std::unordered_map<std::string, graphquery::database::storage::CDBStorage::SGraph_Entry_t> &
-graphquery::database::storage::CDBStorage::get_graph_table() const noexcept
-{
-    return m_graph_entry_map;
-}
-
-std::shared_ptr<graphquery::database::storage::ILPGModel *>
-graphquery::database::storage::CDBStorage::get_graph() const noexcept
-{
-    return m_loaded_graph;
-}
-
-const bool &
-graphquery::database::storage::CDBStorage::get_is_db_loaded() const noexcept
-{
-    return m_existing_db_loaded;
-}
-
-const bool &
-graphquery::database::storage::CDBStorage::get_is_graph_loaded() const noexcept
-{
-    return m_existing_graph_loaded;
-}
-
-void
-graphquery::database::storage::CDBStorage::open_graph(const std::string_view name) noexcept
-{
-    if (!check_if_graph_exists(name))
+    for (const auto & dirEntry : std::filesystem::recursive_directory_iterator(dataset_path))
     {
-        _log_system->warning("Cannot open graph that does not exist, initialise graph first");
-        return;
+        if (std::filesystem::is_regular_file(dirEntry))
+        {
+            io::CSVReader<5> in(dirEntry.path().string());
+            in.read_header(io::ignore_extra_column, "vendor", "size", "speed", "i", "k");
+            std::string vendor;
+            int size;
+            double speed;
+            int i;
+            int k;
+            while (in.read_row(vendor, size, speed, i, k))
+            {
+                fmt::print("{} {} {} {} {}\n", vendor, size, speed, i, k);
+            }
+        }
+    }
+}
+
+    const std::unordered_map<std::string, graphquery::database::storage::CDBStorage::SGraph_Entry_t> & graphquery::database::storage::CDBStorage::get_graph_table() const noexcept
+    {
+        return m_graph_entry_map;
     }
 
-    if (m_existing_db_loaded)
+    std::shared_ptr<graphquery::database::storage::ILPGModel *> graphquery::database::storage::CDBStorage::get_graph() const noexcept
     {
-        if (m_existing_graph_loaded)
-            close_graph();
-
-        const auto graph_entry = m_graph_entry_map.at(name.data());
-
-        if (define_graph_model(name.data(), graph_entry.graph_type))
-            _log_system->info(fmt::format("Opening Graph [{}] of memory model type [{}] as the current context", name, graph_entry.graph_type));
+        return m_loaded_graph;
     }
-    else
-        _log_system->warning("Database has not been loaded for a graph to opened");
-}
 
-bool
-graphquery::database::storage::CDBStorage::check_if_graph_exists(const std::string_view graph_name) const noexcept
-{
-    return m_graph_entry_map.contains(graph_name.data());
-}
+    const bool & graphquery::database::storage::CDBStorage::get_is_db_loaded() const noexcept
+    {
+        return m_existing_db_loaded;
+    }
+
+    const bool & graphquery::database::storage::CDBStorage::get_is_graph_loaded() const noexcept
+    {
+        return m_existing_graph_loaded;
+    }
+
+    void graphquery::database::storage::CDBStorage::open_graph(const std::string_view name) noexcept
+    {
+        if (!check_if_graph_exists(name))
+        {
+            _log_system->warning("Cannot open graph that does not exist, initialise graph first");
+            return;
+        }
+
+        if (m_existing_db_loaded)
+        {
+            if (m_existing_graph_loaded)
+                close_graph();
+
+            const auto graph_entry = m_graph_entry_map.at(name.data());
+
+            if (define_graph_model(name.data(), graph_entry.graph_type))
+                _log_system->info(fmt::format("Opening Graph [{}] of memory model type [{}] as the current context", name, graph_entry.graph_type));
+        }
+        else
+            _log_system->warning("Database has not been loaded for a graph to opened");
+    }
+
+    bool graphquery::database::storage::CDBStorage::check_if_graph_exists(const std::string_view graph_name) const noexcept
+    {
+        return m_graph_entry_map.contains(graph_name.data());
+    }

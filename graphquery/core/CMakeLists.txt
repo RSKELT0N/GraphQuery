@@ -27,9 +27,8 @@ target_compile_options(
         -Werror
         -Wpedantic
         -Wextra
-        -Wshadow
-        -pthread
-        -O2)
+        -lpthread
+        -O3)
 
 target_link_libraries(${EXECUTABLE_NAME}
         PUBLIC
@@ -41,5 +40,6 @@ target_link_libraries(${EXECUTABLE_NAME}
 # Add program include directories
 target_include_directories(${EXECUTABLE_NAME}
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR})
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ../external/)
 

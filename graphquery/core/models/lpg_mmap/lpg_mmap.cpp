@@ -182,7 +182,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_edge_entry(const uint3
     data_block_ptr->payload[payload_offset].metadata.edge_label_id = edge_label_id;
     data_block_ptr->payload[payload_offset].metadata.property_c    = props.size();
 
-    uint32_t next_props_ref = EIndexValue_t::END_INDEX;
+    uint32_t next_props_ref = END_INDEX;
 
     for (const SProperty_t & prop : props)
         next_props_ref = store_property_entry(prop, next_props_ref);
