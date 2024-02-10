@@ -281,6 +281,16 @@ graphquery::database::storage::CDiskDriver::async() const noexcept
     return SRet_t::ERROR;
 }
 
+size_t
+graphquery::database::storage::CDiskDriver::get_filesize() const noexcept
+{
+    if (m_initialised)
+    {
+        return m_fd_info.st_size;
+    }
+    return 0;
+}
+
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::close()
 {

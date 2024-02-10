@@ -1,10 +1,12 @@
 #include "dbstorage.h"
 
 #include "db/system.h"
-#include "csv-parser/csv.h"
 
 #include <string_view>
 #include <cassert>
+#include <cstdint>
+#include <cstdint>
+#include <cstdint>
 
 graphquery::database::storage::CDBStorage::
 CDBStorage()
@@ -210,17 +212,12 @@ graphquery::database::storage::CDBStorage::load_dataset([[maybe_unused]] const s
     {
         if (std::filesystem::is_regular_file(dirEntry))
         {
-            io::CSVReader<5> in(dirEntry.path().string());
-            in.read_header(io::ignore_extra_column, "vendor", "size", "speed", "i", "k");
-            std::string vendor;
-            int size;
-            double speed;
-            int i;
-            int k;
-            while (in.read_row(vendor, size, speed, i, k))
-            {
-                fmt::print("{} {} {} {} {}\n", vendor, size, speed, i, k);
-            }
+            csv::CSVFormat format;
+            format.delimiter(',');
+            format.guess_delim();
+            // custom formatting options go here
+
+            csv::CSVReader mmap(dirEntry.path().c_str(), format);
         }
     }
 }

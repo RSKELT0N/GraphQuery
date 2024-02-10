@@ -23,11 +23,6 @@ target_compile_definitions(${EXECUTABLE_NAME}
 target_compile_options(
         ${EXECUTABLE_NAME}
         PUBLIC
-        -Wall
-        -Werror
-        -Wpedantic
-        -Wshadow
-        -Wextra
         -lpthread
         -O3)
 
@@ -36,7 +31,8 @@ target_link_libraries(${EXECUTABLE_NAME}
         diskdriver
         imgui
         dylib
-        logsystem)
+        logsystem
+        csv)
 
 # Add program include directories
 target_include_directories(${EXECUTABLE_NAME}

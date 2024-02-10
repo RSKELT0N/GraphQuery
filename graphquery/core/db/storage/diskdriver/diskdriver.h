@@ -57,6 +57,7 @@ namespace graphquery::database::storage
         CDiskDriver(const CDiskDriver &) = delete;
         static constexpr int64_t PAGESIZE = KB(4);
 
+        size_t get_filesize() const noexcept;
         [[maybe_unused]] SRet_t close();
         [[maybe_unused]] SRet_t seek(uint64_t offset);
         [[maybe_unused]] uint64_t get_seek_offset() const noexcept;

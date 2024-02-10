@@ -49,4 +49,19 @@ namespace graphquery::database
 
         return to_convert;
     }
+
+    inline std::vector<std::string_view> split(std::string_view in, const char sep)
+    {
+        std::vector<std::string_view> ret;
+        ret.reserve(std::count(in.begin(), in.end(), sep) + 1); // optional
+        for (auto p = in.begin(); ; ++p)
+        {
+            auto q = p;
+            p      = std::find(p, in.end(), sep);
+            ret.emplace_back(q, p);
+            if (p == in.end())
+                return ret;
+        }
+    }
+
 } // namespace graphquery::database

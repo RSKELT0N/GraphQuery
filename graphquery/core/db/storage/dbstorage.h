@@ -12,6 +12,7 @@
 #include "graph_model.h"
 #include "db/storage/config.h"
 #include "diskdriver/memory_ref.h"
+#include "csv-parser/single_include/csv.hpp"
 
 #include <string_view>
 
