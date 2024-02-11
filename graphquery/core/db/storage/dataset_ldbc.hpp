@@ -14,7 +14,6 @@
 #include <filesystem>
 #include <rapidcsv.h>
 #include <unordered_map>
-#include <utility>
 
 namespace graphquery::database::storage
 {
@@ -22,8 +21,8 @@ namespace graphquery::database::storage
     {
       public:
         ~CDatasetLDBC() override;
-        explicit CDatasetLDBC(std::shared_ptr<ILPGModel *> _graph): CDataset(std::move(_graph)) {}
-        explicit CDatasetLDBC(std::shared_ptr<ILPGModel *> _graph, std::filesystem::path & _path): CDataset(std::move(_graph), _path) {}
+        explicit CDatasetLDBC(std::shared_ptr<ILPGModel *> _graph): CDataset(std::move(_graph)) { define_column_edgelabel_map(); }
+        explicit CDatasetLDBC(std::shared_ptr<ILPGModel *> _graph, std::filesystem::path & _path): CDataset(std::move(_graph), _path) { define_column_edgelabel_map(); }
 
         CDatasetLDBC(const CDatasetLDBC &)                 = delete;
         CDatasetLDBC(CDatasetLDBC &&) noexcept             = delete;
@@ -66,16 +65,30 @@ namespace graphquery::database::storage
 
         for (const auto & entry : entries)
         {
-            if (!std::filesystem::is_regular_file(entry))
+            if (!std::filesystem::is_regular_file(entry) || !entry.path().extension().compare("csv"))
                 return;
 
             csv = rapidcsv::Document(entry.path().string(), label_params, sep_params);
 
-            const auto file_name  = entry.path().stem();
-            const auto rows       = csv.GetRowCount();
-            const auto col_names  = csv.GetColumnNames();
-            const auto id_col_idx = csv.GetColumnIdx("id");
-            const auto type_idx   = csv.GetColumnIdx("type");
+            const auto file_name     = entry.path().stem();
+            const auto rows          = csv.GetRowCount();
+            const auto col_names     = csv.GetColumnNames();
+            const int32_t id_col_idx = csv.GetColumnIdx("id");
+            const int32_t type_idx   = csv.GetColumnIdx("type");
+
+            std::vector<uint32_t> prop_indices = {};
+            std::vector<uint32_t> edge_indices = {};
+            prop_indices.reserve(csv.GetColumnCount());
+            edge_indices.reserve(csv.GetColumnCount());
+
+            for (int32_t i = 0; i < static_cast<int32_t>(csv.GetColumnCount()); i++)
+            {
+                if (i != id_col_idx && i != type_idx && !m_column_to_edgelabel_map.contains(csv.GetColumnName(i)))
+                    prop_indices.emplace_back(i);
+
+                if (m_column_to_edgelabel_map.contains(csv.GetColumnName(i)))
+                    edge_indices.emplace_back(i);
+            }
 
             for (size_t row = 0; row < rows; row++)
             {
@@ -83,7 +96,32 @@ namespace graphquery::database::storage
                 const uint32_t id   = std::stol(row_data[id_col_idx]);
                 const auto type     = type_idx == -1 ? file_name.string() : row_data[type_idx];
 
-                (*m_graph)->add_vertex(ILPGModel::SNodeID {id, type}, {});
+                std::vector<std::pair<std::string_view, std::string_view>> props;
+                props.reserve(prop_indices.size());
+
+                for (const auto & prop_idx : prop_indices)
+                    props.emplace_back(csv.GetColumnName(prop_idx), row_data[prop_idx]);
+
+                (*m_graph)->add_vertex(ILPGModel::SNodeID {id, type}, props);
+            }
+
+            for (size_t row = 0; row < rows; row++)
+            {
+                const auto row_data   = csv.GetRow<std::string>(row);
+                const uint32_t src_id = std::stol(row_data[id_col_idx]);
+                const auto src_type   = type_idx == -1 ? file_name.string() : row_data[type_idx];
+
+                for (const auto & edge_idx : edge_indices)
+                {
+                    const std::string & dst_id = row_data[edge_idx];
+
+                    if (dst_id.empty())
+                        continue;
+
+                    const auto dst_type         = type_idx == -1 ? file_name.string() : csv.GetCell<std::string>(type_idx, dst_id);
+                    const std::string edge_type = m_column_to_edgelabel_map.at(csv.GetColumnName(edge_idx));
+                    (*m_graph)->add_edge(ILPGModel::SNodeID {src_id, src_type}, ILPGModel::SNodeID {static_cast<uint32_t>(std::stol(dst_id)), dst_type}, edge_type, {});
+                }
             }
         }
     }

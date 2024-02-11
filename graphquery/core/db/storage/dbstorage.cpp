@@ -171,8 +171,8 @@ graphquery::database::storage::CDBStorage::close_graph() noexcept
     m_existing_graph_loaded = false;
     (*m_loaded_graph)->save_graph();
     (*m_loaded_graph)->close();
-    m_graph_model_lib.reset();
     m_loaded_graph.reset();
+    m_graph_model_lib.reset();
     _log_system->info(fmt::format("Graph has been unloaded from memory and changes have been synced"));
 }
 
@@ -213,9 +213,9 @@ graphquery::database::storage::CDBStorage::load_dataset(std::filesystem::path da
     const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     m_dataset_loader->load();
     const std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    const std::chrono::duration<double> elapsed     = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+    const std::chrono::duration<double> elapsed     = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-    _log_system->info(fmt::format("Dataset has been inserted into currently loaded graph within {}ns", elapsed.count()));
+    _log_system->info(fmt::format("Dataset has been inserted into loaded graph within {}ms", elapsed.count()));
 }
 
 const std::unordered_map<std::string, graphquery::database::storage::CDBStorage::SGraph_Entry_t> &

@@ -47,7 +47,6 @@ namespace graphquery::database::storage
             uint32_t dst           = {};
             uint32_t property_id   = {};
             uint16_t edge_label_id = {};
-            uint16_t dst_label_id  = {};
             uint16_t property_c    = {};
 
             SEdge_t() = default;
@@ -57,20 +56,10 @@ namespace graphquery::database::storage
                 this->dst           = cpy.dst;
                 this->property_id   = cpy.property_id;
                 this->edge_label_id = cpy.edge_label_id;
-                this->dst_label_id  = cpy.dst_label_id;
                 this->property_c    = cpy.property_c;
             }
 
-            SEdge_t & operator=(const SEdge_t & cpy)
-            {
-                this->src           = cpy.src;
-                this->dst           = cpy.dst;
-                this->property_id   = cpy.property_id;
-                this->edge_label_id = cpy.edge_label_id;
-                this->dst_label_id  = cpy.dst_label_id;
-                this->property_c    = cpy.property_c;
-                return *this;
-            }
+            SEdge_t & operator=(const SEdge_t & cpy) = default;
         };
 
         struct SVertex_t
@@ -93,16 +82,7 @@ namespace graphquery::database::storage
                 this->edge_label_c = cpy.edge_label_c;
             }
 
-            SVertex_t & operator=(const SVertex_t & cpy)
-            {
-                this->id           = cpy.id;
-                this->neighbour_c  = cpy.neighbour_c;
-                this->property_id  = cpy.property_id;
-                this->property_c   = cpy.property_c;
-                this->label_id     = cpy.label_id;
-                this->edge_label_c = cpy.edge_label_c;
-                return *this;
-            }
+            SVertex_t & operator=(const SVertex_t & cpy) = default;
         };
 
         struct SProperty_t
@@ -133,11 +113,9 @@ namespace graphquery::database::storage
         virtual std::unordered_map<std::string, std::string> get_properties_by_vertex_map(const SNodeID & id) = 0;
 
         virtual std::vector<SEdge_t> get_edges(const SNodeID & src, const SNodeID & dst)                                                                                    = 0;
-        virtual std::optional<SEdge_t> get_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label)                                                      = 0;
-        virtual std::optional<SEdge_t> get_edge(const SNodeID & src, std::string_view edge_label, std::string_view vertex_label)                                            = 0;
         virtual std::vector<SEdge_t> get_edges(const SNodeID & src, std::string_view edge_label, std::string_view vertex_label)                                             = 0;
         virtual std::unordered_set<uint32_t> get_edge_dst_vertices(const SNodeID & src, std::string_view edge_label, std::string_view vertex_label)                         = 0;
-        virtual std::vector<SEdge_t> get_recursive_edges(const SNodeID & src, std::initializer_list<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs) = 0;
+        virtual std::vector<SEdge_t> get_recursive_edges(const SNodeID & src, std::vector<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs)           = 0;
 
         virtual std::vector<SEdge_t> get_edges(const std::function<bool(const SEdge_t &)> &)                                                             = 0;
         virtual std::vector<SVertex_t> get_vertices(const std::function<bool(const SVertex_t &)> &)                                                      = 0;
@@ -150,9 +128,9 @@ namespace graphquery::database::storage
         virtual void rm_vertex(const SNodeID & vertex_id)                                                                                                                               = 0;
         virtual void rm_edge(const SNodeID & src, const SNodeID & dst)                                                                                                                  = 0;
         virtual void rm_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label)                                                                                     = 0;
-        virtual void add_vertex(const SNodeID & id, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)                                                  = 0;
-        virtual void add_vertex(std::string_view label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop)                                              = 0;
-        virtual void add_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label, const std::initializer_list<std::pair<std::string_view, std::string_view>> & prop) = 0;
+        virtual void add_vertex(const SNodeID & id, const std::vector<std::pair<std::string_view, std::string_view>> & prop)                                                            = 0;
+        virtual void add_vertex(std::string_view label, const std::vector<std::pair<std::string_view, std::string_view>> & prop)                                                        = 0;
+        virtual void add_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label, const std::vector<std::pair<std::string_view, std::string_view>> & prop)           = 0;
     };
 } // namespace graphquery::database::storage
 

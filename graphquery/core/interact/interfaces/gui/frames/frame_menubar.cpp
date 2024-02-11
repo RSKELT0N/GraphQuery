@@ -346,7 +346,7 @@ graphquery::interact::CFrameMenuBar::render_open_graph_button() noexcept
         assert(m_open_graph_choice >= 0 && static_cast<size_t>(m_open_graph_choice) < m_graph_table.size());
 
         set_open_graph_state(false);
-        std::thread(&database::storage::CDBStorage::open_graph, database::_db_storage.get(), std::next(m_graph_table.begin(), m_open_graph_choice)->second.graph_name).detach();
+        database::_db_storage->open_graph(std::next(m_graph_table.begin(), m_open_graph_choice)->second.graph_name);
     }
 }
 
