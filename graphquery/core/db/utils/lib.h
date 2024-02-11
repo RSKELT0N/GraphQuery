@@ -10,6 +10,7 @@
 #pragma once
 
 #include <climits>
+#include <algorithm>
 #include <type_traits>
 
 namespace graphquery::database

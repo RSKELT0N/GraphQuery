@@ -8,11 +8,11 @@
 
 #pragma once
 
+#include "dataset.h"
 #include "dylib.hpp"
 #include "graph_model.h"
 #include "db/storage/config.h"
 #include "diskdriver/memory_ref.h"
-#include "csv-parser/single_include/csv.hpp"
 
 #include <string_view>
 
@@ -57,7 +57,7 @@ namespace graphquery::database::storage
         void open_graph(std::string_view name) noexcept;
         void init(const std::filesystem::path & path, std::string_view db_name);
         void create_graph(std::string_view name, std::string_view type) noexcept;
-        static void load_dataset(const std::filesystem::path & dataset_path) noexcept;
+        void load_dataset(std::filesystem::path dataset_path) const noexcept;
         [[nodiscard]] bool check_if_graph_exists(std::string_view graph_name) const noexcept;
 
         void close_graph() noexcept;
@@ -77,6 +77,7 @@ namespace graphquery::database::storage
         [[nodiscard]] bool define_graph_model(std::string_view name, std::string_view type) noexcept;
 
         CDiskDriver m_db_file;                                 //~ Instance of the DiskDriver for the DB master file.
+        std::unique_ptr<CDataset> m_dataset_loader;            //~ Instance of the dataset loader.
         std::unique_ptr<dylib> m_graph_model_lib    = nullptr; //~ Library of the currently loaded graph model.
         std::shared_ptr<ILPGModel *> m_loaded_graph = {};      //~ Instance of the currently linked graph model.
 

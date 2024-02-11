@@ -101,8 +101,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::load_graph(std::filesystem::
 
     //~ Load graph memory.
     m_transactions->init();
-    m_transactions->handle_transactions();
     read_index_list();
+    m_transactions->handle_transactions();
 }
 
 void
@@ -1115,8 +1115,12 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_head_offset(const
 std::optional<graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SVertexDataBlock>>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_id(const uint32_t id, const uint16_t label_id) noexcept
 {
-    auto index_ptr = m_global_index_file.read_entry(id);
-    auto head      = index_ptr->offset;
+    auto index_ptr          = m_global_index_file.read_entry(id);
+    auto head               = index_ptr->offset;
+    const auto data_block_c = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
+
+    if (head >= data_block_c)
+        return std::nullopt;
 
     while (head != END_INDEX)
     {
@@ -1140,7 +1144,7 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::define_vertex_lut() noexcept
 {
     const auto label_c = utils::atomic_load(&read_graph_metadata()->vertex_label_c);
-    m_label_vertex.reserve(label_c);
+    m_label_vertex.resize(label_c);
     m_label_map.reserve(label_c);
 
     auto label_ptr = read_vertex_label_entry(0);
@@ -1148,7 +1152,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::define_vertex_lut() noexcept
     for (uint16_t i = 0; i < label_c; i++, ++label_ptr)
     {
         m_label_map[label_ptr->label_s] = label_ptr->label_id;
-        m_label_vertex[label_ptr->label_id].reserve(label_ptr->item_c);
+        m_label_vertex[label_ptr->label_id].resize(label_ptr->item_c);
     }
 }
 

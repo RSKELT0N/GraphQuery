@@ -23,7 +23,12 @@ target_compile_definitions(${EXECUTABLE_NAME}
 target_compile_options(
         ${EXECUTABLE_NAME}
         PUBLIC
-        -lpthread
+        -Wall
+        -Werror
+        -Wpedantic
+        -Wshadow
+        -Wextra
+        -pthread
         -O3)
 
 target_link_libraries(${EXECUTABLE_NAME}
@@ -32,7 +37,7 @@ target_link_libraries(${EXECUTABLE_NAME}
         imgui
         dylib
         logsystem
-        csv)
+        rapidcsv)
 
 # Add program include directories
 target_include_directories(${EXECUTABLE_NAME}
