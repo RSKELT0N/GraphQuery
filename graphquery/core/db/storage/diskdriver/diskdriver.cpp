@@ -408,7 +408,7 @@ graphquery::database::storage::CDiskDriver::seek(const uint64_t offset)
 int64_t
 graphquery::database::storage::CDiskDriver::resize_to_pagesize(const int64_t size) noexcept
 {
-    const uint32_t pages = ceilaferdiv(size, PAGESIZE);
+    const uint32_t pages = utils::ceilaferdiv(size, PAGESIZE);
     return pages * PAGESIZE;
 }
 

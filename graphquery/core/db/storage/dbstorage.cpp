@@ -1,11 +1,13 @@
 #include "dbstorage.h"
 
+#include "db/utils/lib.h"
 #include "dataset_ldbc.hpp"
 #include "db/system.h"
 #include "csv-parser/src/rapidcsv.h"
 
 #include <string_view>
 #include <cassert>
+#include <cstdint>
 #include <cstdint>
 #include <cstdint>
 #include <cstdint>
@@ -187,13 +189,15 @@ graphquery::database::storage::CDBStorage::create_graph(const std::string_view n
 
     if (m_existing_db_loaded)
     {
-        if (*m_loaded_graph)
+        if (m_existing_graph_loaded)
             close_graph();
 
-        if (define_graph_model(name.data(), type.data()))
+        const auto [defined, elapsed] = utils::measure<bool>(&CDBStorage::define_graph_model, this, name.data(), type.data());
+
+        if (defined)
         {
             store_graph_entry(SGraph_Entry_t(name, type.data()));
-            _log_system->info(fmt::format("Graph [{}] of memory model type [{}] has been created and opened", name, type));
+            _log_system->info(fmt::format("Graph [{}] of memory model type [{}] has been created and opened within {}s", name, type, elapsed.count()));
         }
     }
     else
@@ -209,13 +213,9 @@ graphquery::database::storage::CDBStorage::load_dataset(std::filesystem::path da
         return;
     }
     m_dataset_loader->set_path(dataset_path);
+    const auto [elapsed] = utils::measure(&CDataset::load, m_dataset_loader.get());
 
-    const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-    m_dataset_loader->load();
-    const std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    const std::chrono::duration<double> elapsed     = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-    _log_system->info(fmt::format("Dataset has been inserted into loaded graph within {}ms", elapsed.count()));
+    _log_system->info(fmt::format("Dataset has been inserted into loaded graph within {}s", elapsed.count()));
 }
 
 const std::unordered_map<std::string, graphquery::database::storage::CDBStorage::SGraph_Entry_t> &
@@ -256,10 +256,11 @@ graphquery::database::storage::CDBStorage::open_graph(const std::string_view nam
         if (m_existing_graph_loaded)
             close_graph();
 
-        const auto graph_entry = m_graph_entry_map.at(name.data());
+        const auto graph_entry        = m_graph_entry_map.at(name.data());
+        const auto [defined, elapsed] = utils::measure<bool>(&CDBStorage::define_graph_model, this, name.data(), graph_entry.graph_type);
 
-        if (define_graph_model(name.data(), graph_entry.graph_type))
-            _log_system->info(fmt::format("Opening Graph [{}] of memory model type [{}] as the current context", name, graph_entry.graph_type));
+        if (defined)
+            _log_system->info(fmt::format("Opening Graph [{}] of memory model type [{}] as the current context within {}s", name, graph_entry.graph_type, elapsed.count()));
     }
     else
         _log_system->warning("Database has not been loaded for a graph to opened");
