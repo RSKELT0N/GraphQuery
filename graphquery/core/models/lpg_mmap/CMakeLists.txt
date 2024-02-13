@@ -20,11 +20,6 @@ target_sources(
 target_compile_options(
         lpg_mmap
         PUBLIC
-        -Wall
-        -Werror
-        -Wpedantic
-        -Wshadow
-        -Wextra
         -pthread
         -fPIC
         -O3)

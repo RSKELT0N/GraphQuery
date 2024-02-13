@@ -3,7 +3,6 @@
 #include "db/utils/lib.h"
 #include "dataset_ldbc.hpp"
 #include "db/system.h"
-#include "csv-parser/src/rapidcsv.h"
 
 #include <string_view>
 #include <cassert>
@@ -171,9 +170,7 @@ void
 graphquery::database::storage::CDBStorage::close_graph() noexcept
 {
     m_existing_graph_loaded = false;
-    (*m_loaded_graph)->save_graph();
-    (*m_loaded_graph)->close();
-    m_loaded_graph.reset();
+    delete *m_loaded_graph;
     m_graph_model_lib.reset();
     _log_system->info(fmt::format("Graph has been unloaded from memory and changes have been synced"));
 }

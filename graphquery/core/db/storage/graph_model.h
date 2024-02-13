@@ -26,9 +26,6 @@ namespace graphquery::database::storage
     class ILPGModel : public IMemoryModel
     {
       public:
-        template<typename T>
-        using LabelGroup = std::vector<T>;
-
         ILPGModel()           = default;
         ~ILPGModel() override = default;
 
@@ -39,6 +36,21 @@ namespace graphquery::database::storage
 
             SNodeID() = default;
             SNodeID(const uint32_t _id, const std::string_view _label): id(_id), label(_label) {}
+        };
+
+        /****************************************************************
+         * \struct SLabel_t
+         * \brief Structure of a label type within the graph
+         *
+         * \param label_s char[]    - str of label name
+         * \param item_c uint32_t   - count of the generic items under this label type
+         * \param label_id uint16_t - unique identifier for relative label usage
+         ***************************************************************/
+        struct SLabel_t
+        {
+            char label_s[CFG_LPG_LABEL_LENGTH] = {};
+            uint32_t item_c                    = {};
+            uint16_t label_id                  = {};
         };
 
         struct SEdge_t
@@ -112,10 +124,10 @@ namespace graphquery::database::storage
         virtual std::unordered_map<std::string, std::string> get_properties_by_property_id_map(uint32_t id)   = 0;
         virtual std::unordered_map<std::string, std::string> get_properties_by_vertex_map(const SNodeID & id) = 0;
 
-        virtual std::vector<SEdge_t> get_edges(const SNodeID & src, const SNodeID & dst)                                                                                    = 0;
-        virtual std::vector<SEdge_t> get_edges(const SNodeID & src, std::string_view edge_label, std::string_view vertex_label)                                             = 0;
-        virtual std::unordered_set<uint32_t> get_edge_dst_vertices(const SNodeID & src, std::string_view edge_label, std::string_view vertex_label)                         = 0;
-        virtual std::vector<SEdge_t> get_recursive_edges(const SNodeID & src, std::vector<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs)           = 0;
+        virtual std::vector<SEdge_t> get_edges(const SNodeID & src, const SNodeID & dst)                                                                          = 0;
+        virtual std::vector<SEdge_t> get_edges(const SNodeID & src, std::string_view edge_label, std::string_view vertex_label)                                   = 0;
+        virtual std::unordered_set<uint32_t> get_edge_dst_vertices(const SNodeID & src, std::string_view edge_label, std::string_view vertex_label)               = 0;
+        virtual std::vector<SEdge_t> get_recursive_edges(const SNodeID & src, std::vector<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs) = 0;
 
         virtual std::vector<SEdge_t> get_edges(const std::function<bool(const SEdge_t &)> &)                                                             = 0;
         virtual std::vector<SVertex_t> get_vertices(const std::function<bool(const SVertex_t &)> &)                                                      = 0;
@@ -125,12 +137,12 @@ namespace graphquery::database::storage
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, const SNodeID & dst)                          = 0;
         virtual std::vector<SEdge_t> get_edges(uint32_t vertex_id, std::string_view edge_label, std::string_view vertex_label)                           = 0;
 
-        virtual void rm_vertex(const SNodeID & vertex_id)                                                                                                                               = 0;
-        virtual void rm_edge(const SNodeID & src, const SNodeID & dst)                                                                                                                  = 0;
-        virtual void rm_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label)                                                                                     = 0;
-        virtual void add_vertex(const SNodeID & id, const std::vector<std::pair<std::string_view, std::string_view>> & prop)                                                            = 0;
-        virtual void add_vertex(std::string_view label, const std::vector<std::pair<std::string_view, std::string_view>> & prop)                                                        = 0;
-        virtual void add_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label, const std::vector<std::pair<std::string_view, std::string_view>> & prop)           = 0;
+        virtual void rm_vertex(const SNodeID & vertex_id)                                                                                                                     = 0;
+        virtual void rm_edge(const SNodeID & src, const SNodeID & dst)                                                                                                        = 0;
+        virtual void rm_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label)                                                                           = 0;
+        virtual void add_vertex(const SNodeID & id, const std::vector<std::pair<std::string_view, std::string_view>> & prop)                                                  = 0;
+        virtual void add_vertex(std::string_view label, const std::vector<std::pair<std::string_view, std::string_view>> & prop)                                              = 0;
+        virtual void add_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label, const std::vector<std::pair<std::string_view, std::string_view>> & prop) = 0;
     };
 } // namespace graphquery::database::storage
 

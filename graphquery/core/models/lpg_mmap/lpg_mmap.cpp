@@ -15,6 +15,12 @@ CMemoryModelMMAPLPG(): m_sync_needed(false), m_syncing(0), m_transaction_ref_c(0
     m_unq_lock     = std::unique_lock(m_sync_lock);
 }
 
+graphquery::database::storage::CMemoryModelMMAPLPG::~CMemoryModelMMAPLPG()
+{
+    save_graph();
+    close();
+}
+
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::close() noexcept
 {
@@ -1174,7 +1180,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::define_vertex_lut() noexcept
     for (uint16_t i = 0; i < label_c; i++, ++label_ptr)
     {
         m_label_map[label_ptr->label_s] = label_ptr->label_id;
-        m_label_vertex[label_ptr->label_id].resize(label_ptr->item_c);
+        m_label_vertex[label_ptr->label_id].reserve(label_ptr->item_c);
     }
 }
 
@@ -1186,12 +1192,12 @@ graphquery::database::storage::CMemoryModelMMAPLPG::read_index_list() noexcept
 
     auto vertex_ptr = m_vertices_file.read_entry(0);
 
-    for (uint32_t vertex_i = 0, vertex_c = 0; vertex_c < block_c; vertex_c++, ++vertex_ptr)
+    for (uint32_t vertex_i = 0; vertex_i < block_c; vertex_i++, ++vertex_ptr)
     {
         if (unlikely(!vertex_ptr->state.any()))
             continue;
 
-        m_label_vertex[vertex_ptr->payload.metadata.label_id][vertex_i++] = vertex_ptr->idx;
+        m_label_vertex[vertex_ptr->payload.metadata.label_id].emplace_back(vertex_ptr->idx);
     }
 }
 

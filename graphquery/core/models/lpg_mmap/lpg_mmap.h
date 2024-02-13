@@ -84,21 +84,6 @@ namespace graphquery::database::storage
         };
 
         /****************************************************************
-         * \struct SLabel_t
-         * \brief Structure of a label type within the graph
-         *
-         * \param label_s char[]    - str of label name
-         * \param item_c uint32_t   - count of the generic items under this label type
-         * \param label_id uint16_t - unique identifier for relative label usage
-         ***************************************************************/
-        struct SLabel_t
-        {
-            char label_s[CFG_LPG_LABEL_LENGTH] = {};
-            uint32_t item_c                    = {};
-            uint16_t label_id                  = {};
-        };
-
-        /****************************************************************
          * \struct SEdgeEntry_t
          * \brief Structure of an edge entry to the edge list.
          *
@@ -126,7 +111,7 @@ namespace graphquery::database::storage
 
       public:
         CMemoryModelMMAPLPG();
-        ~CMemoryModelMMAPLPG() override = default;
+        ~CMemoryModelMMAPLPG() override;
 
         void close() noexcept override;
         void save_graph() noexcept override;

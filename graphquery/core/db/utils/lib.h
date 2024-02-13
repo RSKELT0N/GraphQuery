@@ -63,9 +63,9 @@ namespace graphquery::database::utils
         return to_convert;
     }
 
-    inline std::vector<std::string_view> split(std::string_view in, const char sep)
+    inline std::vector<std::string> split(std::string & in, const char sep)
     {
-        std::vector<std::string_view> ret;
+        std::vector<std::string> ret;
         ret.reserve(std::count(in.begin(), in.end(), sep) + 1); // optional
         for (auto p = in.begin();; ++p)
         {

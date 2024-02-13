@@ -1,0 +1,4 @@
+LDBC SNB Dataset strict order:
+
+Static:
+ - 

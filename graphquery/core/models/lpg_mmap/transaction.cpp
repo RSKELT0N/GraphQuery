@@ -79,7 +79,7 @@ graphquery::database::storage::CTransaction::commit_rm_vertex(const ILPGModel::S
 
     auto transaction_ptr = read_transaction<SVertexTransaction>(commit_addr);
 
-    transaction_ptr->type              = ETransactionType::vertex;
+    transaction_ptr->type               = ETransactionType::vertex;
     transaction_ptr->commit.optional_id = src.id;
     strncpy(&transaction_ptr->commit.label[0], src.label.data(), CFG_LPG_LABEL_LENGTH);
     transaction_ptr->commit.remove     = 1;
@@ -174,8 +174,8 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
     const uint32_t transaction_c = utils::atomic_load(&read_transaction_header()->transaction_c);
 
     SRef_t<ETransactionType> type;
-    SRef_t<SVertexTransaction> v_transc = {};
-    SRef_t<SEdgeTransaction> e_transc   = {};
+    SRef_t<SVertexTransaction> v_transc = SRef_t<SVertexTransaction>();
+    SRef_t<SEdgeTransaction> e_transc   = SRef_t<SEdgeTransaction>();
 
     std::vector<ILPGModel::SProperty_t> props = {};
 
