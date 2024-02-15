@@ -53,17 +53,23 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-            for (int i = 0; i < 5; i++)
-                (*m_graph)->add_vertex("Person", {});
+        {
+            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {0, {"Place", "City"}}, {});
+            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {1, {"Place", "Country"}}, {});
+            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {2, {"Place", "Continent"}}, {});
+        }
 
         if (ImGui::Button("Query"))
         {
-            //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
-            std::unordered_set<uint32_t> _friends = (*m_graph)->get_edge_dst_vertices({0, "Person"}, "KNOWS", "Person");
-            for (const auto _friend : _friends)
-            {
-                database::_log_system->info(fmt::format("FOUND: {}", _friend));
-            }
+            auto p    = (*m_graph)->get_vertices_by_label("Place");
+            auto ci   = (*m_graph)->get_vertices_by_label("City");
+            auto co   = (*m_graph)->get_vertices_by_label("Country");
+            auto cont = (*m_graph)->get_vertices_by_label("Continent");
+
+            database::_log_system->info(fmt::format("Place: {}", p.size()));
+            database::_log_system->info(fmt::format("City: {}", ci.size()));
+            database::_log_system->info(fmt::format("Country: {}", co.size()));
+            database::_log_system->info(fmt::format("Continent: {}", cont.size()));
         }
 
         if (ImGui::Button("Add Vertex (0)"))
@@ -71,15 +77,15 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 
         if (ImGui::Button("Add Edge"))
         {
-            (*m_graph)->add_edge({0, "Person"}, {1, "Person"}, "KNOWS", {});
-            (*m_graph)->add_edge({0, "Person"}, {20, "Dog"}, "KNOWS", {});
+            (*m_graph)->add_edge({0, {"Person"}}, {1, {"Person"}}, "KNOWS", {});
+            (*m_graph)->add_edge({0, {"Person"}}, {20, {"Dog"}}, "KNOWS", {});
         }
 
         if (ImGui::Button("Remove Vertex"))
-            (*m_graph)->rm_vertex({0, "Person"});
+            (*m_graph)->rm_vertex({0, {"Person"}});
 
         if (ImGui::Button("Remove Edge"))
-            (*m_graph)->rm_edge({0, "Person"}, {1, "Person"}, "PERSON");
+            (*m_graph)->rm_edge({0, {"Person"}}, {1, {"Person"}}, "PERSON");
     }
 }
 

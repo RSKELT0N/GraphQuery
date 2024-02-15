@@ -68,10 +68,7 @@ namespace graphquery::database::storage
     };
 } // namespace graphquery::database::storage
 
-inline graphquery::database::storage::CIndexFile::
-CIndexFile()
-{
-}
+inline graphquery::database::storage::CIndexFile::CIndexFile() = default;
 
 inline graphquery::database::storage::CIndexFile::~
 CIndexFile()

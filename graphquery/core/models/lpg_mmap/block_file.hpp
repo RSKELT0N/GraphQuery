@@ -49,6 +49,7 @@ namespace graphquery::database::storage
         uint32_t next            = END_INDEX;
         uint32_t version         = END_INDEX;
         std::array<T, N> payload = {};
+        uint8_t payload_amt      = {};
     };
 
     /****************************************************************

@@ -86,14 +86,14 @@ namespace graphquery::database::storage
         {
             const auto row_data = fd.GetRow<std::string>(row);
             const uint32_t id   = std::stol(row_data[id_col_idx]);
-            const auto type     = type_idx == -1 ? file_name : row_data[type_idx];
+            const auto type     = type_idx == -1 ? file_name.data() : row_data[type_idx];
 
             props.reserve(prop_indices.size());
 
             for (const auto & prop_idx : prop_indices)
                 props.emplace_back(fd.GetColumnName(prop_idx), row_data[prop_idx]);
 
-            (*m_graph)->add_vertex(ILPGModel::SNodeID {id, type}, props);
+            (*m_graph)->add_vertex(ILPGModel::SNodeID {id, {type}}, props);
             props.clear();
         }
     }
@@ -119,14 +119,14 @@ namespace graphquery::database::storage
         {
             const auto row_data = fd.GetRow<std::string>(row);
             const uint32_t id   = std::stol(row_data[id_col_idx]);
-            const auto type     = type_idx == -1 ? file_name : row_data[type_idx];
+            const auto type     = type_idx == -1 ? file_name.data() : row_data[type_idx];
 
             props.reserve(prop_indices.size());
 
             for (const auto & prop_idx : prop_indices)
                 props.emplace_back(fd.GetColumnName(prop_idx), row_data[prop_idx]);
 
-            (*m_graph)->add_vertex(ILPGModel::SNodeID {id, type}, props);
+            (*m_graph)->add_vertex(ILPGModel::SNodeID {id, {type}}, props);
             props.clear();
         }
     }
@@ -148,15 +148,15 @@ namespace graphquery::database::storage
             load_vertex_file(entry.path().string(), csv);
         }
 
-        //~ Process Edge Files
-        for (const auto & entry : entries)
-        {
-            if (!std::filesystem::is_regular_file(entry) || !entry.path().extension().compare("csv"))
-                return;
-
-            csv = rapidcsv::Document(entry.path().string(), label_params, sep_params);
-            load_edge_file(entry.path().string(), csv);
-        }
+        // //~ Process Edge Files
+        // for (const auto & entry : entries)
+        // {
+        //     if (!std::filesystem::is_regular_file(entry) || !entry.path().extension().compare("csv"))
+        //         return;
+        //
+        //     csv = rapidcsv::Document(entry.path().string(), label_params, sep_params);
+        //     load_edge_file(entry.path().string(), csv);
+        // }
     }
 
     inline void CDatasetLDBC::load_dataset_dynamic([[maybe_unused]] const std::filesystem::path & path) const noexcept

@@ -31,11 +31,11 @@ namespace graphquery::database::storage
 
         struct SNodeID
         {
-            uint32_t id       = {};
-            std::string label = {};
+            uint32_t id                          = {};
+            std::vector<std::string_view> labels = {};
 
             SNodeID() = default;
-            SNodeID(const uint32_t _id, const std::string_view _label): id(_id), label(_label) {}
+            SNodeID(const uint32_t _id, const std::vector<std::string_view> & _label): id(_id), labels(_label) {}
         };
 
         /****************************************************************
@@ -79,8 +79,8 @@ namespace graphquery::database::storage
             uint32_t id           = {};
             uint32_t neighbour_c  = {};
             uint32_t property_id  = {};
+            uint32_t label_id     = {};
             uint16_t property_c   = {};
-            uint16_t label_id     = {};
             uint16_t edge_label_c = {};
 
             SVertex_t() = default;
@@ -141,7 +141,7 @@ namespace graphquery::database::storage
         virtual void rm_edge(const SNodeID & src, const SNodeID & dst)                                                                                                        = 0;
         virtual void rm_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label)                                                                           = 0;
         virtual void add_vertex(const SNodeID & id, const std::vector<std::pair<std::string_view, std::string_view>> & prop)                                                  = 0;
-        virtual void add_vertex(std::string_view label, const std::vector<std::pair<std::string_view, std::string_view>> & prop)                                              = 0;
+        virtual void add_vertex(const std::vector<std::string_view> & labels, const std::vector<std::pair<std::string_view, std::string_view>> & prop)                        = 0;
         virtual void add_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label, const std::vector<std::pair<std::string_view, std::string_view>> & prop) = 0;
     };
 } // namespace graphquery::database::storage
