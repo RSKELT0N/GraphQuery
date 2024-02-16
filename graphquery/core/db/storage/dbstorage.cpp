@@ -152,7 +152,7 @@ graphquery::database::storage::CDBStorage::define_graph_model(const std::string_
     try
     {
         m_graph_model_lib = std::make_unique<dylib>(dylib(fmt::format("{}/{}", PROJECT_ROOT, "lib/models"), type.data()));
-        m_graph_model_lib->get_function<void(ILPGModel **)>("create_graph_model")(m_loaded_graph.get());
+        m_graph_model_lib->get_function<void(ILPGModel **, const std::shared_ptr<logger::CLogSystem> &)>("create_graph_model")(m_loaded_graph.get(), _log_system);
         (*m_loaded_graph)->init(m_db_file.get_path().parent_path().string(), name);
 
         m_existing_graph_loaded = true;

@@ -59,7 +59,7 @@ graphquery::database::storage::CTransaction::define_transaction_header()
 
 template<typename T>
 graphquery::database::storage::SRef_t<T>
-graphquery::database::storage::CTransaction::read_transaction(const uint32_t seek)
+graphquery::database::storage::CTransaction::read_transaction(const uint64_t seek)
 {
     return m_transaction_file.ref<T>(seek);
 }
@@ -141,7 +141,7 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const ILPGModel::SNo
 }
 
 void
-graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std::string_view> & labels, const std::vector<ILPGModel::SProperty_t> & props, const uint32_t optional_id) noexcept
+graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std::string_view> & labels, const std::vector<ILPGModel::SProperty_t> & props, const uint64_t optional_id) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
     const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr,

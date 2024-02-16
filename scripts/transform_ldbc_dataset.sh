@@ -26,6 +26,14 @@ echo "All other files except '*.csv' have been removed."
 # shellcheck disable=SC2156
 find "$1" -type f -name "*.csv" -exec sh -c 'dir=$(dirname "{}") && new_name="$(dirname "$dir")/$(basename "$dir").csv" && if [ -f "{}" ]; then mv "{}" "$new_name" && rm -r "$dir"; fi' \;
 echo "All '*.csv' files have been extracted and renamed."
+
+initial_snapshot_dir=$(find $1 -type d -name "initial_snapshot" -print -quit)
+
+if [[ -n $initial_snapshot_dir ]]; then
+    find "$initial_snapshot_dir" -type f -name '*_*' -exec sh -c 'mkdir -p "${1%/*}/edges" && mv "$1" "${1%/*}/edges/"' sh {} \;
+    find "$initial_snapshot_dir" -type f ! -name '*_*' -exec sh -c 'mkdir -p "${1%/*}/vertices" && mv "$1" "${1%/*}/vertices/"' sh {} \;
+fi
+echo "Vertex and edge files have been stored under their own folder, for dynamic and static parts of the graph."
 echo "Script finished successfully."
 exit 0
 

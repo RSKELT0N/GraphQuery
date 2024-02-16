@@ -29,7 +29,9 @@ target_compile_options(
         -Wshadow
         -Wextra
         -pthread
-        -O3)
+        -O3
+        -ffast-math
+        -ffinite-math-only)
 
 target_link_libraries(${EXECUTABLE_NAME}
         PUBLIC

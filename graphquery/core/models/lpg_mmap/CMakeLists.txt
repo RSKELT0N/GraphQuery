@@ -22,7 +22,9 @@ target_compile_options(
         PUBLIC
         -pthread
         -fPIC
-        -O3)
+        -O3
+        -ffast-math
+        -ffinite-math-only)
 
 target_link_libraries(
         lpg_mmap

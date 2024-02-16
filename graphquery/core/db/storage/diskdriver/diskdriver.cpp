@@ -77,7 +77,7 @@ graphquery::database::storage::CDiskDriver::resize(const int64_t file_size) noex
     m_cv_lock.wait(m_unq_lock, wait_on_refs);
 
     assert(unmap() == SRet_t::VALID);
-    truncate(resize_to_pagesize(file_size));
+    truncate(std::min(resize_to_pagesize(file_size), INT64_MAX));
     map();
 
     m_resizing = 0;
@@ -125,7 +125,7 @@ graphquery::database::storage::CDiskDriver::map() noexcept
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::unmap() const noexcept
 {
-    if (munmap(this->m_memory_mapped_file, static_cast<size_t>(this->m_fd_info.st_size)) == -1)
+    if (munmap(this->m_memory_mapped_file, this->m_fd_info.st_size) == -1)
     {
         m_log_system->error(fmt::format("Error unmapping file from memory"));
         return SRet_t::ERROR;
@@ -344,7 +344,7 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
 }
 
 void *
-graphquery::database::storage::CDiskDriver::ref(const uint64_t seek, const uint64_t size) noexcept
+graphquery::database::storage::CDiskDriver::ref(const int64_t seek, const uint64_t size) noexcept
 {
     static char * ptr = nullptr;
     if (this->m_initialised)
@@ -393,7 +393,7 @@ graphquery::database::storage::CDiskDriver::operator[](const int64_t idx) const 
 }
 
 graphquery::database::storage::CDiskDriver::SRet_t
-graphquery::database::storage::CDiskDriver::seek(const uint64_t offset)
+graphquery::database::storage::CDiskDriver::seek(const int64_t offset)
 {
     if (this->m_initialised)
     {
@@ -408,7 +408,7 @@ graphquery::database::storage::CDiskDriver::seek(const uint64_t offset)
 int64_t
 graphquery::database::storage::CDiskDriver::resize_to_pagesize(const int64_t size) noexcept
 {
-    const uint32_t pages = utils::ceilaferdiv(size, PAGESIZE);
+    const int64_t pages = utils::ceilaferdiv(size, PAGESIZE);
     return pages * PAGESIZE;
 }
 

@@ -29,7 +29,7 @@ namespace graphquery::database::storage
 {
     class CDiskDriver
     {
-    public:
+      public:
         enum class SRet_t : uint16_t
         {
             ERROR = 0xFFFF,
@@ -37,7 +37,7 @@ namespace graphquery::database::storage
         };
 
         template<typename T>
-        inline SRef_t<T> ref(const uint64_t seek)
+        inline SRef_t<T> ref(const int64_t seek)
         {
             auto reference = std::bit_cast<T *>(ref(seek, sizeof(T)));
             return SRef_t<T>(reference, &m_ref_counter);
@@ -53,14 +53,14 @@ namespace graphquery::database::storage
         explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
         ~CDiskDriver();
 
-        CDiskDriver(CDiskDriver &&)      = delete;
-        CDiskDriver(const CDiskDriver &) = delete;
+        CDiskDriver(CDiskDriver &&)       = delete;
+        CDiskDriver(const CDiskDriver &)  = delete;
         static constexpr int64_t PAGESIZE = KB(4);
 
-        size_t get_filesize() const noexcept;
+        [[nodiscard]] size_t get_filesize() const noexcept;
         [[maybe_unused]] SRet_t close();
-        [[maybe_unused]] SRet_t seek(uint64_t offset);
-        [[maybe_unused]] uint64_t get_seek_offset() const noexcept;
+        [[maybe_unused]] SRet_t seek(int64_t offset);
+        [[nodiscard]] uint64_t get_seek_offset() const noexcept;
         [[maybe_unused]] SRet_t open(std::string_view file_path);
         [[maybe_unused]] SRet_t read(void * ptr, int64_t size, uint32_t amt, bool update = true);
         [[maybe_unused]] SRet_t write(const void * ptr, int64_t size, uint32_t amt, bool update = true);
@@ -79,9 +79,9 @@ namespace graphquery::database::storage
         [[maybe_unused]] static SRet_t create_file(const std::filesystem::path & path, std::string_view file_name, int64_t file_size = PAGESIZE);
 
       private:
-        [[maybe_unused]] void * ref(uint64_t seek, uint64_t size) noexcept;
+        [[maybe_unused]] void * ref(int64_t seek, uint64_t size) noexcept;
         [[maybe_unused]] void * ref_update(uint64_t size) noexcept;
-        [[maybe_unused]] SRet_t unmap() const noexcept;
+        [[nodiscard]] SRet_t unmap() const noexcept;
         [[maybe_unused]] SRet_t open_fd() noexcept;
         [[maybe_unused]] SRet_t close_fd() noexcept;
         [[maybe_unused]] SRet_t map() noexcept;

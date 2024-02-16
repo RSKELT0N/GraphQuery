@@ -7,10 +7,9 @@
 #include <vector>
 #include <set>
 
-graphquery::database::storage::CMemoryModelMMAPLPG::
-CMemoryModelMMAPLPG(): m_sync_needed(false), m_syncing(0), m_transaction_ref_c(0)
+graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> & log_system):
+    ILPGModel(log_system), m_sync_needed(false), m_syncing(0), m_transaction_ref_c(0)
 {
-    m_log_system   = logger::CLogSystem::get_instance();
     m_label_vertex = std::vector<std::vector<uint32_t>>();
     m_unq_lock     = std::unique_lock(m_sync_lock);
 }
@@ -125,7 +124,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_graph_metadata() noexc
 }
 
 uint32_t
-graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const uint32_t id,
+graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const uint64_t id,
                                                                        const std::unordered_set<uint16_t> & label_ids,
                                                                        const std::vector<SProperty_t> & props,
                                                                        const uint32_t next_ref) noexcept
@@ -160,7 +159,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const uin
 }
 
 void
-graphquery::database::storage::CMemoryModelMMAPLPG::store_index_entry(const uint32_t id, const std::unordered_set<uint16_t> & label_ids, const uint32_t vertex_offset) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::store_index_entry(const uint64_t id, const std::unordered_set<uint16_t> & label_ids, const uint32_t vertex_offset) noexcept
 {
     m_global_index_file.store_entry(id, vertex_offset);
 
@@ -170,8 +169,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_index_entry(const uint
 
 uint32_t
 graphquery::database::storage::CMemoryModelMMAPLPG::store_edge_entry(const uint32_t next_ref,
-                                                                     const uint32_t src,
-                                                                     const uint32_t dst,
+                                                                     const uint64_t src,
+                                                                     const uint64_t dst,
                                                                      const uint16_t edge_label_id,
                                                                      const std::vector<SProperty_t> & props) noexcept
 {
@@ -343,7 +342,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_labels(const std:
 }
 
 graphquery::database::storage::CMemoryModelMMAPLPG::EActionState_t
-graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const uint32_t id, const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & props) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const uint64_t id, const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & props) noexcept
 {
     std::unordered_set<uint16_t> label_ids = get_vertex_labels(labels, true);
 
@@ -387,7 +386,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(const SNodeID
         return EActionState_t::invalid;
 
     const std::optional<uint16_t> edge_label_exists = check_if_edge_label_exists(edge_label);
-    const auto edge_label_id                        = edge_label_exists.has_value() ? edge_label_exists.value() : create_edge_label(edge_label);
+    const auto edge_label_id                        = edge_label_exists.has_value() ? *edge_label_exists : create_edge_label(edge_label);
 
     const auto tail_edge   = utils::atomic_load(&src_vertex_exists.value()->payload.edge_idx);
     const auto edge_offset = store_edge_entry(tail_edge, src_vertex_exists.value()->idx, dst_vertex_exists.value()->idx, edge_label_id, props);
@@ -401,49 +400,43 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(const SNodeID
 }
 
 void
-graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const SNodeID & src, const std::vector<std::pair<std::string_view, std::string_view>> & prop)
+graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const SNodeID & src, const std::vector<SProperty_t> & prop)
 {
     transaction_preamble();
-    const auto transformed_properties = transform_properties(prop);
-    if (add_vertex_entry(src.id, src.labels, transformed_properties) == EActionState_t::invalid)
+    if (add_vertex_entry(src.id, src.labels, prop) == EActionState_t::invalid)
     {
         transaction_epilogue();
         m_log_system->warning(fmt::format("Issue adding vertex"));
         return;
     }
 
-    m_transactions->commit_vertex(src.labels, transformed_properties, src.id);
+    m_transactions->commit_vertex(src.labels, prop, src.id);
     transaction_epilogue();
     utils::atomic_store(&m_sync_needed, true);
 }
 
 void
-graphquery::database::storage::CMemoryModelMMAPLPG::add_edge(const SNodeID & src,
-                                                             const SNodeID & dst,
-                                                             const std::string_view edge_label,
-                                                             const std::vector<std::pair<std::string_view, std::string_view>> & prop)
+graphquery::database::storage::CMemoryModelMMAPLPG::add_edge(const SNodeID & src, const SNodeID & dst, const std::string_view edge_label, const std::vector<SProperty_t> & prop)
 {
     transaction_preamble();
-    const auto transformed_properties = transform_properties(prop);
-    if (add_edge_entry(src, dst, edge_label, transformed_properties) == EActionState_t::invalid)
+    if (add_edge_entry(src, dst, edge_label, prop) == EActionState_t::invalid)
     {
         transaction_epilogue();
         m_log_system->warning(fmt::format("Issue adding edge({}) to vertex({})", dst.id, src.id));
         return;
     }
 
-    m_transactions->commit_edge(src, dst, edge_label, transformed_properties);
+    m_transactions->commit_edge(src, dst, edge_label, prop);
     transaction_epilogue();
     utils::atomic_store(&m_sync_needed, true);
 }
 
 void
-graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const std::vector<std::string_view> & labels, const std::vector<std::pair<std::string_view, std::string_view>> & prop)
+graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & prop)
 {
     transaction_preamble();
-    const auto transformed_properties = transform_properties(prop);
-    (void) add_vertex_entry(labels, transformed_properties);
-    m_transactions->commit_vertex(labels, transformed_properties);
+    (void) add_vertex_entry(labels, prop);
+    m_transactions->commit_vertex(labels, prop);
 
     transaction_epilogue();
     utils::atomic_store(&m_sync_needed, true);
@@ -595,7 +588,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const uint32_t ver
 std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::string_view vertex_label, const std::function<bool(const SEdge_t &)> & pred)
 {
-    std::vector<uint32_t> label_vertices = get_vertices_offset_by_label(vertex_label);
+    std::vector<uint64_t> label_vertices = get_vertices_offset_by_label(vertex_label);
     std::vector<SEdge_t> ret;
 
     for (const auto vertex_offset : label_vertices)
@@ -617,7 +610,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::string_
     else
         label_id = exists.value();
 
-    std::vector<uint32_t> label_vertices = get_vertices_offset_by_label(vertex_label);
+    std::vector<uint64_t> label_vertices = get_vertices_offset_by_label(vertex_label);
     std::vector<SEdge_t> ret;
 
     auto label_pred = [&label_id, &pred](const SEdge_t & edge) -> bool { return edge.edge_label_id == label_id && pred(edge); };
@@ -744,7 +737,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges_by_offset(const ui
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
-graphquery::database::storage::CMemoryModelMMAPLPG::get_edges_by_id(const uint32_t src, const uint16_t src_label_id, const std::function<bool(const SEdge_t &)> & pred)
+graphquery::database::storage::CMemoryModelMMAPLPG::get_edges_by_id(const uint64_t src, const uint16_t src_label_id, const std::function<bool(const SEdge_t &)> & pred)
 {
     auto vertex_ptr          = get_vertex_by_id(src, src_label_id);
     std::vector<SEdge_t> ret = {};
@@ -852,7 +845,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertices_by_label(const 
     return ret;
 }
 
-std::vector<uint32_t>
+std::vector<uint64_t>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_vertices_offset_by_label(const std::string_view label)
 {
     const std::optional<uint16_t> exists = check_if_vertex_label_exists(label);
@@ -862,7 +855,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertices_offset_by_label
 
     const uint16_t label_id = exists.has_value();
 
-    std::vector<uint32_t> ret = {};
+    std::vector<uint64_t> ret = {};
     ret.reserve(m_label_vertex[label_id].size());
 
     for (const uint32_t vertex_offset : m_label_vertex[label_id])
@@ -898,7 +891,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const SNodeID & sr
                                });
 }
 
-std::unordered_set<uint32_t>
+std::unordered_set<uint64_t>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_edge_dst_vertices(const SNodeID & src, const std::function<bool(const SEdge_t &)> & pred)
 {
     SRef_t<SVertexDataBlock> vertex_ptr = {};
@@ -908,7 +901,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edge_dst_vertices(const 
     else
         vertex_ptr = exists.value();
 
-    std::unordered_set<uint32_t> ret = {};
+    std::unordered_set<uint64_t> ret = {};
     const auto neighbours            = utils::atomic_load(&vertex_ptr->payload.metadata.neighbour_c);
     ret.reserve(neighbours);
 
@@ -933,7 +926,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edge_dst_vertices(const 
     return ret;
 }
 
-std::unordered_set<uint32_t>
+std::unordered_set<uint64_t>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_edge_dst_vertices(const SNodeID & src, const std::string_view edge_label, const std::string_view vertex_label)
 {
     std::optional<uint16_t> vertex_label_exists = check_if_vertex_label_exists(vertex_label);
@@ -961,7 +954,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edge_dst_vertices(const 
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
-graphquery::database::storage::CMemoryModelMMAPLPG::get_recursive_edges(const SNodeID & src, const std::vector<std::pair<std::string_view, std::string_view>> edge_vertex_label_pairs)
+graphquery::database::storage::CMemoryModelMMAPLPG::get_recursive_edges(const SNodeID & src, const std::vector<SProperty_t> edge_vertex_label_pairs)
 {
     const auto src_vertex_ptr = get_vertex(src.id, src.labels);
     std::vector<SEdge_t> ret  = {};
@@ -976,7 +969,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_recursive_edges(const SN
         ret.clear();
         for (const auto & i : vertices_to_process)
         {
-            auto retrieved_edges = get_edges(i, curr_label_pair.first, curr_label_pair.second);
+            auto retrieved_edges = get_edges(i, curr_label_pair.key, curr_label_pair.value);
             ret.insert(ret.begin(), retrieved_edges.begin(), retrieved_edges.end());
         }
         vertices_to_process.clear();
@@ -1051,9 +1044,9 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_vertex_map
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SProperty_t>
-graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_id(const uint32_t id)
+graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_id(const uint64_t id)
 {
-    SRef_t<SVertexDataBlock> vertex_ptr = m_vertices_file.read_entry(id);
+    SRef_t<SVertexDataBlock> vertex_ptr = m_vertices_file.read_entry(static_cast<int64_t>(id));
     std::vector<SProperty_t> ret        = {};
 
     ret.reserve(vertex_ptr->payload.metadata.property_c);
@@ -1077,9 +1070,9 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_id(const u
 }
 
 std::unordered_map<std::string, std::string>
-graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_id_map(const uint32_t id)
+graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_id_map(const uint64_t id)
 {
-    SRef_t<SVertexDataBlock> vertex_ptr              = m_vertices_file.read_entry(id);
+    SRef_t<SVertexDataBlock> vertex_ptr              = m_vertices_file.read_entry(static_cast<int64_t>(id));
     std::unordered_map<std::string, std::string> ret = {};
 
     ret.reserve(vertex_ptr->payload.metadata.property_c);
@@ -1163,7 +1156,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::calc_outdegree(const std::sh
 }
 
 std::optional<graphquery::database::storage::SRef_t<graphquery::database::storage::SDataBlock_t<graphquery::database::storage::CMemoryModelMMAPLPG::SVertexEntry_t, 1>>>
-graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex(const uint32_t id, const std::vector<std::string_view> & labels)
+graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex(const uint64_t id, const std::vector<std::string_view> & labels)
 {
     const auto label_ids = get_vertex_labels(labels, false);
 
@@ -1185,19 +1178,19 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_offset(const u
 }
 
 uint32_t
-graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_head_offset(const uint32_t id)
+graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_head_offset(const uint64_t id)
 {
-    auto index_ptr          = m_global_index_file.read_entry(id);
+    auto index_ptr          = m_global_index_file.read_entry(static_cast<int64_t>(id));
     const auto data_block_c = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
 
-    if (id >= data_block_c)
+    if (id >= data_block_c || id != index_ptr->id)
         return END_INDEX;
 
     return index_ptr->offset;
 }
 
 std::optional<graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SVertexDataBlock>>
-graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_id(const uint32_t id, const std::unordered_set<uint16_t> & label_ids) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_id(const uint64_t id, const std::unordered_set<uint16_t> & label_ids) noexcept
 {
     auto head = get_vertex_head_offset(id);
 
@@ -1227,9 +1220,9 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_id(const uint3
 }
 
 std::optional<graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SVertexDataBlock>>
-graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_id(const uint32_t id, const uint16_t label_id) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_id(const uint64_t id, const uint16_t label_id) noexcept
 {
-    auto index_ptr          = m_global_index_file.read_entry(id);
+    auto index_ptr          = m_global_index_file.read_entry(static_cast<int64_t>(id));
     auto head               = index_ptr->offset;
     const auto data_block_c = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
 
@@ -1413,40 +1406,29 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge_entry(const SNodeID 
     return EActionState_t::valid;
 }
 
-uint32_t
+uint64_t
 graphquery::database::storage::CMemoryModelMMAPLPG::get_unassigned_vertex_id(const size_t label_idx) const noexcept
 {
     return label_idx;
 }
 
-uint32_t
+uint64_t
 graphquery::database::storage::CMemoryModelMMAPLPG::get_num_edges()
 {
     return utils::atomic_load(&read_graph_metadata()->edges_c);
 }
 
-uint32_t
+uint64_t
 graphquery::database::storage::CMemoryModelMMAPLPG::get_num_vertices()
 {
     return utils::atomic_load(&read_graph_metadata()->vertices_c);
 }
 
-std::vector<graphquery::database::storage::ILPGModel::SProperty_t>
-graphquery::database::storage::CMemoryModelMMAPLPG::transform_properties(const std::vector<std::pair<std::string_view, std::string_view>> & properties) noexcept
-{
-    std::vector<SProperty_t> ret = {};
-    ret.resize(properties.size());
-
-    for (size_t i = 0; i < properties.size(); i++)
-        ret[i] = {properties[i].first, properties[i].second};
-
-    return ret;
-}
-
 extern "C"
 {
-    LIB_EXPORT void create_graph_model(graphquery::database::storage::ILPGModel ** graph_model)
+    LIB_EXPORT void create_graph_model(graphquery::database::storage::ILPGModel ** graph_model, const std::shared_ptr<graphquery::logger::CLogSystem> & log_system)
     {
-        *graph_model = new graphquery::database::storage::CMemoryModelMMAPLPG();
+        assert(log_system != nullptr);
+        *graph_model = new graphquery::database::storage::CMemoryModelMMAPLPG(log_system);
     }
 }

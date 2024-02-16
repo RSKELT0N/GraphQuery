@@ -53,23 +53,12 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-        {
             (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {0, {"Place", "City"}}, {});
-            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {1, {"Place", "Country"}}, {});
-            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {2, {"Place", "Continent"}}, {});
-        }
 
         if (ImGui::Button("Query"))
         {
-            auto p    = (*m_graph)->get_vertices_by_label("Place");
-            auto ci   = (*m_graph)->get_vertices_by_label("City");
-            auto co   = (*m_graph)->get_vertices_by_label("Country");
-            auto cont = (*m_graph)->get_vertices_by_label("Continent");
-
-            database::_log_system->info(fmt::format("Place: {}", p.size()));
-            database::_log_system->info(fmt::format("City: {}", ci.size()));
-            database::_log_system->info(fmt::format("Country: {}", co.size()));
-            database::_log_system->info(fmt::format("Continent: {}", cont.size()));
+            auto p = (*m_graph)->get_vertices_by_label("Person");
+            database::_log_system->info(fmt::format("Person: {}", p.size()));
         }
 
         if (ImGui::Button("Add Vertex (0)"))

@@ -50,8 +50,8 @@ graphquery::interact::CFrameMenuBar::render_frame() noexcept
     {
         render_create_menu();
         render_open_menu();
-        render_close_menu();
         render_load_menu();
+        render_close_menu();
         ImGui::EndMainMenuBar();
     }
 
