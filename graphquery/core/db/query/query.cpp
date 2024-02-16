@@ -10,10 +10,10 @@ graphquery::database::query::CQueryEngine::process_query([[maybe_unused]] const 
 }
 
 std::vector<std::map<std::string, std::string>>
-graphquery::database::query::CQueryEngine::interaction_complex_2(const uint64_t _person_id, [[maybe_unused]] uint32_t _max_date) const noexcept
+graphquery::database::query::CQueryEngine::interaction_complex_2(const int64_t _person_id, [[maybe_unused]] uint32_t _max_date) const noexcept
 {
     //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
-    std::unordered_set<uint64_t> _friends = get_graph()->get_edge_dst_vertices({_person_id, {"Person"}}, "KNOWS", "Person");
+    std::unordered_set<int64_t> _friends = get_graph()->get_edge_dst_vertices({_person_id, {"Person"}}, "KNOWS", "Person");
 
     //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
     std::vector<storage::ILPGModel::SEdge_t> message_creators =
@@ -28,7 +28,7 @@ graphquery::database::query::CQueryEngine::interaction_complex_2(const uint64_t 
         auto message_props = get_graph()->get_properties_by_id_map(edge.src);
 
         //~ WHERE message.creationDate < $maxDate
-        if (static_cast<uint64_t>(std::stol(message_props.at("creationDate"))) >= _max_date)
+        if (static_cast<int64_t>(std::stol(message_props.at("creationDate"))) >= _max_date)
             continue;
 
         message_props["postOrCommendId"]           = message_props.at("id");
@@ -56,12 +56,12 @@ graphquery::database::query::CQueryEngine::interaction_complex_2(const uint64_t 
 }
 
 std::vector<std::map<std::string, std::string>>
-graphquery::database::query::CQueryEngine::interation_complex_8(const uint64_t _person_id) const noexcept
+graphquery::database::query::CQueryEngine::interation_complex_8(const int64_t _person_id) const noexcept
 {
     //~ MATCH (start:Person {id: $personId})<-[:HAS_CREATOR]-(:Message)
     std::vector<storage::ILPGModel::SEdge_t> person_comments = get_graph()->get_edges("Message", "HAS_CREATOR", {_person_id, {"Person"}});
 
-    std::unordered_set<uint64_t> uniq_messages = {};
+    std::unordered_set<int64_t> uniq_messages = {};
     uniq_messages.reserve(person_comments.size());
 
     std::for_each(person_comments.begin(), person_comments.end(), [&uniq_messages](const storage::ILPGModel::SEdge_t & edge) { uniq_messages.emplace(edge.src); });
@@ -114,7 +114,7 @@ graphquery::database::query::CQueryEngine::interation_complex_8(const uint64_t _
 }
 
 void
-graphquery::database::query::CQueryEngine::interation_update_2([[maybe_unused]] const uint64_t _person_id, [[maybe_unused]] const uint64_t _post_id) const noexcept
+graphquery::database::query::CQueryEngine::interation_update_2([[maybe_unused]] const int64_t _person_id, [[maybe_unused]] const int64_t _post_id) const noexcept
 {
     static auto time = std::time(nullptr);
     static std::stringstream date;
@@ -124,7 +124,7 @@ graphquery::database::query::CQueryEngine::interation_update_2([[maybe_unused]] 
 }
 
 void
-graphquery::database::query::CQueryEngine::interation_update_8([[maybe_unused]] const uint64_t _src_person_id, [[maybe_unused]] const uint64_t _dst_person_id) const noexcept
+graphquery::database::query::CQueryEngine::interation_update_8([[maybe_unused]] const int64_t _src_person_id, [[maybe_unused]] const int64_t _dst_person_id) const noexcept
 {
     static auto time = std::time(nullptr);
     static std::stringstream date;
@@ -134,19 +134,19 @@ graphquery::database::query::CQueryEngine::interation_update_8([[maybe_unused]] 
 }
 
 void
-graphquery::database::query::CQueryEngine::interation_delete_2([[maybe_unused]] const uint64_t _person_id, [[maybe_unused]] const uint64_t _post_id) const noexcept
+graphquery::database::query::CQueryEngine::interation_delete_2([[maybe_unused]] const int64_t _person_id, [[maybe_unused]] const int64_t _post_id) const noexcept
 {
     get_graph()->rm_edge({_person_id, {"Person"}}, {_post_id, {"Post"}}, "LIKES");
 }
 
 void
-graphquery::database::query::CQueryEngine::interation_delete_8([[maybe_unused]] const uint64_t _src_person_id, [[maybe_unused]] const uint64_t _dst_person_id) const noexcept
+graphquery::database::query::CQueryEngine::interation_delete_8([[maybe_unused]] const int64_t _src_person_id, [[maybe_unused]] const int64_t _dst_person_id) const noexcept
 {
     get_graph()->rm_edge({_src_person_id, {"Person"}}, {_dst_person_id, {"Person"}}, "KNOWS");
 }
 
 void
-graphquery::database::query::CQueryEngine::interation_short_2([[maybe_unused]] const uint64_t _person_id) const noexcept
+graphquery::database::query::CQueryEngine::interation_short_2([[maybe_unused]] const int64_t _person_id) const noexcept
 {
     //~ MATCH (:Person {id: $personId})<-[:HAS_CREATOR]-(message)
     auto person_comments = get_graph()->get_edges("Message", "HAS_CREATOR", {_person_id, {"Person"}});
@@ -171,7 +171,7 @@ graphquery::database::query::CQueryEngine::interation_short_2([[maybe_unused]] c
 }
 
 void
-graphquery::database::query::CQueryEngine::interation_short_7([[maybe_unused]] const uint64_t _message_id) const noexcept
+graphquery::database::query::CQueryEngine::interation_short_7([[maybe_unused]] const int64_t _message_id) const noexcept
 {
     //~ MATCH (m:Message {id: $messageId })<-[:REPLY_OF]-(c:Comment)
     const auto message_comments = get_graph()->get_edges("Comment", "REPLY_OF", {_message_id, {"Message"}});

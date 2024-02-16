@@ -40,9 +40,9 @@ namespace graphquery::database::utils
         return (val + mask) ^ mask;
     }
 
-    inline int64_t ceilaferdiv(const uint64_t _x, const uint64_t _y)
+    inline int64_t ceilaferdiv(const int64_t _x, const int64_t _y)
     {
-        return 1 + ((_x - 1) / _y);
+        return 1LL + ((_x - 1LL) / _y);
     }
 
     // Converts a string to lowercase

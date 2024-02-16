@@ -12,6 +12,7 @@
 
 #include "memory_ref.h"
 #include "log/logsystem/logsystem.h"
+#include "db/storage/config.h"
 
 #include <filesystem>
 #include <functional>
@@ -20,6 +21,8 @@
 #include <sys/stat.h>
 #include <condition_variable>
 #include <unistd.h>
+
+#define RESIZE_OVERLAY(x) ((int64_t) x + (x / 10))
 
 #define KB(x) ((size_t) (x * (1 << 10)))
 #define MB(x) ((size_t) (x * (1 << 20)))
@@ -50,7 +53,7 @@ namespace graphquery::database::storage
             return SRef_t<T>(reference, &m_ref_counter);
         }
 
-        explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
+        explicit CDiskDriver(int file_mode = O_RDWR | O_LARGEFILE, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
         ~CDiskDriver();
 
         CDiskDriver(CDiskDriver &&)       = delete;
@@ -79,8 +82,8 @@ namespace graphquery::database::storage
         [[maybe_unused]] static SRet_t create_file(const std::filesystem::path & path, std::string_view file_name, int64_t file_size = PAGESIZE);
 
       private:
-        [[maybe_unused]] void * ref(int64_t seek, uint64_t size) noexcept;
-        [[maybe_unused]] void * ref_update(uint64_t size) noexcept;
+        [[maybe_unused]] void * ref(int64_t seek, int64_t size) noexcept;
+        [[maybe_unused]] void * ref_update(int64_t size) noexcept;
         [[nodiscard]] SRet_t unmap() const noexcept;
         [[maybe_unused]] SRet_t open_fd() noexcept;
         [[maybe_unused]] SRet_t close_fd() noexcept;
@@ -101,9 +104,9 @@ namespace graphquery::database::storage
         int m_map_mode_flags = {}; //~ Set map mode (flags) of the file when mapped.
 
         bool m_initialised           = {}; //~ Wether the fd descriptor is opened.
-        struct stat m_fd_info        = {}; //~ Structure info on the currently opened file.
+        struct stat64 m_fd_info      = {}; //~ Structure info on the currently opened file.
         int m_file_descriptor        = {}; //~ integer of the pointed file.
-        uint64_t m_seek_offset       = {}; //~ Current offset within the memory map.
+        int64_t m_seek_offset       = {}; //~ Current offset within the memory map.
         char * m_memory_mapped_file  = {}; //~ buffer address of the memory mapped file.
         std::filesystem::path m_path = {}; //~ Set path of the current context.
 

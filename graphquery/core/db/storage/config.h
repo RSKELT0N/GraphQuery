@@ -12,6 +12,13 @@
 #include <cstdint>
 #include <chrono>
 
+#undef _LARGEFILE_SOURCE
+#undef _FILE_OFFSET_BITS
+
+#define _LARGEFILE64_SOURCE 1
+#define __USE_FILE_OFFSET64 1
+#define _FILE_OFFSET_BITS   64
+
 #define likely(x)   __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 

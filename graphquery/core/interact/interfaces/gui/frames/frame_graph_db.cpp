@@ -61,6 +61,11 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
             database::_log_system->info(fmt::format("Person: {}", p.size()));
         }
 
+        if (ImGui::Button("Test"))
+        {
+            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {2814749767656, {"Place"}}, {});
+        }
+
         if (ImGui::Button("Add Vertex (0)"))
             (*m_graph)->add_vertex({20, "Dog"}, {});
 

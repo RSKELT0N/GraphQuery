@@ -12,7 +12,11 @@ target_include_directories(
 target_compile_options(
         diskdriver
         PUBLIC
-        -fPIC)
+        -fPIC
+        -lrt
+        -O3
+        -ffast-math
+        -ffinite-math-only)
 
 target_sources(
         diskdriver

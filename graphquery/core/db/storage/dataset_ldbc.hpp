@@ -74,7 +74,7 @@ namespace graphquery::database::storage
         static const auto initial_static_path  = m_dataset_path / "initial_snapshot" / "static";
         static const auto initial_dynamic_path = m_dataset_path / "initial_snapshot" / "dynamic";
 
-        load_dataset_segment(initial_static_path);
+        // load_dataset_segment(initial_static_path);
         load_dataset_segment(initial_dynamic_path);
     }
 
@@ -105,7 +105,7 @@ namespace graphquery::database::storage
         for (size_t row = 0; row < rows; row++)
         {
             const auto row_data = fd.GetRow<std::string>(row);
-            const uint64_t id   = std::stoull(row_data[id_col_idx]);
+            const int64_t id    = std::stoll(row_data[id_col_idx]);
 
             if (type_exists)
             {
@@ -116,10 +116,6 @@ namespace graphquery::database::storage
             for (const auto & prop_idx : prop_indices)
                 props.emplace_back(fd.GetColumnName(prop_idx), row_data[prop_idx]);
 
-            if(row < rows - 1 && std::stoull(fd.GetRow<std::string>(row+1)[id_col_idx]) == 6597069766768)
-            {
-                printf("Halt\n");
-            }
             (*m_graph)->add_vertex(ILPGModel::SNodeID {id, labels}, props);
 
             props.clear();
@@ -154,8 +150,8 @@ namespace graphquery::database::storage
         for (size_t row = 0; row < rows; row++)
         {
             const auto row_data   = fd.GetRow<std::string>(row);
-            const uint64_t src_id = std::stoull(row_data[edge_idx_map.first]);
-            const uint64_t dst_id = std::stoull(row_data[edge_idx_map.second]);
+            const int64_t src_id  = std::stoll(row_data[edge_idx_map.first]);
+            const int64_t dst_id  = std::stoll(row_data[edge_idx_map.second]);
 
             for (const auto & prop_idx : prop_indices)
                 props.emplace_back(col_names[prop_idx], row_data[prop_idx]);
