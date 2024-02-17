@@ -74,7 +74,7 @@ namespace graphquery::database::storage
         static const auto initial_static_path  = m_dataset_path / "initial_snapshot" / "static";
         static const auto initial_dynamic_path = m_dataset_path / "initial_snapshot" / "dynamic";
 
-        // load_dataset_segment(initial_static_path);
+        load_dataset_segment(initial_static_path);
         load_dataset_segment(initial_dynamic_path);
     }
 

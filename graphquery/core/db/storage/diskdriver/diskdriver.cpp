@@ -40,7 +40,7 @@ CDiskDriver()
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::open_fd() noexcept
 {
-    this->m_file_descriptor = ::open64(m_path.generic_string().c_str(), m_file_mode);
+    this->m_file_descriptor = ::open(m_path.generic_string().c_str(), m_file_mode);
 
     if (this->m_file_descriptor == -1)
     {
@@ -51,7 +51,7 @@ graphquery::database::storage::CDiskDriver::open_fd() noexcept
         return SRet_t::ERROR;
     }
 
-    if (fstat64(this->m_file_descriptor, &this->m_fd_info) == -1)
+    if (fstat(this->m_file_descriptor, &this->m_fd_info) == -1)
     {
         m_log_system->error(fmt::format("Issue getting file descriptor ({}) info", m_path.generic_string()));
         return SRet_t::ERROR;
@@ -97,14 +97,14 @@ graphquery::database::storage::CDiskDriver::truncate(const int64_t file_size) no
         return SRet_t::ERROR;
     }
 
-    if (ftruncate64(this->m_file_descriptor, file_size) == -1)
+    if (ftruncate(this->m_file_descriptor, file_size) == -1)
     {
         m_log_system->warning(fmt::format("Issue truncating the file to the specified size, error: {} ({})", strerror(errno), errno));
         ::close(this->m_file_descriptor);
         return SRet_t::ERROR;
     }
 
-    if (fstat64(this->m_file_descriptor, &this->m_fd_info) == -1)
+    if (fstat(this->m_file_descriptor, &this->m_fd_info) == -1)
     {
         m_log_system->error(fmt::format("Issue getting file descriptor ({}) info", m_path.generic_string()));
         return SRet_t::ERROR;
@@ -116,7 +116,7 @@ graphquery::database::storage::CDiskDriver::truncate(const int64_t file_size) no
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::map() noexcept
 {
-    this->m_memory_mapped_file = static_cast<char *>(mmap64(m_memory_mapped_file, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
+    this->m_memory_mapped_file = static_cast<char *>(mmap(nullptr, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
     if (this->m_memory_mapped_file == MAP_FAILED)
     {
         m_log_system->error(fmt::format("Error mapping file to memory"));
@@ -194,7 +194,7 @@ graphquery::database::storage::CDiskDriver::create_file(const std::filesystem::p
         return SRet_t::ERROR;
     }
 
-    const int fd = ::open64(file_path.c_str(), O_CREAT | O_LARGEFILE | O_TRUNC | PROT_WRITE | O_RDWR, S_IWRITE | S_IWUSR | S_IRUSR);
+    const int fd = ::open(file_path.c_str(), O_CREAT | O_TRUNC | PROT_WRITE | O_RDWR, S_IWRITE | S_IWUSR | S_IRUSR);
 
     if (fd == -1)
     {
@@ -202,7 +202,7 @@ graphquery::database::storage::CDiskDriver::create_file(const std::filesystem::p
         return SRet_t::ERROR;
     }
 
-    if (ftruncate64(fd, file_size) == -1)
+    if (ftruncate(fd, file_size) == -1)
     {
         m_log_system->warning(fmt::format("Issue truncating the file to the specified size {}", errno));
         ::close(fd);

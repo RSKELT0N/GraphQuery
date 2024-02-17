@@ -13,7 +13,6 @@ target_compile_options(
         diskdriver
         PUBLIC
         -fPIC
-        -lrt
         -O3
         -ffast-math
         -ffinite-math-only)

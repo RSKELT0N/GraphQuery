@@ -106,8 +106,8 @@ namespace graphquery::database::storage
 
             SProperty_t(const std::string_view k, const std::string_view v)
             {
-                strcpy(key, k.data());
-                strcpy(value, v.data());
+                strcpy(key, k.c_str();
+                strcpy(value, v.c_str());
                 key[CFG_LPG_PROPERTY_KEY_LENGTH - 1]     = '\0';
                 value[CFG_LPG_PROPERTY_VALUE_LENGTH - 1] = '\0';
             }

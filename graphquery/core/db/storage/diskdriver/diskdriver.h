@@ -53,7 +53,7 @@ namespace graphquery::database::storage
             return SRef_t<T>(reference, &m_ref_counter);
         }
 
-        explicit CDiskDriver(int file_mode = O_RDWR | O_LARGEFILE, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
+        explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
         ~CDiskDriver();
 
         CDiskDriver(CDiskDriver &&)       = delete;
@@ -104,7 +104,7 @@ namespace graphquery::database::storage
         int m_map_mode_flags = {}; //~ Set map mode (flags) of the file when mapped.
 
         bool m_initialised           = {}; //~ Wether the fd descriptor is opened.
-        struct stat64 m_fd_info      = {}; //~ Structure info on the currently opened file.
+        struct stat m_fd_info        = {}; //~ Structure info on the currently opened file.
         int m_file_descriptor        = {}; //~ integer of the pointed file.
         int64_t m_seek_offset       = {}; //~ Current offset within the memory map.
         char * m_memory_mapped_file  = {}; //~ buffer address of the memory mapped file.

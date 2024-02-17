@@ -63,6 +63,7 @@ graphquery::logger::CLogSystem::warning(const std::string_view out) noexcept
     {
         std::string formatted = format_output(ELogType::warning, out.data());
         const auto & ref      = m_backlog->emplace_back(ELogType::warning, formatted);
+        fmt::print("{}", formatted);
         render_output(ref);
     }
 }
