@@ -10,9 +10,9 @@
 
 #include "dataset.h"
 #include "db/system.h"
+#include "libcsv-parser/include/csv.hpp"
 
 #include <filesystem>
-#include <rapidcsv.h>
 
 namespace graphquery::database::storage
 {
@@ -30,8 +30,8 @@ namespace graphquery::database::storage
 
         void load() const noexcept override;
 
-        void load_vertex_file(std::string_view file_name, const rapidcsv::Document & fd) const noexcept;
-        void load_edge_file(std::string_view file_name, const rapidcsv::Document & fd) const noexcept;
+        void load_vertex_file(std::string_view file_name, csv::CSVReader & fd) const noexcept;
+        void load_edge_file(std::string_view file_name, csv::CSVReader & fd) const noexcept;
         void load_dataset_segment(const std::filesystem::path & path) const noexcept;
 
         std::unordered_map<std::string, std::pair<int32_t, int32_t>> m_edge_file_idx_pos = {
@@ -75,57 +75,52 @@ namespace graphquery::database::storage
         static const auto initial_dynamic_path = m_dataset_path / "initial_snapshot" / "dynamic";
 
         load_dataset_segment(initial_static_path);
-        load_dataset_segment(initial_dynamic_path);
+        // load_dataset_segment(initial_dynamic_path);
     }
 
-    inline void CDatasetLDBC::load_vertex_file(const std::string_view file_name, const rapidcsv::Document & fd) const noexcept
+    inline void CDatasetLDBC::load_vertex_file([[maybe_unused]] const std::string_view file_name, [[maybe_unused]] csv::CSVReader & fd) const noexcept
     {
-        const auto rows          = fd.GetRowCount();
-        const auto col_names     = fd.GetColumnNames();
-        const int32_t id_col_idx = fd.GetColumnIdx("id");
-        const int32_t type_idx   = fd.GetColumnIdx("type");
+        const auto col_names     = fd.get_col_names();
+        const int32_t id_col_idx = fd.index_of("id");
+        const int32_t type_idx   = fd.index_of("type");
 
         std::vector<uint32_t> prop_indices = {};
-        prop_indices.reserve(fd.GetColumnCount());
-
-        std::vector<std::string_view> labels;
-        labels.reserve(2);
-        labels.emplace_back(file_name);
+        prop_indices.reserve(col_names.size());
 
         std::string type       = {};
         const bool type_exists = type_idx != -1;
 
-        for (int32_t i = 0; i < static_cast<int32_t>(fd.GetColumnCount()); i++)
+        for (int32_t i = 0; i < static_cast<int32_t>(col_names.size()); i++)
         {
             if (i != id_col_idx && i != type_idx)
                 prop_indices.emplace_back(i);
         }
 
         std::vector<ILPGModel::SProperty_t> props;
-        for (size_t row = 0; row < rows; row++)
+        std::vector<std::string> labels;
+
+        for(const auto & row : fd)
         {
-            const auto row_data = fd.GetRow<std::string>(row);
-            const int64_t id    = std::stoll(row_data[id_col_idx]);
+            labels.emplace_back(file_name);
+            auto id = row[id_col_idx].get<int64_t>();
 
             if (type_exists)
             {
-                type = row_data[type_idx];
+                type = row[type_idx].get<std::string>();
                 labels.emplace_back(type);
             }
 
             for (const auto & prop_idx : prop_indices)
-                props.emplace_back(fd.GetColumnName(prop_idx), row_data[prop_idx]);
+                props.emplace_back(col_names[prop_idx], row[prop_idx].get<>());
 
             (*m_graph)->add_vertex(ILPGModel::SNodeID {id, labels}, props);
 
             props.clear();
-
-            if (type_exists)
-                labels.pop_back();
+            labels.clear();
         }
     }
 
-    inline void CDatasetLDBC::load_edge_file(const std::string_view file_name, const rapidcsv::Document & fd) const noexcept
+    inline void CDatasetLDBC::load_edge_file([[maybe_unused]] const std::string_view file_name, [[maybe_unused]] csv::CSVReader & fd) const noexcept
     {
         const std::vector<std::string> edge_parts = utils::split(file_name, '_');
         const std::string & src_label             = edge_parts[0];
@@ -133,28 +128,25 @@ namespace graphquery::database::storage
         const std::string & dst_label             = edge_parts[2];
 
         const auto edge_idx_map = m_edge_file_idx_pos.at(file_name.data());
-
-        const auto rows      = fd.GetRowCount();
-        const auto col_names = fd.GetColumnNames();
+        const auto col_names    = fd.get_col_names();
 
         std::vector<uint32_t> prop_indices = {};
-        prop_indices.reserve(fd.GetColumnCount());
+        prop_indices.reserve(col_names.size());
 
-        for (int32_t i = 0; i < static_cast<int32_t>(fd.GetColumnCount()); i++)
+        for (int32_t i = 0; i < static_cast<int32_t>(col_names.size()); i++)
         {
             if (i != edge_idx_map.first && i != edge_idx_map.second)
                 prop_indices.emplace_back(i);
         }
 
         std::vector<ILPGModel::SProperty_t> props;
-        for (size_t row = 0; row < rows; row++)
+        for (const auto & row : fd)
         {
-            const auto row_data   = fd.GetRow<std::string>(row);
-            const int64_t src_id  = std::stoll(row_data[edge_idx_map.first]);
-            const int64_t dst_id  = std::stoll(row_data[edge_idx_map.second]);
+            const auto src_id = row[edge_idx_map.first].get<int64_t>();
+            const auto dst_id = row[edge_idx_map.second].get<int64_t>();
 
             for (const auto & prop_idx : prop_indices)
-                props.emplace_back(col_names[prop_idx], row_data[prop_idx]);
+                props.emplace_back(col_names[prop_idx], row[prop_idx].get<>());
 
             (*m_graph)->add_edge(ILPGModel::SNodeID {src_id, {src_label}}, ILPGModel::SNodeID {dst_id, {dst_label}}, edge_label, props);
             props.clear();
@@ -163,17 +155,13 @@ namespace graphquery::database::storage
 
     inline void CDatasetLDBC::load_dataset_segment(const std::filesystem::path & path) const noexcept
     {
-        static const auto label_params = rapidcsv::LabelParams();
-        static const auto sep_params   = rapidcsv::SeparatorParams('|');
-        rapidcsv::Document csv;
-
         //~ Process Vertex Files
         for (const auto & entry : std::filesystem::recursive_directory_iterator(path / "vertices"))
         {
             if (!is_regular_file(entry) || !entry.path().extension().compare("csv"))
                 return;
 
-            csv = rapidcsv::Document(entry.path().string(), label_params, sep_params);
+            csv::CSVReader csv(entry.path().string());
             load_vertex_file(entry.path().stem().string(), csv);
         }
 
@@ -183,7 +171,7 @@ namespace graphquery::database::storage
             if (!is_regular_file(entry) || !entry.path().extension().compare("csv"))
                 return;
 
-            csv = rapidcsv::Document(entry.path().string(), label_params, sep_params);
+            csv::CSVReader csv(entry.path().string());
             load_edge_file(entry.path().stem().string(), csv);
         }
     }

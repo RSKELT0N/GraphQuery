@@ -20,11 +20,14 @@ target_sources(
 target_compile_options(
         lpg_mmap
         PUBLIC
+        -Wall
+        -Werror
+        -Wpedantic
+        -Wshadow
+        -Wextra
         -pthread
         -fPIC
-        -O3
-        -ffast-math
-        -ffinite-math-only)
+        -O3)
 
 target_link_libraries(
         lpg_mmap

@@ -29,9 +29,7 @@ target_compile_options(
         -Wshadow
         -Wextra
         -pthread
-        -O3
-        -ffast-math
-        -ffinite-math-only)
+        -O3)
 
 target_link_libraries(${EXECUTABLE_NAME}
         PUBLIC
@@ -39,7 +37,7 @@ target_link_libraries(${EXECUTABLE_NAME}
         imgui
         dylib
         logsystem
-        rapidcsv)
+        csv "--coverage")
 
 # Add program include directories
 target_include_directories(${EXECUTABLE_NAME}

@@ -24,13 +24,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   endif (CMAKE_BUILD_TYPE EQUAL "DEBUG")
 
 # add submodules
-#  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/libcypher-parser)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glew)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/googletest)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/dylib)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glfw)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/fmt)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/csv-parser)
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/libcsv-parser)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external)                     # imgui/imnodes/imfile_browser
 
 # source

@@ -95,7 +95,7 @@ graphquery::database::storage::CTransaction::commit_rm_vertex(const ILPGModel::S
     for (const auto & label : src.labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH);
+        strcpy(&label_ptr->label[0], label.data());
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 }
@@ -119,7 +119,7 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const ILPGModel::SNo
     transaction_ptr->commit.property_c  = 0;
     transaction_ptr->commit.src_label_c = src.labels.size();
     transaction_ptr->commit.dst_label_c = dst.labels.size();
-    strncpy(&transaction_ptr->commit.edge_label[0], edge_label.data(), CFG_LPG_LABEL_LENGTH);
+    strcpy(&transaction_ptr->commit.edge_label[0], edge_label.data());
 
     transaction_ptr.~SRef_t<SEdgeTransaction>(); //~ Remove reference to transaction file.
 
@@ -128,20 +128,20 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const ILPGModel::SNo
     for (const auto & label : src.labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH);
+        strcpy(&label_ptr->label[0], label.data());
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 
     for (const auto & label : dst.labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH);
+        strcpy(&label_ptr->label[0], label.data());
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 }
 
 void
-graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std::string_view> & labels, const std::vector<ILPGModel::SProperty_t> & props, const int64_t optional_id) noexcept
+graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std::string> & labels, const std::vector<ILPGModel::SProperty_t> & props, const int64_t optional_id) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
     const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr,
@@ -166,15 +166,15 @@ graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std
     for (const auto & label : labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH);
+        strcpy(&label_ptr->label[0], label.data());
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 
     for (const auto & [key, value] : props)
     {
         auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(curr_addr);
-        strncpy(&prop->key[0], key, CFG_LPG_PROPERTY_KEY_LENGTH);
-        strncpy(&prop->value[0], value, CFG_LPG_PROPERTY_VALUE_LENGTH);
+        strcpy(&prop->key[0], key);
+        strcpy(&prop->value[0], value);
         curr_addr += sizeof(ILPGModel::SProperty_t);
     }
 }
@@ -201,7 +201,7 @@ graphquery::database::storage::CTransaction::commit_edge(const ILPGModel::SNodeI
     transaction_ptr->commit.dst        = dst.id;
     transaction_ptr->commit.remove     = 0;
     transaction_ptr->commit.property_c = props.size();
-    strncpy(&transaction_ptr->commit.edge_label[0], edge_label.data(), CFG_LPG_LABEL_LENGTH);
+    strcpy(&transaction_ptr->commit.edge_label[0], edge_label.data());
 
     transaction_ptr.~SRef_t<SEdgeTransaction>(); //~ Remove reference to transaction file.
 
@@ -210,22 +210,22 @@ graphquery::database::storage::CTransaction::commit_edge(const ILPGModel::SNodeI
     for (const auto & label : src.labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH);
+        strcpy(&label_ptr->label[0], label.data());
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 
     for (const auto & label : dst.labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH);
+        strcpy(&label_ptr->label[0], label.data());
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 
     for (const auto & [key, value] : props)
     {
         auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(curr_addr);
-        strncpy(&prop->key[0], key, CFG_LPG_PROPERTY_KEY_LENGTH);
-        strncpy(&prop->value[0], value, CFG_LPG_PROPERTY_VALUE_LENGTH);
+        strcpy(&prop->key[0], key);
+        strcpy(&prop->value[0], value);
         curr_addr += sizeof(ILPGModel::SProperty_t);
     }
 }
@@ -240,8 +240,8 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
     SRef_t<SVertexTransaction> v_transc = SRef_t<SVertexTransaction>();
     SRef_t<SEdgeTransaction> e_transc   = SRef_t<SEdgeTransaction>();
 
-    std::vector<std::string_view> src_labels  = {};
-    std::vector<std::string_view> dst_labels  = {};
+    std::vector<std::string> src_labels  = {};
+    std::vector<std::string> dst_labels  = {};
     std::vector<ILPGModel::SProperty_t> props = {};
 
     for (uint32_t i = 0; i < transaction_c; i++)
@@ -304,7 +304,7 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
 
 void
 graphquery::database::storage::CTransaction::process_vertex_transaction(SRef_t<SVertexTransaction> & transaction,
-                                                                        const std::vector<std::string_view> & src_labels,
+                                                                        const std::vector<std::string> & src_labels,
                                                                         const std::vector<ILPGModel::SProperty_t> & props) const noexcept
 {
     if (transaction->commit.remove == 0)
@@ -318,8 +318,8 @@ graphquery::database::storage::CTransaction::process_vertex_transaction(SRef_t<S
 
 void
 graphquery::database::storage::CTransaction::process_edge_transaction(SRef_t<SEdgeTransaction> & transaction,
-                                                                      const std::vector<std::string_view> & src_labels,
-                                                                      const std::vector<std::string_view> & dst_labels,
+                                                                      const std::vector<std::string> & src_labels,
+                                                                      const std::vector<std::string> & dst_labels,
                                                                       const std::vector<ILPGModel::SProperty_t> & props) const noexcept
 {
     if (transaction->commit.remove == 0)

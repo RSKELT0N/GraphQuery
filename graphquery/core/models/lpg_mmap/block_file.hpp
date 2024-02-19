@@ -162,7 +162,7 @@ graphquery::database::storage::CDatablockFile<T, N>::attain_data_block(const uin
     {
         auto data_block_ptr = read_entry(next_ref);
 
-        if (!data_block_ptr->state.all())
+        if (data_block_ptr->state.any())
             return data_block_ptr;
     }
 

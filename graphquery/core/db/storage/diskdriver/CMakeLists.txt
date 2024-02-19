@@ -13,9 +13,7 @@ target_compile_options(
         diskdriver
         PUBLIC
         -fPIC
-        -O3
-        -ffast-math
-        -ffinite-math-only)
+        -O3)
 
 target_sources(
         diskdriver

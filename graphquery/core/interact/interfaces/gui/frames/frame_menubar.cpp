@@ -144,7 +144,7 @@ graphquery::interact::CFrameMenuBar::render_load_dataset() noexcept
     {
         const std::filesystem::path dataset_folder_path = m_dataset_folder_location_explorer.GetSelected();
 
-        database::_db_storage->load_dataset(dataset_folder_path);
+        std::thread(&database::storage::CDBStorage::load_dataset, database::_db_storage.get(), dataset_folder_path).detach();
         m_dataset_folder_location_explorer.ClearSelected();
     }
 }
