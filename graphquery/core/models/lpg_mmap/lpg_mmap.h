@@ -215,7 +215,7 @@ namespace graphquery::database::storage
 
         //~ Disk/file drivers for graph mapping from disk to memory
         CDiskDriver m_master_file;
-        CIndexFile m_global_index_file;
+        CIndexFile m_index_file;
         CDatablockFile<SVertexEntry_t> m_vertices_file;
         CDatablockFile<SEdgeEntry_t, DATABLOCK_EDGE_PAYLOAD_C> m_edges_file;
         CDatablockFile<SProperty_t, DATABLOCK_PROPERTY_PAYLOAD_C> m_properties_file;

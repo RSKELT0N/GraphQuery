@@ -95,7 +95,7 @@ graphquery::database::storage::CTransaction::commit_rm_vertex(const ILPGModel::S
     for (const auto & label : src.labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strcpy(&label_ptr->label[0], label.data());
+        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH - 1);
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 }
@@ -119,7 +119,7 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const ILPGModel::SNo
     transaction_ptr->commit.property_c  = 0;
     transaction_ptr->commit.src_label_c = src.labels.size();
     transaction_ptr->commit.dst_label_c = dst.labels.size();
-    strcpy(&transaction_ptr->commit.edge_label[0], edge_label.data());
+    strncpy(&transaction_ptr->commit.edge_label[0], edge_label.data(), CFG_LPG_LABEL_LENGTH - 1);
 
     transaction_ptr.~SRef_t<SEdgeTransaction>(); //~ Remove reference to transaction file.
 
@@ -128,14 +128,14 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const ILPGModel::SNo
     for (const auto & label : src.labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strcpy(&label_ptr->label[0], label.data());
+        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH - 1);
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 
     for (const auto & label : dst.labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strcpy(&label_ptr->label[0], label.data());
+        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH - 1);
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 }
@@ -166,15 +166,15 @@ graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std
     for (const auto & label : labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strcpy(&label_ptr->label[0], label.data());
+        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH - 1);
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 
     for (const auto & [key, value] : props)
     {
         auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(curr_addr);
-        strcpy(&prop->key[0], key);
-        strcpy(&prop->value[0], value);
+        strncpy(&prop->key[0], key, CFG_LPG_PROPERTY_KEY_LENGTH - 1);
+        strncpy(&prop->value[0], value, CFG_LPG_PROPERTY_VALUE_LENGTH - 1);
         curr_addr += sizeof(ILPGModel::SProperty_t);
     }
 }
@@ -201,7 +201,7 @@ graphquery::database::storage::CTransaction::commit_edge(const ILPGModel::SNodeI
     transaction_ptr->commit.dst        = dst.id;
     transaction_ptr->commit.remove     = 0;
     transaction_ptr->commit.property_c = props.size();
-    strcpy(&transaction_ptr->commit.edge_label[0], edge_label.data());
+    strncpy(&transaction_ptr->commit.edge_label[0], edge_label.data(), CFG_LPG_LABEL_LENGTH - 1);
 
     transaction_ptr.~SRef_t<SEdgeTransaction>(); //~ Remove reference to transaction file.
 
@@ -210,22 +210,22 @@ graphquery::database::storage::CTransaction::commit_edge(const ILPGModel::SNodeI
     for (const auto & label : src.labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strcpy(&label_ptr->label[0], label.data());
+        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH - 1);
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 
     for (const auto & label : dst.labels)
     {
         auto label_ptr = m_transaction_file.ref<SLabel>(curr_addr);
-        strcpy(&label_ptr->label[0], label.data());
+        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH - 1);
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 
     for (const auto & [key, value] : props)
     {
         auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(curr_addr);
-        strcpy(&prop->key[0], key);
-        strcpy(&prop->value[0], value);
+        strncpy(&prop->key[0], key, CFG_LPG_PROPERTY_KEY_LENGTH - 1);
+        strncpy(&prop->value[0], value, CFG_LPG_PROPERTY_VALUE_LENGTH - 1);
         curr_addr += sizeof(ILPGModel::SProperty_t);
     }
 }

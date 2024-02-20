@@ -53,7 +53,17 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {0, {"Place", "City"}}, {});
+            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {0, {"Place"}}, {});
+
+        if (ImGui::Button("Add Vertex 1"))
+            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {349, {"Place", "City"}}, {{"name", "Ryan"}});
+
+        if (ImGui::Button("Add Vertex 2"))
+            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {349, {"Person", "Human"}}, {{"name", "Rysfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfcc"}});
+
+        if (ImGui::Button("Add Vertex 3"))
+            for(int i = 0; i < 100000; i++)
+            (*m_graph)->add_vertex({{"Person", "Human"}}, {{"name", "Rysfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfcc"}});
 
         if (ImGui::Button("Query"))
         {

@@ -117,9 +117,9 @@ graphquery::database::storage::SRef_t<graphquery::database::storage::CDBStorage:
 graphquery::database::storage::CDBStorage::read_graph_entry(const uint8_t entry_offset) noexcept
 {
     assert(m_db_file.check_if_initialised() == true);
-    static const uint64_t base_addr  = read_db_superblock()->db_info.graph_table_start_addr;
-    static const uint64_t entry_size = read_db_superblock()->db_info.graph_entry_size;
-    const uint64_t effective_addr    = base_addr + (entry_size * entry_offset);
+    static const int64_t base_addr  = read_db_superblock()->db_info.graph_table_start_addr;
+    static const int64_t entry_size = read_db_superblock()->db_info.graph_entry_size;
+    const int64_t effective_addr    = base_addr + (entry_size * entry_offset);
     return m_db_file.ref<SGraph_Entry_t>(effective_addr);
 }
 

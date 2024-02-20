@@ -105,11 +105,8 @@ namespace graphquery::database::storage
             SProperty_t() = default;
             SProperty_t(const std::string & k, const std::string & v)
             {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstringop-truncation"
-                strncpy(key, k.c_str(), CFG_LPG_PROPERTY_KEY_LENGTH);
-                strncpy(value, v.c_str(), CFG_LPG_PROPERTY_VALUE_LENGTH);
-#pragma GCC diagnostic pop
+                strncpy(key, k.c_str(), CFG_LPG_PROPERTY_KEY_LENGTH - 1);
+                strncpy(value, v.c_str(), CFG_LPG_PROPERTY_VALUE_LENGTH - 1);
             }
         };
 

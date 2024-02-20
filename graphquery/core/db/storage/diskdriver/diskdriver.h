@@ -22,7 +22,7 @@
 #include <condition_variable>
 #include <unistd.h>
 
-#define RESIZE_OVERLAY(x) ((int64_t) x + (x / 10))
+#define RESIZE_OVERLAY(x) ((int64_t) x * 2)
 
 #define KB(x) ((size_t) (x * (1 << 10)))
 #define MB(x) ((size_t) (x * (1 << 20)))
@@ -106,7 +106,7 @@ namespace graphquery::database::storage
         bool m_initialised           = {}; //~ Wether the fd descriptor is opened.
         struct stat m_fd_info        = {}; //~ Structure info on the currently opened file.
         int m_file_descriptor        = {}; //~ integer of the pointed file.
-        int64_t m_seek_offset       = {}; //~ Current offset within the memory map.
+        int64_t m_seek_offset        = {}; //~ Current offset within the memory map.
         char * m_memory_mapped_file  = {}; //~ buffer address of the memory mapped file.
         std::filesystem::path m_path = {}; //~ Set path of the current context.
 

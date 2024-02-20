@@ -29,9 +29,9 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SIndexMetadata_t
         {
-            uint32_t index_list_start_addr = {};
-            uint32_t index_c               = {};
-            uint32_t index_size            = {};
+            int64_t index_list_start_addr = {};
+            int64_t index_c               = {};
+            int64_t index_size            = {};
         };
 
         /****************************************************************
@@ -46,7 +46,7 @@ namespace graphquery::database::storage
         {
             int64_t id      = {};
             uint32_t offset = END_INDEX;
-        };
+        } __attribute__((packed));
 
         ~CIndexFile();
         CIndexFile();
