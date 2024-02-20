@@ -32,10 +32,10 @@ namespace graphquery::database::storage
         struct SNodeID
         {
             int64_t id                      = {};
-            std::vector<std::string> labels = {};
+            std::vector<std::string_view> labels = {};
 
             SNodeID() = default;
-            SNodeID(const int64_t _id, const std::vector<std::string> & _label): id(_id), labels(_label) {}
+            SNodeID(const int64_t _id, const std::vector<std::string_view> & _label): id(_id), labels(_label) {}
         };
 
         /****************************************************************
@@ -103,10 +103,10 @@ namespace graphquery::database::storage
             char value[CFG_LPG_PROPERTY_VALUE_LENGTH] = {""};
 
             SProperty_t() = default;
-            SProperty_t(const std::string & k, const std::string & v)
+            SProperty_t(const std::string_view & k, const std::string_view & v)
             {
-                strncpy(key, k.c_str(), CFG_LPG_PROPERTY_KEY_LENGTH - 1);
-                strncpy(value, v.c_str(), CFG_LPG_PROPERTY_VALUE_LENGTH - 1);
+                strncpy(key, k.data(), CFG_LPG_PROPERTY_KEY_LENGTH - 1);
+                strncpy(value, v.data(), CFG_LPG_PROPERTY_VALUE_LENGTH - 1);
             }
         };
 
@@ -140,7 +140,7 @@ namespace graphquery::database::storage
         virtual void rm_edge(const SNodeID & src, const SNodeID & dst)                                                                      = 0;
         virtual void rm_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label)                                         = 0;
         virtual void add_vertex(const SNodeID & id, const std::vector<SProperty_t> & prop)                                                  = 0;
-        virtual void add_vertex(const std::vector<std::string> & labels, const std::vector<SProperty_t> & prop)                             = 0;
+        virtual void add_vertex(const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & prop)                             = 0;
         virtual void add_edge(const SNodeID & src, const SNodeID & dst, std::string_view edge_label, const std::vector<SProperty_t> & prop) = 0;
 
       protected:

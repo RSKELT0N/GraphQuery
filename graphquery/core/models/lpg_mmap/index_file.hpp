@@ -83,6 +83,11 @@ graphquery::database::storage::CIndexFile::store_metadata() noexcept
     metadata->index_c               = 0;
     metadata->index_size            = sizeof(SIndexEntry_t);
     metadata->index_list_start_addr = sizeof(SIndexMetadata_t);
+
+    // ~ Initialise first index block
+    auto ptr    = read_entry(0);
+    ptr->id     = END_INDEX;
+    ptr->offset = END_INDEX;
 }
 
 inline graphquery::database::storage::SRef_t<graphquery::database::storage::CIndexFile::SIndexEntry_t>

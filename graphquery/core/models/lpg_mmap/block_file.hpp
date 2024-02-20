@@ -149,7 +149,7 @@ graphquery::database::storage::CDatablockFile<T, N>::read_entry(int64_t offset) 
 {
     static const auto base_addr      = utils::atomic_load(&read_metadata()->data_blocks_start_addr);
     static const auto datablock_size = utils::atomic_load(&read_metadata()->data_block_size);
-    const auto effective_addr        = std::min(static_cast<int64_t>(base_addr + (datablock_size * offset)), INT64_MAX);
+    const auto effective_addr        = base_addr + datablock_size * offset;
     return m_file.ref<STypeDataBlock>(effective_addr);
 }
 
@@ -162,7 +162,7 @@ graphquery::database::storage::CDatablockFile<T, N>::attain_data_block(const uin
     {
         auto data_block_ptr = read_entry(next_ref);
 
-        if (data_block_ptr->state.any())
+        if (!data_block_ptr->state.all())
             return data_block_ptr;
     }
 

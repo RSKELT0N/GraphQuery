@@ -76,13 +76,9 @@ graphquery::database::storage::CDiskDriver::resize(const int64_t file_size) noex
     m_resizing = 1;
     m_cv_lock.wait(m_unq_lock, wait_on_refs);
 
-    if (file_size == 9007199254741016)
-    {
-        printf("Halt\n");
-    }
-    assert(unmap() == SRet_t::VALID);
+    (void) unmap();
     truncate(resize_to_pagesize(file_size));
-    assert(map() == SRet_t::VALID);
+    map();
 
     m_resizing = 0;
     m_cv_lock.notify_all();
@@ -317,7 +313,7 @@ graphquery::database::storage::CDiskDriver::read(void * ptr, const int64_t size,
     if (this->m_initialised)
     {
         if (m_fd_info.st_size <= static_cast<int64_t>(size * amt + m_seek_offset))
-            resize(RESIZE_OVERLAY(size * amt + m_seek_offset));
+            resize((size * amt + m_seek_offset) * 2);
 
         memcpy(ptr, &this->m_memory_mapped_file[this->m_seek_offset], size * amt);
 
@@ -335,7 +331,7 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
     if (this->m_initialised)
     {
         if (m_fd_info.st_size <= static_cast<int64_t>(size * amt + m_seek_offset))
-            resize(RESIZE_OVERLAY(size * amt + m_seek_offset));
+            resize((size * amt + m_seek_offset) * 2);
 
         memcpy(&this->m_memory_mapped_file[this->m_seek_offset], ptr, size * amt);
         if (update)
@@ -354,7 +350,7 @@ graphquery::database::storage::CDiskDriver::ref(const int64_t seek, const int64_
     if (this->m_initialised)
     {
         if (m_fd_info.st_size <= seek + size)
-            resize(RESIZE_OVERLAY(seek + size));
+            resize((seek + size) * 2);
 
         m_cv_lock.wait(m_unq_lock, wait_on_resizing);
         ptr = &this->m_memory_mapped_file[seek];
@@ -370,7 +366,7 @@ graphquery::database::storage::CDiskDriver::ref_update(const int64_t size) noexc
     if (this->m_initialised)
     {
         if (m_fd_info.st_size <= m_seek_offset + size)
-            resize(RESIZE_OVERLAY(m_seek_offset + size));
+            resize((m_seek_offset + size) * 2);
 
         m_cv_lock.wait(m_unq_lock, wait_on_resizing);
         ptr = &this->m_memory_mapped_file[m_seek_offset];

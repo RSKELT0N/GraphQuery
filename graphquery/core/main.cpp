@@ -1,7 +1,7 @@
 #include "db/system.h"
 
-#define DB_NAME    "DB10"
-#define GRAPH_NAME "GR3"
+#define DB_NAME    "DB1"
+#define GRAPH_NAME "GR20"
 
 int
 main([[maybe_unused]] const int argc, [[maybe_unused]] char * argv[])

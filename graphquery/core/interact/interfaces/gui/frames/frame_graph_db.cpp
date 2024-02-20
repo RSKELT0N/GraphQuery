@@ -62,10 +62,45 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
             (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {349, {"Person", "Human"}}, {{"name", "Rysfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfcc"}});
 
         if (ImGui::Button("Add Vertex 3"))
-            for(int i = 0; i < 100000; i++)
-            (*m_graph)->add_vertex({{"Person", "Human"}}, {{"name", "Rysfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfcc"}});
+        {
+            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {10, {"Place", "City"}}, {{"Name", "Ryan"}, {"Second", "Skelton"}, {"email", "ryanskelton2000@yahoo.com"}});
+        }
 
-        if (ImGui::Button("Query"))
+        if (ImGui::Button("Query 0"))
+        {
+            auto vrt = (*m_graph)->get_vertex(database::storage::ILPGModel::SNodeID {1459, {"Continent"}});
+
+            if (vrt.has_value())
+            {
+                auto props = (*m_graph)->get_properties_by_property_id_map(vrt->property_id);
+
+                fmt::print("{}\n{}\n{}\n{}\n\n", vrt->id, vrt->label_id, vrt->edge_label_c, vrt->property_c);
+
+                for (const auto & prop : props)
+                {
+                    fmt::print("{} : {}\n", prop.first, prop.second);
+                }
+            }
+            else
+                fmt::print("Not found\n");
+        }
+
+        if(ImGui::Button("Query 1"))
+        {
+            auto result = database::_db_query->interation_complex_8(143);
+
+            for(auto & res : result)
+            {
+                fmt::print("Prop\n--------\n\n");
+                for(const auto & r : res)
+                {
+                    fmt::print("{} : {}\n", r.first, r.second);
+                }
+                fmt::print("\n");
+            }
+        }
+
+        if (ImGui::Button("Query 2"))
         {
             auto p = (*m_graph)->get_vertices_by_label("Person");
             database::_log_system->info(fmt::format("Person: {}", p.size()));

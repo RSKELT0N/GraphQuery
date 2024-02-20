@@ -141,7 +141,7 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const ILPGModel::SNo
 }
 
 void
-graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std::string> & labels, const std::vector<ILPGModel::SProperty_t> & props, const int64_t optional_id) noexcept
+graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std::string_view> & labels, const std::vector<ILPGModel::SProperty_t> & props, const int64_t optional_id) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
     const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr,
@@ -240,8 +240,8 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
     SRef_t<SVertexTransaction> v_transc = SRef_t<SVertexTransaction>();
     SRef_t<SEdgeTransaction> e_transc   = SRef_t<SEdgeTransaction>();
 
-    std::vector<std::string> src_labels  = {};
-    std::vector<std::string> dst_labels  = {};
+    std::vector<std::string_view> src_labels  = {};
+    std::vector<std::string_view> dst_labels  = {};
     std::vector<ILPGModel::SProperty_t> props = {};
 
     for (uint32_t i = 0; i < transaction_c; i++)
@@ -304,7 +304,7 @@ graphquery::database::storage::CTransaction::handle_transactions() noexcept
 
 void
 graphquery::database::storage::CTransaction::process_vertex_transaction(SRef_t<SVertexTransaction> & transaction,
-                                                                        const std::vector<std::string> & src_labels,
+                                                                        const std::vector<std::string_view> & src_labels,
                                                                         const std::vector<ILPGModel::SProperty_t> & props) const noexcept
 {
     if (transaction->commit.remove == 0)
@@ -318,8 +318,8 @@ graphquery::database::storage::CTransaction::process_vertex_transaction(SRef_t<S
 
 void
 graphquery::database::storage::CTransaction::process_edge_transaction(SRef_t<SEdgeTransaction> & transaction,
-                                                                      const std::vector<std::string> & src_labels,
-                                                                      const std::vector<std::string> & dst_labels,
+                                                                      const std::vector<std::string_view> & src_labels,
+                                                                      const std::vector<std::string_view> & dst_labels,
                                                                       const std::vector<ILPGModel::SProperty_t> & props) const noexcept
 {
     if (transaction->commit.remove == 0)

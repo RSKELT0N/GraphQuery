@@ -22,8 +22,6 @@
 #include <condition_variable>
 #include <unistd.h>
 
-#define RESIZE_OVERLAY(x) ((int64_t) x * 2)
-
 #define KB(x) ((size_t) (x * (1 << 10)))
 #define MB(x) ((size_t) (x * (1 << 20)))
 #define GB(x) ((size_t) (x * (1 << 30)))

@@ -75,11 +75,12 @@ namespace graphquery::database::storage
         static const auto initial_dynamic_path = m_dataset_path / "initial_snapshot" / "dynamic";
 
         load_dataset_segment(initial_static_path);
-        // load_dataset_segment(initial_dynamic_path);
+        load_dataset_segment(initial_dynamic_path);
     }
 
     inline void CDatasetLDBC::load_vertex_file([[maybe_unused]] const std::string_view file_name, [[maybe_unused]] csv::CSVReader & fd) const noexcept
     {
+        _log_system->info(fmt::format("Loading vertex file {} into graph", file_name));
         const auto col_names     = fd.get_col_names();
         const int32_t id_col_idx = fd.index_of("id");
         const int32_t type_idx   = fd.index_of("type");
@@ -97,8 +98,7 @@ namespace graphquery::database::storage
         }
 
         std::vector<ILPGModel::SProperty_t> props;
-        std::vector<std::string> labels;
-
+        std::vector<std::string_view> labels;
         for(const auto & row : fd)
         {
             labels.emplace_back(file_name);
@@ -109,6 +109,9 @@ namespace graphquery::database::storage
                 type = row[type_idx].get<std::string>();
                 labels.emplace_back(type);
             }
+
+            if(file_name.compare("Post") == 0 || file_name.compare("Comment") == 0)
+                labels.emplace_back("Message");
 
             for (const auto & prop_idx : prop_indices)
                 props.emplace_back(col_names[prop_idx], row[prop_idx].get<>());
@@ -122,6 +125,7 @@ namespace graphquery::database::storage
 
     inline void CDatasetLDBC::load_edge_file([[maybe_unused]] const std::string_view file_name, [[maybe_unused]] csv::CSVReader & fd) const noexcept
     {
+        _log_system->info(fmt::format("Loading edge file {} into graph", file_name));
         const std::vector<std::string> edge_parts = utils::split(file_name, '_');
         const std::string & src_label             = edge_parts[0];
         const std::string & edge_label            = edge_parts[1];

@@ -146,7 +146,7 @@ namespace graphquery::database::storage
 
         void load_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void create_graph(std::filesystem::path path, std::string_view graph) noexcept override;
-        void add_vertex(const std::vector<std::string> & label, const std::vector<SProperty_t> & prop) override;
+        void add_vertex(const std::vector<std::string_view> & label, const std::vector<SProperty_t> & prop) override;
         void add_vertex(const SNodeID & src, const std::vector<SProperty_t> & prop) override;
         void add_edge(const SNodeID & src, const SNodeID & dst, std::string_view label, const std::vector<SProperty_t> & prop) override;
 
@@ -161,7 +161,7 @@ namespace graphquery::database::storage
         void inline transaction_preamble() noexcept;
         void inline transaction_epilogue() noexcept;
 
-        std::optional<SRef_t<SVertexDataBlock>> get_vertex(int64_t id, const std::vector<std::string> & labels);
+        std::optional<SRef_t<SVertexDataBlock>> get_vertex(int64_t id, const std::vector<std::string_view> & labels);
         std::optional<SRef_t<SVertexDataBlock>> get_vertex_by_offset(uint32_t offset) noexcept;
         uint32_t get_vertex_head_offset(int64_t id);
         void read_index_list() noexcept;
@@ -181,8 +181,8 @@ namespace graphquery::database::storage
         [[nodiscard]] EActionState_t rm_edge_entry(const SNodeID & src, const SNodeID & dst) noexcept;
         [[nodiscard]] EActionState_t rm_edge_entry(const SNodeID & src, const SNodeID & dst, std::string_view edge_label) noexcept;
 
-        [[nodiscard]] EActionState_t add_vertex_entry(int64_t id, const std::vector<std::string> & labels, const std::vector<SProperty_t> & props) noexcept;
-        [[nodiscard]] EActionState_t add_vertex_entry(const std::vector<std::string> & labels, const std::vector<SProperty_t> & props) noexcept;
+        [[nodiscard]] EActionState_t add_vertex_entry(int64_t id, const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & props) noexcept;
+        [[nodiscard]] EActionState_t add_vertex_entry(const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & props) noexcept;
         [[nodiscard]] EActionState_t add_edge_entry(const SNodeID & src, const SNodeID & dst, std::string_view edge_label, const std::vector<SProperty_t> & props) noexcept;
 
         [[nodiscard]] uint16_t create_edge_label(std::string_view) noexcept;
@@ -190,7 +190,7 @@ namespace graphquery::database::storage
         [[nodiscard]] int64_t get_unassigned_vertex_id(size_t label_idx) const noexcept;
         [[nodiscard]] inline std::optional<uint16_t> check_if_edge_label_exists(const std::string_view &) noexcept;
         [[nodiscard]] inline std::optional<uint16_t> check_if_vertex_label_exists(const std::string_view &) noexcept;
-        [[nodiscard]] inline std::unordered_set<uint16_t> get_vertex_labels(const std::vector<std::string> & labels, bool create_if_absent = false) noexcept;
+        [[nodiscard]] inline std::unordered_set<uint16_t> get_vertex_labels(const std::vector<std::string_view> & labels, bool create_if_absent = false) noexcept;
 
         [[nodiscard]] std::optional<SRef_t<SVertexDataBlock>> get_vertex_by_id(int64_t id, uint16_t label_id) noexcept;
         [[nodiscard]] std::optional<SRef_t<SVertexDataBlock>> get_vertex_by_id(int64_t id, const std::unordered_set<uint16_t> & label_ids) noexcept;
