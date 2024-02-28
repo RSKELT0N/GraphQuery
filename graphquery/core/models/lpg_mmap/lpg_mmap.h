@@ -163,7 +163,7 @@ namespace graphquery::database::storage
 
         std::optional<SRef_t<SVertexDataBlock>> get_vertex_by_offset(uint32_t offset) noexcept;
         void read_index_list() noexcept;
-        void define_vertex_lut() noexcept;
+        void define_luts() noexcept;
         void store_graph_metadata() noexcept;
         uint32_t store_label_entry(uint16_t label_id, uint32_t next_ref) noexcept;
         uint32_t store_property_entry(const SProperty_t & prop, uint32_t next_ref) noexcept;
@@ -202,7 +202,8 @@ namespace graphquery::database::storage
         std::string m_graph_name;
         std::string m_graph_path;
         std::vector<std::vector<uint32_t>> m_label_vertex;
-        std::unordered_map<std::string, uint16_t> m_label_map;
+        std::unordered_map<std::string, uint16_t> m_v_label_map;
+        std::unordered_map<std::string, uint16_t> m_e_label_map;
 
         uint8_t m_syncing;
         std::mutex m_sync_lock;

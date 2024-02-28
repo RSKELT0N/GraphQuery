@@ -50,7 +50,7 @@ namespace graphquery::database::query
          *
          *  \param _person_id int64_t - ID of person
          ***************************************************************/
-        [[nodiscard]] std::vector<std::map<std::string, std::string>> interation_complex_8(int64_t _person_id) const noexcept;
+        [[nodiscard]] std::vector<std::map<std::string, std::string>> interaction_complex_8(int64_t _person_id) const noexcept;
 
         /****************************************************************
          ** \brief Creates an edge between two nodes (person, post),

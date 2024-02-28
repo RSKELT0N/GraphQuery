@@ -87,7 +87,7 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 
         if(ImGui::Button("Query 1"))
         {
-            auto result = database::_db_query->interaction_complex_2(10000, 2000000);
+            auto result = database::_db_query->interaction_complex_8(1774628);
 
             for(auto & res : result)
             {

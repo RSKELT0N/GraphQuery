@@ -48,8 +48,8 @@ namespace graphquery::database::storage
 
         struct SEdge_t
         {
-            int64_t src            = {};
-            int64_t dst            = {};
+            SNodeID src            = {};
+            SNodeID dst            = {};
             uint32_t property_id   = {};
             uint16_t edge_label_id = {};
             uint16_t property_c    = {};
@@ -64,12 +64,20 @@ namespace graphquery::database::storage
                 this->property_c    = cpy.property_c;
             }
 
-            SEdge_t & operator=(const SEdge_t & cpy) = default;
+            SEdge_t & operator=(const SEdge_t & cpy)
+            {
+                this->src           = cpy.src;
+                this->dst           = cpy.dst;
+                this->property_id   = cpy.property_id;
+                this->edge_label_id = cpy.edge_label_id;
+                this->property_c    = cpy.property_c;
+                return *this;
+            }
         };
 
         struct SVertex_t
         {
-            int64_t id            = {};
+            SNodeID id            = {};
             uint32_t neighbour_c  = {};
             uint32_t property_id  = {};
             uint32_t label_id     = {};
@@ -87,7 +95,16 @@ namespace graphquery::database::storage
                 this->edge_label_c = cpy.edge_label_c;
             }
 
-            SVertex_t & operator=(const SVertex_t & cpy) = default;
+            SVertex_t & operator=(const SVertex_t & cpy)
+            {
+                this->id           = cpy.id;
+                this->neighbour_c  = cpy.neighbour_c;
+                this->property_id  = cpy.property_id;
+                this->property_c   = cpy.property_c;
+                this->label_id     = cpy.label_id;
+                this->edge_label_c = cpy.edge_label_c;
+                return *this;
+            }
         };
 
         struct SProperty_t

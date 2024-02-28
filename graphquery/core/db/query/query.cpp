@@ -21,6 +21,7 @@ graphquery::database::query::CQueryEngine::interaction_complex_2(const int64_t _
 
     //~ Generating Map of properties
     std::vector<std::map<std::string, std::string>> properties_map;
+    properties_map.reserve(message_creators.size());
 
     uint32_t prop_i = 0;
     for (const storage::ILPGModel::SEdge_t & edge : message_creators)
@@ -31,18 +32,16 @@ graphquery::database::query::CQueryEngine::interaction_complex_2(const int64_t _
         if (static_cast<int64_t>(std::stol(message_props.at("creationDate"))) >= _max_date)
             continue;
 
-        message_props["postOrCommendId"]           = message_props.at("id");
+        message_props["postOrCommendId"]           = std::to_string(edge.src);
         message_props["postOrCommentCreationDate"] = message_props.at("creationDate");
 
-        message_props.erase("id");
         message_props.erase("creationDate");
 
         auto friend_props               = get_graph()->get_properties_by_id_map(edge.dst);
-        friend_props["personId"]        = friend_props.at("id");
+        friend_props["personId"]        = std::to_string(edge.dst);
         friend_props["personFirstName"] = friend_props.at("firstName");
         friend_props["personLastName"]  = friend_props.at("lastName");
 
-        friend_props.erase("id");
         friend_props.erase("firstName");
         friend_props.erase("lastName");
 
@@ -56,7 +55,7 @@ graphquery::database::query::CQueryEngine::interaction_complex_2(const int64_t _
 }
 
 std::vector<std::map<std::string, std::string>>
-graphquery::database::query::CQueryEngine::interation_complex_8(const int64_t _person_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_complex_8(const int64_t _person_id) const noexcept
 {
     //~ MATCH (start:Person {id: $personId})<-[:HAS_CREATOR]-(:Message)
     std::vector<storage::ILPGModel::SEdge_t> person_comments = get_graph()->get_edges("Message", "hasCreator", _person_id);
@@ -64,7 +63,7 @@ graphquery::database::query::CQueryEngine::interation_complex_8(const int64_t _p
     std::unordered_set<int64_t> uniq_messages = {};
     uniq_messages.reserve(person_comments.size());
 
-    std::for_each(person_comments.begin(), person_comments.end(), [&uniq_messages](const storage::ILPGModel::SEdge_t & edge) { uniq_messages.emplace(edge.src); });
+    std::for_each(person_comments.begin(), person_comments.end(), [&uniq_messages](const storage::ILPGModel::SEdge_t & edge) { uniq_messages.insert(edge.src); });
 
     //~ (start:Person {id: $personId})<-[:HAS_CREATOR]-(:Message)<-[:REPLY_OF]-(comment:Comment)
     std::vector<storage::ILPGModel::SEdge_t> comments =
@@ -81,26 +80,25 @@ graphquery::database::query::CQueryEngine::interation_complex_8(const int64_t _p
 
     //~ Generating Map of properties
     std::vector<std::map<std::string, std::string>> properties_map;
+    properties_map.reserve(comment_creators.size());
 
     uint32_t prop_i = 0;
     for (const storage::ILPGModel::SEdge_t & edge : comment_creators)
     {
         auto comment_props = get_graph()->get_properties_by_id_map(edge.src);
 
-        comment_props["postOrCommendId"]           = comment_props.at("id");
+        comment_props["postOrCommendId"]           = std::to_string(edge.src);
         comment_props["postOrCommentCreationDate"] = comment_props.at("creationDate");
         comment_props["commentContent"]            = comment_props.at("content");
 
-        comment_props.erase("id");
         comment_props.erase("creationDate");
         comment_props.erase("content");
 
         auto friend_props               = get_graph()->get_properties_by_id_map(edge.dst);
-        friend_props["personId"]        = friend_props.at("id");
+        friend_props["personId"]        = std::to_string(edge.dst);
         friend_props["personFirstName"] = friend_props.at("firstName");
         friend_props["personLastName"]  = friend_props.at("lastName");
 
-        friend_props.erase("id");
         friend_props.erase("firstName");
         friend_props.erase("lastName");
 
