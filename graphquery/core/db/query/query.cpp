@@ -13,7 +13,7 @@ std::vector<std::map<std::string, std::string>>
 graphquery::database::query::CQueryEngine::interaction_complex_2(const int64_t _person_id, [[maybe_unused]] uint32_t _max_date) const noexcept
 {
     //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
-    std::unordered_set<int64_t> _friends = get_graph()->get_edge_dst_vertices({_person_id, {"Person"}}, "knows", "Person");
+    std::unordered_set<int64_t> _friends = get_graph()->get_edge_dst_vertices(_person_id, "knows", "Person");
 
     //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
     std::vector<storage::ILPGModel::SEdge_t> message_creators =
@@ -59,7 +59,7 @@ std::vector<std::map<std::string, std::string>>
 graphquery::database::query::CQueryEngine::interation_complex_8(const int64_t _person_id) const noexcept
 {
     //~ MATCH (start:Person {id: $personId})<-[:HAS_CREATOR]-(:Message)
-    std::vector<storage::ILPGModel::SEdge_t> person_comments = get_graph()->get_edges("Message", "hasCreator", {_person_id, {"Person"}});
+    std::vector<storage::ILPGModel::SEdge_t> person_comments = get_graph()->get_edges("Message", "hasCreator", _person_id);
 
     std::unordered_set<int64_t> uniq_messages = {};
     uniq_messages.reserve(person_comments.size());
@@ -120,7 +120,7 @@ graphquery::database::query::CQueryEngine::interation_update_2([[maybe_unused]] 
     static std::stringstream date;
     date << std::put_time(std::gmtime(&time), "%c");
 
-    get_graph()->add_edge({_person_id, {"Person"}}, {_post_id, {"Post"}}, "LIKES", {{"creationDate", date.str()}});
+    get_graph()->add_edge(_person_id, _post_id, "LIKES", {{"creationDate", date.str()}});
 }
 
 void
@@ -130,26 +130,26 @@ graphquery::database::query::CQueryEngine::interation_update_8([[maybe_unused]] 
     static std::stringstream date;
     date << std::put_time(std::gmtime(&time), "%c");
 
-    get_graph()->add_edge({_src_person_id, {"Person"}}, {_dst_person_id, {"Person"}}, "KNOWS", {{"creationDate", date.str()}});
+    get_graph()->add_edge(_src_person_id, _dst_person_id, "KNOWS", {{"creationDate", date.str()}});
 }
 
 void
 graphquery::database::query::CQueryEngine::interation_delete_2([[maybe_unused]] const int64_t _person_id, [[maybe_unused]] const int64_t _post_id) const noexcept
 {
-    get_graph()->rm_edge({_person_id, {"Person"}}, {_post_id, {"Post"}}, "LIKES");
+    get_graph()->rm_edge(_person_id, _post_id, "LIKES");
 }
 
 void
 graphquery::database::query::CQueryEngine::interation_delete_8([[maybe_unused]] const int64_t _src_person_id, [[maybe_unused]] const int64_t _dst_person_id) const noexcept
 {
-    get_graph()->rm_edge({_src_person_id, {"Person"}}, {_dst_person_id, {"Person"}}, "KNOWS");
+    get_graph()->rm_edge(_src_person_id, _dst_person_id, "KNOWS");
 }
 
 void
 graphquery::database::query::CQueryEngine::interation_short_2([[maybe_unused]] const int64_t _person_id) const noexcept
 {
     //~ MATCH (:Person {id: $personId})<-[:HAS_CREATOR]-(message)
-    auto person_comments = get_graph()->get_edges("Message", "HAS_CREATOR", {_person_id, {"Person"}});
+    auto person_comments = get_graph()->get_edges("Message", "HAS_CREATOR", _person_id);
     //~ MATCH (message)-[:REPLY_OF*0..]->(post:Post)
     std::vector<storage::ILPGModel::SEdge_t> posts = {};
 
@@ -174,7 +174,7 @@ void
 graphquery::database::query::CQueryEngine::interation_short_7([[maybe_unused]] const int64_t _message_id) const noexcept
 {
     //~ MATCH (m:Message {id: $messageId })<-[:REPLY_OF]-(c:Comment)
-    const auto message_comments = get_graph()->get_edges("Comment", "REPLY_OF", {_message_id, {"Message"}});
+    const auto message_comments = get_graph()->get_edges("Comment", "REPLY_OF", _message_id);
 
     //~ (c:Comment)-[:HAS_CREATOR]->(p:Person)
     std::vector<storage::ILPGModel::SEdge_t> creator_of_comments = {};

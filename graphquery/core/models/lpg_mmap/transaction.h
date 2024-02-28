@@ -39,21 +39,20 @@ namespace graphquery::database::storage
 
         struct SVertexCommit
         {
-            int64_t optional_id  = {0};
-            uint16_t label_c     = {0};
-            uint16_t property_c  = {0};
-            uint8_t remove       = {0};
+            ILPGModel::SNodeID optional_id = {0};
+            uint16_t label_c               = {0};
+            uint16_t property_c            = {0};
+            uint8_t remove                 = {0};
         } __attribute__((packed));
 
         struct SEdgeCommit
         {
-            char edge_label[CFG_LPG_LABEL_LENGTH] = {};
-            int64_t src                           = {};
-            int64_t dst                           = {};
+            char edge_label[CFG_LPG_LABEL_LENGTH] = {""};
+            ILPGModel::SNodeID src                = {0};
+            ILPGModel::SNodeID dst                = {0};
             uint16_t property_c                   = {0};
-            uint16_t src_label_c                  = {0};
-            uint16_t dst_label_c                  = {0};
             uint8_t remove                        = {0};
+            uint8_t undirected                    = {0};
         };
 
         template<typename T>
@@ -71,11 +70,11 @@ namespace graphquery::database::storage
         void init() noexcept;
         void reset() noexcept;
         void handle_transactions() noexcept;
-        void commit_rm_vertex(const ILPGModel::SNodeID & src) noexcept;
-        void commit_rm_edge(const ILPGModel::SNodeID & src, const ILPGModel::SNodeID & dst, std::string_view edge_label = "") noexcept;
+        void commit_rm_vertex(ILPGModel::SNodeID src) noexcept;
+        void commit_rm_edge(ILPGModel::SNodeID src, ILPGModel::SNodeID dst, std::string_view edge_label = "") noexcept;
 
-        void commit_vertex(const std::vector<std::string_view> & labels, const std::vector<ILPGModel::SProperty_t> & props, int64_t optional_id = -1) noexcept;
-        void commit_edge(const ILPGModel::SNodeID & src, const ILPGModel::SNodeID & dst, std::string_view edge_label, const std::vector<ILPGModel::SProperty_t> & props) noexcept;
+        void commit_vertex(const std::vector<std::string_view> & labels, const std::vector<ILPGModel::SProperty_t> & props, ILPGModel::SNodeID optional_id = -1) noexcept;
+        void commit_edge(ILPGModel::SNodeID src, ILPGModel::SNodeID dst, std::string_view edge_label, const std::vector<ILPGModel::SProperty_t> & props, bool undirected) noexcept;
 
       private:
         using SVertexTransaction = STransaction<SVertexCommit>;
@@ -90,8 +89,6 @@ namespace graphquery::database::storage
         inline SRef_t<SHeaderBlock> read_transaction_header();
 
         void process_edge_transaction(SRef_t<SEdgeTransaction> &,
-                                      const std::vector<std::string_view> & src_labels,
-                                      const std::vector<std::string_view> & dst_labels,
                                       const std::vector<ILPGModel::SProperty_t> & props) const noexcept;
         void process_vertex_transaction(SRef_t<SVertexTransaction> &, const std::vector<std::string_view> & src_labels, const std::vector<ILPGModel::SProperty_t> & props) const noexcept;
 

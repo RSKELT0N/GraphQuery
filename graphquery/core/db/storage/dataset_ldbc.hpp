@@ -116,7 +116,7 @@ namespace graphquery::database::storage
             for (const auto & prop_idx : prop_indices)
                 props.emplace_back(col_names[prop_idx], row[prop_idx].get<>());
 
-            (*m_graph)->add_vertex(ILPGModel::SNodeID {id, labels}, props);
+            (*m_graph)->add_vertex(id, labels, props);
 
             props.clear();
             labels.clear();
@@ -127,9 +127,8 @@ namespace graphquery::database::storage
     {
         _log_system->info(fmt::format("Loading edge file {} into graph", file_name));
         const std::vector<std::string> edge_parts = utils::split(file_name, '_');
-        const std::string & src_label             = edge_parts[0];
         const std::string & edge_label            = edge_parts[1];
-        const std::string & dst_label             = edge_parts[2];
+        const bool undirected = edge_label == "knows";
 
         const auto edge_idx_map = m_edge_file_idx_pos.at(file_name.data());
         const auto col_names    = fd.get_col_names();
@@ -152,7 +151,8 @@ namespace graphquery::database::storage
             for (const auto & prop_idx : prop_indices)
                 props.emplace_back(col_names[prop_idx], row[prop_idx].get<>());
 
-            (*m_graph)->add_edge(ILPGModel::SNodeID {src_id, {src_label}}, ILPGModel::SNodeID {dst_id, {dst_label}}, edge_label, props);
+            (*m_graph)->add_edge(src_id, dst_id, edge_label, props, undirected);
+
             props.clear();
         }
     }

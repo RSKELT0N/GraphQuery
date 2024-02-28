@@ -12,9 +12,11 @@ import os
 import sys
 import pandas as pd
 
-def remap_ids(df, start=0):
+new_id = 0
+
+def remap_ids(df):
+    global new_id
     id_mapping = {}
-    new_id = start
 
     for old_id in df['id']:
         # Assign a new ID to each unique old ID
@@ -34,18 +36,10 @@ def process_directory(directory, subdirectory, mappings):
     for filename in os.listdir(vertices_dir):
         if filename.endswith(".csv"):
             df = pd.read_csv(os.path.join(vertices_dir, filename), delimiter='|')
+            print("~ Remapping " + filename)
             
-            continuous_id = filename.startswith("Comment") or filename.startswith("Post") 
-            start = 0
-            
-            if continuous_id:
-                comment_max = max(mappings["Comment"].values()) if "Comment" in mappings else 0
-                post_max = max(mappings["Post"].values()) if "Post" in mappings else 0
-                start = max(comment_max, post_max)
-                start += 1 if start != 0 else 0
-
             # Remap the IDs if they are not sequential
-            df, id_mapping = remap_ids(df, start)
+            df, id_mapping = remap_ids(df)
 
             type = filename.split('.')[0]
             mappings[type] = id_mapping
@@ -66,11 +60,12 @@ def process_directory(directory, subdirectory, mappings):
     for filename in os.listdir(edges_dir):
         if filename.endswith(".csv"):
             df = pd.read_csv(os.path.join(edges_dir, filename), delimiter='|')
+            print("~ Remapping " + filename)
 
             # Check if this file corresponds to a vertices file
             parts = filename.split('_')
             src_type = parts[0]
-            dst_type = parts[2].split('.')[0];
+            dst_type = parts[2].split('.')[0]
 
             src_col_idx = 0 if subdirectory == "static" else 1
             dst_col_idx = 1 if subdirectory == "static" else 2

@@ -53,22 +53,22 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
     {
         const auto graph = database::_db_storage->get_graph();
         if (ImGui::Button("Add Vertex"))
-            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {0, {"Place"}}, {});
+            (*m_graph)->add_vertex(0, {"Place"}, {});
 
         if (ImGui::Button("Add Vertex 1"))
-            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {349, {"Place", "City"}}, {{"name", "Ryan"}});
+            (*m_graph)->add_vertex(349, {{"Place", "City"}}, {{"name", "Ryan"}});
 
         if (ImGui::Button("Add Vertex 2"))
-            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {349, {"Person", "Human"}}, {{"name", "Rysfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfhfcc"}});
+            (*m_graph)->add_vertex(349, {{"Person", "Human"}}, {});
 
         if (ImGui::Button("Add Vertex 3"))
         {
-            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {10, {"Place", "City"}}, {{"Name", "Ryan"}, {"Second", "Skelton"}, {"email", "ryanskelton2000@yahoo.com"}});
+            (*m_graph)->add_vertex(10, {{"Place", "City"}}, {{"Name", "Ryan"}, {"Second", "Skelton"}, {"email", "ryanskelton2000@yahoo.com"}});
         }
 
         if (ImGui::Button("Query 0"))
         {
-            auto vrt = (*m_graph)->get_vertex(database::storage::ILPGModel::SNodeID {1459, {"Continent"}});
+            auto vrt = (*m_graph)->get_vertex(459);
 
             if (vrt.has_value())
             {
@@ -87,7 +87,7 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 
         if(ImGui::Button("Query 1"))
         {
-            auto result = database::_db_query->interation_complex_8(143);
+            auto result = database::_db_query->interaction_complex_2(10000, 2000000);
 
             for(auto & res : result)
             {
@@ -106,25 +106,20 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
             database::_log_system->info(fmt::format("Person: {}", p.size()));
         }
 
-        if (ImGui::Button("Test"))
-        {
-            (*m_graph)->add_vertex(database::storage::ILPGModel::SNodeID {2814749767656, {"Place"}}, {});
-        }
-
         if (ImGui::Button("Add Vertex (0)"))
             (*m_graph)->add_vertex({20, "Dog"}, {});
 
         if (ImGui::Button("Add Edge"))
         {
-            (*m_graph)->add_edge({0, {"Person"}}, {1, {"Person"}}, "KNOWS", {});
-            (*m_graph)->add_edge({0, {"Person"}}, {20, {"Dog"}}, "KNOWS", {});
+            (*m_graph)->add_edge(0, 1, "KNOWS", {});
+            (*m_graph)->add_edge(0, 2, "KNOWS", {});
         }
 
         if (ImGui::Button("Remove Vertex"))
-            (*m_graph)->rm_vertex({0, {"Person"}});
+            (*m_graph)->rm_vertex(0);
 
         if (ImGui::Button("Remove Edge"))
-            (*m_graph)->rm_edge({0, {"Person"}}, {1, {"Person"}}, "PERSON");
+            (*m_graph)->rm_edge(0, 1, "PERSON");
     }
 }
 

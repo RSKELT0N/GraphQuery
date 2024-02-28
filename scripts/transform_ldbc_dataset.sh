@@ -58,7 +58,7 @@ if [[ -n $initial_snapshot_dir ]]; then
     find "$initial_snapshot_dir" -type f ! -name '*_*' -exec sh -c '
         mkdir -p "${1%/*}/vertices" && mv "$1" "${1%/*}/vertices/"' sh {} \;
     echo "Vertex and edge files have been stored under their own folder, for dynamic and static parts of the graph."
-    python3 remap_ids.py "$initial_snapshot_dir"
+    python3 -W remap_ids.py "$initial_snapshot_dir"
     echo "Non-sequential IDs have been remapped to a lower space."
 fi
 
