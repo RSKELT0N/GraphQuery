@@ -138,6 +138,7 @@ namespace graphquery::database::storage
         virtual std::unordered_set<int64_t> get_edge_dst_vertices(SNodeID src, std::string_view edge_label, std::string_view vertex_label) = 0;
         virtual std::vector<SEdge_t> get_recursive_edges(SNodeID src, std::vector<SProperty_t> edge_vertex_label_pairs)                    = 0;
 
+        virtual std::optional<SEdge_t> get_edge(int64_t src_vertex_id, std::string_view edge_label, int64_t dst_vertex_id)                                = 0;
         virtual std::vector<SEdge_t> get_edges(const std::function<bool(const SEdge_t &)> &)                                                             = 0;
         virtual std::vector<SVertex_t> get_vertices(const std::function<bool(const SVertex_t &)> &)                                                      = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, const std::function<bool(const SEdge_t &)> &)                              = 0;

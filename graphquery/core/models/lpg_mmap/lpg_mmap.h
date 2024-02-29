@@ -136,6 +136,7 @@ namespace graphquery::database::storage
         [[nodiscard]] std::unordered_set<int64_t> get_edge_dst_vertices(SNodeID src, std::string_view edge_label, std::string_view vertex_label) override;
         [[nodiscard]] std::vector<SEdge_t> get_recursive_edges(SNodeID src, std::vector<SProperty_t> edge_vertex_label_pairs) override;
 
+        [[nodiscard]] std::optional<SEdge_t> get_edge(int64_t src_vertex_id, std::string_view edge_label, int64_t dst_vertex_id) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(const std::function<bool(const SEdge_t &)> & pred) override;
         [[nodiscard]] std::vector<SVertex_t> get_vertices(const std::function<bool(const SVertex_t &)> & pred) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, SNodeID dst) override;
@@ -179,10 +180,11 @@ namespace graphquery::database::storage
         [[nodiscard]] EActionState_t rm_edge_entry(SNodeID src, SNodeID dst) noexcept;
         [[nodiscard]] EActionState_t rm_edge_entry(SNodeID src, SNodeID dst, std::string_view edge_label) noexcept;
 
-        [[nodiscard]] EActionState_t add_vertex_entry(int64_t id, const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & props) noexcept;
+        [[nodiscard]] EActionState_t add_vertex_entry(SNodeID id, const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & props) noexcept;
         [[nodiscard]] EActionState_t add_vertex_entry(const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & props) noexcept;
         [[nodiscard]] EActionState_t add_edge_entry(SNodeID src, SNodeID dst, std::string_view edge_label, const std::vector<SProperty_t> & props, bool undirected) noexcept;
 
+        [[nodiscard]] bool contains_vertex_label_id(int64_t vertex_offset, uint16_t label_id) noexcept;
         [[nodiscard]] uint16_t create_edge_label(std::string_view) noexcept;
         [[nodiscard]] uint16_t create_vertex_label(std::string_view) noexcept;
         [[nodiscard]] int64_t get_unassigned_vertex_id(size_t label_idx) const noexcept;

@@ -59,7 +59,7 @@ namespace graphquery::database::query
          *  \param _person_id int64_t - ID of person
          *  \param _post_id int64_t - ID of post
          ***************************************************************/
-        void interation_update_2(int64_t _person_id, int64_t _post_id) const noexcept;
+        void interaction_update_2(int64_t _person_id, int64_t _post_id) const noexcept;
 
         /****************************************************************
         ** \brief Creates an edge between two nodes (person, person),
@@ -68,7 +68,7 @@ namespace graphquery::database::query
         *  \param _src_person_id int64_t - ID of src person
         *  \param _dst_person_id int64_t - ID of dst person
         ***************************************************************/
-        void interation_update_8(int64_t _src_person_id, int64_t _dst_person_id) const noexcept;
+        void interaction_update_8(int64_t _src_person_id, int64_t _dst_person_id) const noexcept;
 
         /****************************************************************
          ** \brief Given a person and post ID, delete the "LIKES" relationship
@@ -78,7 +78,7 @@ namespace graphquery::database::query
          *  \param _person_id - ID of person
          *  \param _post_id - ID of post
          ***************************************************************/
-        inline void interation_delete_2(int64_t _person_id, int64_t _post_id) const noexcept;
+        inline void interaction_delete_2(int64_t _person_id, int64_t _post_id) const noexcept;
 
         /****************************************************************
          ** \brief Given two person IDs, delete the "KNOWS" relationship
@@ -88,7 +88,7 @@ namespace graphquery::database::query
          *  \param _src_person_id int64_t - ID of person
          *  \param _dst_person_id int64_t- ID of person
          ***************************************************************/
-        inline void interation_delete_8(int64_t _src_person_id, int64_t _dst_person_id) const noexcept;
+        inline void interaction_delete_8(int64_t _src_person_id, int64_t _dst_person_id) const noexcept;
 
         /****************************************************************
         ** \brief Given a person ID, returns the 10 most recent messages
@@ -98,7 +98,7 @@ namespace graphquery::database::query
         *
         *  \param _person_id - ID of person
 s        ***************************************************************/
-        void interation_short_2(int64_t _person_id) const noexcept;
+        [[nodiscard]] std::vector<std::map<std::string, std::string>> interaction_short_2(int64_t _person_id) const noexcept;
 
         /****************************************************************
          ** \brief Given the message ID, returns comments made on a specific
@@ -109,11 +109,10 @@ s        ***************************************************************/
          *
          *  \param _message_id int64_t - ID of message
          ***************************************************************/
-        void interation_short_7(int64_t _message_id) const noexcept;
+        [[nodiscard]] std::vector<std::map<std::string, std::string>> interaction_short_7(int64_t _message_id) const noexcept;
 
       private:
         [[nodiscard]] storage::ILPGModel * get_graph() const noexcept;
-
         std::shared_ptr<storage::ILPGModel *> m_graph;
     };
 } // namespace graphquery::database::query

@@ -259,6 +259,30 @@ graphquery::database::storage::CMemoryModelMMAPLPG::transaction_epilogue() noexc
     utils::atomic_fetch_dec(&m_transaction_ref_c);
 }
 
+bool
+graphquery::database::storage::CMemoryModelMMAPLPG::contains_vertex_label_id(const int64_t vertex_offset, const uint16_t label_id) noexcept
+{
+    std::optional<SRef_t<SVertexDataBlock>> v_ptr = get_vertex_by_offset(vertex_offset);
+
+    if (!v_ptr.has_value())
+        return false;
+
+    auto label_head = v_ptr->ref->payload.metadata.label_id;
+
+    while (label_head != END_INDEX)
+    {
+        auto l_ptr = m_label_ref_file.read_entry(label_head);
+
+        for (size_t i = 0; i < l_ptr->state.size(); i++)
+        {
+            if (l_ptr->state.test(i) && l_ptr->payload[i] == label_id)
+                return true;
+        }
+        label_head = l_ptr->next;
+    }
+    return false;
+}
+
 uint16_t
 graphquery::database::storage::CMemoryModelMMAPLPG::create_edge_label(const std::string_view label_str) noexcept
 {
@@ -522,6 +546,24 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertices(const std::func
     return ret;
 }
 
+std::optional<graphquery::database::storage::ILPGModel::SEdge_t>
+graphquery::database::storage::CMemoryModelMMAPLPG::get_edge(const int64_t src_vertex_id, const std::string_view edge_label, const int64_t dst_vertex_id)
+{
+    auto edge_label_id = check_if_edge_label_exists(edge_label);
+
+    if (!edge_label_id.has_value())
+        return std::nullopt;
+
+    auto pred = [edge_label_id, dst_vertex_id](const SEdge_t & edge) -> bool { return dst_vertex_id == edge.dst && edge.edge_label_id == *edge_label_id; };
+
+    auto edges = get_edges_by_offset(src_vertex_id, pred);
+
+    if (edges.empty())
+        return std::nullopt;
+
+    return edges[0];
+}
+
 std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::function<bool(const SEdge_t &)> & pred)
 {
@@ -552,16 +594,15 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::functio
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
-graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::string_view vertex_label, const std::string_view edge_label, SNodeID dst)
+graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::string_view vertex_label, const std::string_view edge_label, const SNodeID dst)
 {
     const auto dst_vertex_exists = get_vertex_by_id(dst);
 
     if (!dst_vertex_exists.has_value())
         return {};
 
-    auto dst_vertex_ptr = dst_vertex_exists.value();
-
-    return get_edges(vertex_label, edge_label, [&dst_vertex_ptr](const SEdge_t & edge) -> bool { return edge.dst == dst_vertex_ptr->idx; });
+    auto dst_vertex_idx = dst_vertex_exists->ref->idx;
+    return get_edges(vertex_label, edge_label, [dst_vertex_idx](const SEdge_t & edge) -> bool { return edge.dst == dst_vertex_idx; });
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SEdge_t>
@@ -877,21 +918,11 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(SNodeID src, const
     if (!(src_vertex_ptr.has_value() && vertex_label_exists.has_value() && edge_label_exists.has_value()))
         return {};
 
-    const uint32_t src_vertex_idx  = utils::atomic_load(&src_vertex_ptr->ref->idx);
+    const int64_t src_vertex_idx  = utils::atomic_load(&src_vertex_ptr->ref->idx);
     const uint16_t vertex_label_id = vertex_label_exists.value();
     const uint16_t edge_label_id   = edge_label_exists.value();
 
-    return get_edges_by_offset(src_vertex_idx,
-                               edge_label_id,
-                               [this, &vertex_label_id](const SEdge_t & edge) -> bool
-                               {
-                                   auto dst_vertex_ptr = get_vertex_by_offset(edge.dst).value();
-
-                                   if (!dst_vertex_ptr->state.any())
-                                       return false;
-
-                                   return dst_vertex_ptr->payload.metadata.label_id == vertex_label_id;
-                               });
+    return get_edges_by_offset(src_vertex_idx, edge_label_id, [this, &vertex_label_id](const SEdge_t & edge) -> bool { return contains_vertex_label_id(edge.dst, vertex_label_id); });
 }
 
 std::unordered_set<int64_t>
@@ -1083,7 +1114,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_id(const i
 std::unordered_map<std::string, std::string>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_id_map(const int64_t id)
 {
-    SRef_t<SVertexDataBlock> vertex_ptr              = m_vertices_file.read_entry(static_cast<int64_t>(id));
+    SRef_t<SVertexDataBlock> vertex_ptr              = m_vertices_file.read_entry(id);
     std::unordered_map<std::string, std::string> ret = {};
 
     ret.reserve(vertex_ptr->payload.metadata.property_c);
@@ -1315,7 +1346,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge_entry(SNodeID src, S
 }
 
 graphquery::database::storage::CMemoryModelMMAPLPG::EActionState_t
-graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge_entry(SNodeID src, SNodeID dst, const std::string_view edge_label) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge_entry(const SNodeID src, const SNodeID dst, const std::string_view edge_label) noexcept
 {
     std::optional<SRef_t<SVertexDataBlock>> src_vertex_ptr = get_vertex_by_id(src);
     std::optional<SRef_t<SVertexDataBlock>> dst_vertex_ptr = get_vertex_by_id(dst);
@@ -1334,7 +1365,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge_entry(SNodeID src, S
                                    {
                                        if (edge_block_ptr->state.test(i))
                                        {
-                                           if (edge_block_ptr->payload[i].metadata.dst == dst_idx && edge_block_ptr->payload[i].metadata.edge_label_id == edge_label_id.value())
+                                           if (edge_block_ptr->payload[i].metadata.dst == dst_idx && edge_block_ptr->payload[i].metadata.edge_label_id == *edge_label_id)
                                                edge_block_ptr->state[i].flip();
                                        }
                                    }
