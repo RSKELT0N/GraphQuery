@@ -36,8 +36,8 @@ namespace graphquery::database::storage
      * \brief Structure of a data block holding a generic payload,
      *        entry to a datablock file.
      *
-     * \param idx_state uint64_t - index of the data block
-     * \param next uint64_t      - state of the next linked block.
+     * \param idx_state uint32_t - index of the data block
+     * \param next uint32_t      - state of the next linked block.
      * \param payload std::array<T, N> - stored payload contained in data block
      ***************************************************************/
     template<typename T, uint8_t N>
@@ -49,25 +49,26 @@ namespace graphquery::database::storage
         uint32_t next            = END_INDEX;
         uint32_t version         = END_INDEX;
         std::array<T, N> payload = {};
-    };
+        uint8_t payload_amt      = {};
+    } __attribute__((packed));
 
     /****************************************************************
      * \struct SDataBlock_t
      * \brief Specialization for N = 1.
      *
-     * \param idx_state uint64_t - index of the data block
-     * \param next uint64_t      - state of the next linked block.
+     * \param idx_state uint32_t - index of the data block
+     * \param next uint32_t      - state of the next linked block.
      * \param payload T          - stored payload contained in data block
      ***************************************************************/
     template<typename T>
     struct SDataBlock_t<T, 1>
     {
-        uint32_t idx         = {};
-        std::bitset<1> state = {};
+        uint32_t idx         = END_INDEX;
+        std::bitset<1> state = {0};
         uint32_t next        = END_INDEX;
         uint32_t version     = END_INDEX;
         T payload            = {};
-    };
+    } __attribute__((packed));
 
     template<typename T, uint8_t N = 1>
         requires(N > 0)
@@ -80,14 +81,14 @@ namespace graphquery::database::storage
          *        holding neccessary information to access the index file
          *        correctly.
          *
-         * \param data_block_c uint64_t       - amount of currently stored data blocks
-         * \param data_blocks_offset uint64_t - start addr of data block entries
+         * \param data_block_c uint32_t       - amount of currently stored data blocks
+         * \param data_blocks_offset uint32_t - start addr of data block entries
          * \param data_block_size uint32_t    - size of one data block
          * \param free_list uint32_t          - linked list of free data blocks
          ***************************************************************/
         struct SBlockFileMetadata_t
         {
-            uint64_t data_blocks_start_addr = {};
+            uint32_t data_blocks_start_addr = {};
             uint32_t data_block_c           = {};
             uint32_t data_block_size        = {};
             uint32_t free_list              = END_INDEX;
@@ -95,7 +96,7 @@ namespace graphquery::database::storage
 
         using STypeDataBlock = SDataBlock_t<T, N>;
 
-        ~CDatablockFile();
+        ~CDatablockFile() { (void) m_file.close(); }
         CDatablockFile()                                       = default;
         CDatablockFile(const CDatablockFile &)                 = delete;
         CDatablockFile(CDatablockFile &&) noexcept             = delete;
@@ -105,8 +106,8 @@ namespace graphquery::database::storage
         CDiskDriver & get_file() noexcept;
         inline void store_metadata() noexcept;
         inline SRef_t<SBlockFileMetadata_t> read_metadata() noexcept;
-        inline SRef_t<SDataBlock_t<T, N>> read_entry(uint32_t offset) noexcept;
-        void open(std::filesystem::path path, std::string_view file_name, bool init) noexcept;
+        inline SRef_t<SDataBlock_t<T, N>> read_entry(int64_t offset) noexcept;
+        void open(std::filesystem::path path, std::string_view file_name, bool create) noexcept;
 
         uint32_t create_entry(uint32_t next_ref = END_INDEX) noexcept;
         void append_free_data_block(uint32_t block_offset) noexcept;
@@ -117,16 +118,9 @@ namespace graphquery::database::storage
 
       private:
         CDiskDriver m_file;
-        static constexpr uint64_t METADATA_START_ADDR = 0x00000000;
+        static constexpr uint32_t METADATA_START_ADDR = 0x00000000;
     };
 } // namespace graphquery::database::storage
-
-template<typename T, uint8_t N>
-    requires(N > 0)
-graphquery::database::storage::CDatablockFile<T, N>::~CDatablockFile()
-{
-    (void) m_file.close();
-}
 
 template<typename T, uint8_t N>
     requires(N > 0)
@@ -151,11 +145,11 @@ graphquery::database::storage::CDatablockFile<T, N>::read_metadata() noexcept
 template<typename T, uint8_t N>
     requires(N > 0)
 graphquery::database::storage::SRef_t<graphquery::database::storage::SDataBlock_t<T, N>>
-graphquery::database::storage::CDatablockFile<T, N>::read_entry(uint32_t offset) noexcept
+graphquery::database::storage::CDatablockFile<T, N>::read_entry(int64_t offset) noexcept
 {
     static const auto base_addr      = utils::atomic_load(&read_metadata()->data_blocks_start_addr);
     static const auto datablock_size = utils::atomic_load(&read_metadata()->data_block_size);
-    const auto effective_addr        = base_addr + (datablock_size * offset);
+    const auto effective_addr        = base_addr + datablock_size * offset;
     return m_file.ref<STypeDataBlock>(effective_addr);
 }
 
@@ -223,8 +217,7 @@ template<typename T, uint8_t N>
 uint32_t
 graphquery::database::storage::CDatablockFile<T, N>::create_entry(uint32_t next_ref) noexcept
 {
-    auto metadata               = read_metadata();
-    const uint32_t entry_offset = utils::atomic_fetch_inc(&metadata->data_block_c);
+    const uint32_t entry_offset = utils::atomic_fetch_inc(&read_metadata()->data_block_c);
     auto data_block_ptr         = read_entry(entry_offset);
 
     data_block_ptr->idx     = entry_offset;
@@ -262,10 +255,10 @@ template<typename T, uint8_t N>
 void
 graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> & apply)
 {
-    const uint64_t datablock_c = read_metadata()->data_block_c;
+    const uint32_t datablock_c = read_metadata()->data_block_c;
     auto block_ptr             = read_entry(0);
 
-    for (uint64_t i = 0; i < datablock_c; i++, ++block_ptr)
+    for (uint32_t i = 0; i < datablock_c; i++, ++block_ptr)
     {
         if (unlikely(block_ptr->state.any()))
             continue;
@@ -277,13 +270,13 @@ graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const std::fu
 template<typename T, uint8_t N>
     requires(N > 0)
 void
-graphquery::database::storage::CDatablockFile<T, N>::open(std::filesystem::path path, const std::string_view file_name, bool init) noexcept
+graphquery::database::storage::CDatablockFile<T, N>::open(std::filesystem::path path, const std::string_view file_name, const bool create) noexcept
 {
+    if (create)
+        CDiskDriver::create_file(path, file_name);
+
     m_file.set_path(std::move(path));
     m_file.open(file_name);
-
-    if (init)
-        store_metadata();
 }
 
 template<typename T, uint8_t N>

@@ -14,13 +14,22 @@ target_sources(
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/lpg_mmap.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/transaction.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/block_file.hpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/block_file.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/index_file.hpp)
 
 target_compile_options(
         lpg_mmap
         PUBLIC
+        -Wall
+        -Werror
+        -Wpedantic
+        -Wshadow
+        -Wextra
+        -pthread
         -fPIC
-        -g)
+        -O3
+        -ffast-math
+        -ffinite-math-only)
 
 target_link_libraries(
         lpg_mmap

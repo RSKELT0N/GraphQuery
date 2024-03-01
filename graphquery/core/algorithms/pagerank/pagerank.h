@@ -16,7 +16,7 @@ namespace graphquery::database::analytic
     class CGraphAlgorithmPageRank final : public IGraphAlgorithm
     {
       public:
-        class CRelaxPR final : public graphquery::database::analytic::IRelax
+        class CRelaxPR final : public IRelax
         {
           public:
             CRelaxPR(const double _d, std::shared_ptr<uint32_t[]> _outdeg, std::shared_ptr<double[]> _x, std::shared_ptr<double[]> _y)
@@ -41,13 +41,12 @@ namespace graphquery::database::analytic
             std::shared_ptr<double[]> y;
         };
 
-        explicit CGraphAlgorithmPageRank(std::string);
+        explicit CGraphAlgorithmPageRank(std::string, const std::shared_ptr<logger::CLogSystem> &);
         ~CGraphAlgorithmPageRank() override = default;
 
         [[nodiscard]] double compute(storage::ILPGModel *) noexcept override;
 
       private:
-        std::shared_ptr<logger::CLogSystem> m_log_system;
         static double sum(const std::shared_ptr<double[]> & vals, uint64_t size) noexcept;
         static double norm_diff(const std::shared_ptr<double[]> & _val, const std::shared_ptr<double[]> & __val, uint64_t size) noexcept;
     };

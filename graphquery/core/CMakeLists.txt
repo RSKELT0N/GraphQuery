@@ -26,20 +26,24 @@ target_compile_options(
         -Wall
         -Werror
         -Wpedantic
-        -Wextra
         -Wshadow
+        -Wextra
         -pthread
-        -O3)
+        -O3
+        -ffast-math
+        -ffinite-math-only)
 
 target_link_libraries(${EXECUTABLE_NAME}
         PUBLIC
         diskdriver
         imgui
         dylib
-        logsystem)
+        logsystem
+        csv "--coverage")
 
 # Add program include directories
 target_include_directories(${EXECUTABLE_NAME}
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR})
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ../external/)
 

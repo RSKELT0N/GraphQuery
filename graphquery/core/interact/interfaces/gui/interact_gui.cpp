@@ -6,6 +6,8 @@
 #include "interact/interfaces/gui/frames/frame_graph_visual.h"
 #include "interact/interfaces/gui/frames/frame_menubar.h"
 #include "interact/interfaces/gui/frames/frame_output.h"
+#include "interact/interfaces/gui/frames/frame_db_query.h"
+#include "interact/interfaces/gui/frames/frame_db_analytic.h"
 
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
@@ -64,9 +66,6 @@ graphquery::interact::CInteractGUI::initialise_glfw() noexcept
 
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1); // Enable vsync
-
-    // if (glewInit() != GLEW_OK
-    // database::_log_system->error("Failed to initialize GLEW");
 }
 
 void
@@ -136,7 +135,19 @@ graphquery::interact::CInteractGUI::initialise_frames() noexcept
                                                           database::_db_storage->get_graph_table()));
 
     // Graph visual
-    m_frames.emplace_back(std::make_unique<CFrameGraphVisual>());
+    m_frames.emplace_back(std::make_unique<CFrameGraphVisual>(database::_db_storage->get_is_db_loaded(),
+                                                          database::_db_storage->get_is_graph_loaded(),
+                                                          database::_db_storage->get_graph()));
+
+    // DB Query
+    m_frames.emplace_back(std::make_unique<CFrameDBQuery>(database::_db_storage->get_is_db_loaded(),
+                                                          database::_db_storage->get_is_graph_loaded(),
+                                                          database::_db_storage->get_graph()));
+
+    // DB Analytic
+    m_frames.emplace_back(std::make_unique<CFrameDBAnalytic>(database::_db_storage->get_is_db_loaded(),
+                                                          database::_db_storage->get_is_graph_loaded(),
+                                                          database::_db_storage->get_graph()));
 }
 
 void

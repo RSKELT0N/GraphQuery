@@ -1,10 +1,7 @@
 #include "bfs.h"
 
 graphquery::database::analytic::CGraphAlgorithmBFS::
-CGraphAlgorithmBFS(std::string name): IGraphAlgorithm(std::move(name))
-{
-    this->m_log_system = logger::CLogSystem::get_instance();
-}
+CGraphAlgorithmBFS(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys) {}
 
 double 
 graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *) noexcept
@@ -14,8 +11,8 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *
 
 extern "C"
 {
-    LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm)
+    LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm, const std::shared_ptr<graphquery::logger::CLogSystem> & logsys)
     {
-        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmBFS("BFS");
+        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmBFS("BFS", logsys);
     }
 }

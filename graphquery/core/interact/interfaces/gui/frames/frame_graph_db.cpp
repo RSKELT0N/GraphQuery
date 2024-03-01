@@ -51,24 +51,15 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 
     if (m_is_graph_loaded)
     {
-        const auto graph = database::_db_storage->get_graph();
-        if (ImGui::Button("Add Vertex"))
-            (*m_graph)->add_vertex("PERSON", {});
+        if(ImGui::Button("PR"))
+        {
+            database::_db_analytic->process_algorithm("PageRank");
+        }
 
-        if (ImGui::Button("Query"))
-            (*m_graph)->add_vertex(0, "PERSON", {});
-
-        if (ImGui::Button("Add Vertex (0)"))
-            (*m_graph)->add_vertex(0, "PERSON", {});
-
-        if (ImGui::Button("Add Edge"))
-            (*m_graph)->add_edge(0, 1, "KNOWS", {});
-
-        if (ImGui::Button("Remove Vertex"))
-            (*m_graph)->rm_vertex(0);
-
-        if (ImGui::Button("Remove Edge"))
-            (*m_graph)->rm_edge(0, 1, "PERSON");
+        if(ImGui::Button("CC"))
+        {
+            database::_db_analytic->process_algorithm("ConnectedComponents");
+        }
     }
 }
 

@@ -38,7 +38,7 @@ namespace graphquery::database::utils
             std::for_each(m_thread_pool.begin(), m_thread_pool.end(), [](std::thread & _t) -> void { _t.join(); });
         }
 
-        void parallel_for(const uint64_t elem_c, const std::function<void(uint64_t i)> & func) noexcept {}
+        void parallel_for([[maybe_unused]] const uint64_t elem_c, [[maybe_unused]] const std::function<void(uint64_t i)> & func) noexcept {}
 
       private:
         std::array<std::thread, N> m_thread_pool;

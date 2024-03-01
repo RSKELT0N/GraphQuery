@@ -36,7 +36,7 @@ graphquery::database::analytic::CAnalyticEngine::insert_lib(const std::string_vi
     auto ptr = std::make_unique<IGraphAlgorithm *>();
     auto lib = std::make_unique<dylib>(dylib(lib_path));
 
-    lib->get_function<void(IGraphAlgorithm **)>("create_graph_algorithm")(ptr.get());
+    lib->get_function<void(IGraphAlgorithm **, const std::shared_ptr<logger::CLogSystem> &)>("create_graph_algorithm")(ptr.get(), _log_system);
 
     m_libs.emplace((*ptr)->get_name(), std::move(lib));
     m_algorithms.emplace((*ptr)->get_name(), std::move(ptr));
@@ -51,6 +51,5 @@ graphquery::database::analytic::CAnalyticEngine::process_algorithm(const std::st
     const auto & lib = m_algorithms.at(algorithm.data());
 
     static auto lambda = [&lib, this]() -> double { return (*lib)->compute(*m_graph); };
-
     m_results.emplace_back(lambda);
 }

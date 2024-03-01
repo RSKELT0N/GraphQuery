@@ -14,7 +14,10 @@ target_include_directories(
 target_compile_options(
         cc
         PUBLIC
-        -fPIC)
+        -fPIC
+        -O3
+        -ffast-math
+        -ffinite-math-only)
 
 target_sources(
         cc

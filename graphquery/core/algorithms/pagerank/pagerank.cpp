@@ -5,10 +5,7 @@
 #include <utility>
 
 graphquery::database::analytic::CGraphAlgorithmPageRank::
-CGraphAlgorithmPageRank(std::string name): IGraphAlgorithm(std::move(name))
-{
-    this->m_log_system = logger::CLogSystem::get_instance();
-}
+CGraphAlgorithmPageRank(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys) {}
 
 double
 graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGModel * graph_model) noexcept
@@ -58,7 +55,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGMo
             y[i] = 0.;
         }
 
-        m_log_system->debug(fmt::format("iteration {}: residual error= {} xnorm= {}", iter, delta, sum(x, n)));
+        m_log_system->info(fmt::format("iteration {}: residual error= {} xnorm= {}", iter, delta, sum(x, n)));
     }
 
     if (delta > tol)
@@ -103,8 +100,8 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::norm_diff(const std::sh
 
 extern "C"
 {
-    LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm)
+    LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm, const std::shared_ptr<graphquery::logger::CLogSystem> & logsys)
     {
-        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmPageRank("PageRank");
+        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmPageRank("PageRank", logsys);
     }
 }

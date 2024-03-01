@@ -1,13 +1,21 @@
 #include "dbstorage.h"
 
+#include "db/utils/lib.h"
+#include "dataset_ldbc.hpp"
 #include "db/system.h"
 
 #include <string_view>
 #include <cassert>
+#include <cstdint>
+#include <cstdint>
+#include <cstdint>
+#include <cstdint>
 
-graphquery::database::storage::CDBStorage::CDBStorage()
+graphquery::database::storage::CDBStorage::
+CDBStorage()
 {
-    m_loaded_graph = std::make_shared<ILPGModel *>();
+    m_loaded_graph   = std::make_shared<ILPGModel *>();
+    m_dataset_loader = std::make_unique<CDatasetLDBC>(m_loaded_graph);
 }
 
 graphquery::database::storage::CDBStorage::~
@@ -109,9 +117,9 @@ graphquery::database::storage::SRef_t<graphquery::database::storage::CDBStorage:
 graphquery::database::storage::CDBStorage::read_graph_entry(const uint8_t entry_offset) noexcept
 {
     assert(m_db_file.check_if_initialised() == true);
-    static const uint64_t base_addr  = read_db_superblock()->db_info.graph_table_start_addr;
-    static const uint64_t entry_size = read_db_superblock()->db_info.graph_entry_size;
-    const uint64_t effective_addr    = base_addr + (entry_size * entry_offset);
+    static const int64_t base_addr  = read_db_superblock()->db_info.graph_table_start_addr;
+    static const int64_t entry_size = read_db_superblock()->db_info.graph_entry_size;
+    const int64_t effective_addr    = base_addr + (entry_size * entry_offset);
     return m_db_file.ref<SGraph_Entry_t>(effective_addr);
 }
 
@@ -123,11 +131,7 @@ graphquery::database::storage::CDBStorage::get_db_info() noexcept
     static const time_t time         = superblock_ptr->timestamp;
     static const auto time_formatted = ctime(&time);
 
-    return fmt::format("Version: {}\nDate Created: {}CheckSum: {}\nGraphs: {}\n",
-                       superblock_ptr->version,
-                       time_formatted,
-                       superblock_ptr->magic_check_sum,
-                       superblock_ptr->db_info.graph_table_c);
+    return fmt::format("Version: {}\nDate Created: {}CheckSum: {}\nGraphs: {}\n", superblock_ptr->version, time_formatted, superblock_ptr->magic_check_sum, superblock_ptr->db_info.graph_table_c);
 }
 
 void
@@ -148,10 +152,9 @@ graphquery::database::storage::CDBStorage::define_graph_model(const std::string_
     try
     {
         m_graph_model_lib = std::make_unique<dylib>(dylib(fmt::format("{}/{}", PROJECT_ROOT, "lib/models"), type.data()));
-        m_graph_model_lib->get_function<void(ILPGModel **)>("create_graph_model")(m_loaded_graph.get());
+        m_graph_model_lib->get_function<void(ILPGModel **, const std::shared_ptr<logger::CLogSystem> &)>("create_graph_model")(m_loaded_graph.get(), _log_system);
         (*m_loaded_graph)->init(m_db_file.get_path().parent_path().string(), name);
 
-        store_graph_entry(SGraph_Entry_t(name, type));
         m_existing_graph_loaded = true;
     }
     catch (std::runtime_error & e)
@@ -167,10 +170,8 @@ void
 graphquery::database::storage::CDBStorage::close_graph() noexcept
 {
     m_existing_graph_loaded = false;
-    (*m_loaded_graph)->save_graph();
-    (*m_loaded_graph)->close();
+    delete *m_loaded_graph;
     m_graph_model_lib.reset();
-    m_loaded_graph.reset();
     _log_system->info(fmt::format("Graph has been unloaded from memory and changes have been synced"));
 }
 
@@ -185,14 +186,33 @@ graphquery::database::storage::CDBStorage::create_graph(const std::string_view n
 
     if (m_existing_db_loaded)
     {
-        if (*m_loaded_graph)
+        if (m_existing_graph_loaded)
             close_graph();
 
-        if (define_graph_model(name.data(), type.data()))
-            _log_system->info(fmt::format("Graph [{}] of memory model type [{}] has been created and opened", name, type));
+        const auto [defined, elapsed] = utils::measure<bool>(&CDBStorage::define_graph_model, this, name.data(), type.data());
+
+        if (defined)
+        {
+            store_graph_entry(SGraph_Entry_t(name, type.data()));
+            _log_system->info(fmt::format("Graph [{}] of memory model type [{}] has been created and opened within {}s", name, type, elapsed.count()));
+        }
     }
     else
         _log_system->warning("Database has not been loaded for a graph to added");
+}
+
+void
+graphquery::database::storage::CDBStorage::load_dataset(std::filesystem::path dataset_path) const noexcept
+{
+    if (!m_existing_graph_loaded)
+    {
+        _log_system->warning("Cannot load any dataset to a non-existing graph loaded.");
+        return;
+    }
+    m_dataset_loader->set_path(dataset_path);
+    const auto [elapsed] = utils::measure(&CDataset::load, m_dataset_loader.get());
+
+    _log_system->info(fmt::format("Dataset has been inserted into loaded graph within {}s", elapsed.count()));
 }
 
 const std::unordered_map<std::string, graphquery::database::storage::CDBStorage::SGraph_Entry_t> &
@@ -233,10 +253,11 @@ graphquery::database::storage::CDBStorage::open_graph(const std::string_view nam
         if (m_existing_graph_loaded)
             close_graph();
 
-        const auto graph_entry = m_graph_entry_map.at(name.data());
+        const auto graph_entry        = m_graph_entry_map.at(name.data());
+        const auto [defined, elapsed] = utils::measure<bool>(&CDBStorage::define_graph_model, this, name.data(), graph_entry.graph_type);
 
-        if (define_graph_model(name.data(), graph_entry.graph_type))
-            _log_system->info(fmt::format("Opening Graph [{}] of memory model type [{}] as the current context", name, graph_entry.graph_type));
+        if (defined)
+            _log_system->info(fmt::format("Opening Graph [{}] of memory model type [{}] as the current context within {}s", name, graph_entry.graph_type, elapsed.count()));
     }
     else
         _log_system->warning("Database has not been loaded for a graph to opened");
