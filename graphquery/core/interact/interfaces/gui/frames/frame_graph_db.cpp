@@ -51,75 +51,15 @@ graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 
     if (m_is_graph_loaded)
     {
-        const auto graph = database::_db_storage->get_graph();
-        if (ImGui::Button("Add Vertex"))
-            (*m_graph)->add_vertex(0, {"Place"}, {});
-
-        if (ImGui::Button("Add Vertex 1"))
-            (*m_graph)->add_vertex(349, {{"Place", "City"}}, {{"name", "Ryan"}});
-
-        if (ImGui::Button("Add Vertex 2"))
-            (*m_graph)->add_vertex(349, {{"Person", "Human"}}, {});
-
-        if (ImGui::Button("Add Vertex 3"))
+        if(ImGui::Button("PR"))
         {
-            (*m_graph)->add_vertex(10, {{"Place", "City"}}, {{"Name", "Ryan"}, {"Second", "Skelton"}, {"email", "ryanskelton2000@yahoo.com"}});
+            database::_db_analytic->process_algorithm("PageRank");
         }
 
-        if (ImGui::Button("Query 0"))
+        if(ImGui::Button("CC"))
         {
-            auto vrt = (*m_graph)->get_vertex(459);
-
-            if (vrt.has_value())
-            {
-                auto props = (*m_graph)->get_properties_by_property_id_map(vrt->property_id);
-
-                fmt::print("{}\n{}\n{}\n{}\n\n", vrt->id, vrt->label_id, vrt->edge_label_c, vrt->property_c);
-
-                for (const auto & prop : props)
-                {
-                    fmt::print("{} : {}\n", prop.first, prop.second);
-                }
-            }
-            else
-                fmt::print("Not found\n");
+            database::_db_analytic->process_algorithm("ConnectedComponents");
         }
-
-        if(ImGui::Button("Query 1"))
-        {
-            auto result = database::_db_query->interaction_short_7(364392);
-
-            for(auto & res : result)
-            {
-                fmt::print("Prop\n--------\n\n");
-                for(const auto & r : res)
-                {
-                    fmt::print("{} : {}\n", r.first, r.second);
-                }
-                fmt::print("\n");
-            }
-        }
-
-        if (ImGui::Button("Query 2"))
-        {
-            auto p = (*m_graph)->get_vertices_by_label("Person");
-            database::_log_system->info(fmt::format("Person: {}", p.size()));
-        }
-
-        if (ImGui::Button("Add Vertex (0)"))
-            (*m_graph)->add_vertex({20, "Dog"}, {});
-
-        if (ImGui::Button("Add Edge"))
-        {
-            (*m_graph)->add_edge(0, 1, "KNOWS", {});
-            (*m_graph)->add_edge(0, 2, "KNOWS", {});
-        }
-
-        if (ImGui::Button("Remove Vertex"))
-            (*m_graph)->rm_vertex(0);
-
-        if (ImGui::Button("Remove Edge"))
-            (*m_graph)->rm_edge(0, 1, "PERSON");
     }
 }
 

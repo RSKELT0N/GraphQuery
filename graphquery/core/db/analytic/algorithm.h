@@ -23,7 +23,7 @@ namespace graphquery::database::analytic
     class IGraphAlgorithm
     {
       public:
-        IGraphAlgorithm(std::string graph_name): m_graph_name(std::move(graph_name)) {}
+        IGraphAlgorithm(std::string graph_name, const std::shared_ptr<logger::CLogSystem> & log_system): m_graph_name(std::move(graph_name)), m_log_system(log_system) {}
 
         virtual ~IGraphAlgorithm()               = default;
         IGraphAlgorithm(const IGraphAlgorithm &) = default;
@@ -34,10 +34,11 @@ namespace graphquery::database::analytic
 
       protected:
         const std::string m_graph_name;
+        const std::shared_ptr<logger::CLogSystem> m_log_system;
     };
 } // namespace graphquery::database::analytic
 
 extern "C"
 {
-    void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm);
+    void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm, const std::shared_ptr<graphquery::logger::CLogSystem> & log_system);
 }

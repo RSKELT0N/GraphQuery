@@ -33,12 +33,9 @@ namespace graphquery::database::analytic
             std::shared_ptr<int[]> y;
         };
 
-        explicit CGraphAlgorithmSSSP(std::string);
+        explicit CGraphAlgorithmSSSP(std::string, const std::shared_ptr<logger::CLogSystem> &);
         ~CGraphAlgorithmSSSP() override = default;
 
         [[nodiscard]] double compute(storage::ILPGModel *) noexcept override;
-
-      private:
-        std::shared_ptr<logger::CLogSystem> m_log_system;
     };
 } // namespace graphquery::database::analytic

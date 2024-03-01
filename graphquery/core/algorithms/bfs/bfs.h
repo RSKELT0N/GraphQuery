@@ -26,12 +26,9 @@ namespace graphquery::database::analytic
             void relax(const uint64_t src, const uint64_t dst) noexcept override {}
         };
 
-        explicit CGraphAlgorithmBFS(std::string name);
+        explicit CGraphAlgorithmBFS(std::string, const std::shared_ptr<logger::CLogSystem> &);
         ~CGraphAlgorithmBFS() override = default;
 
         [[nodiscard]] double compute(storage::ILPGModel *) noexcept override;
-
-      private:
-        std::shared_ptr<logger::CLogSystem> m_log_system;
     };
 } // namespace graphquery::database::analytic

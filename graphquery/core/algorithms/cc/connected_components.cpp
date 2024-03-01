@@ -2,10 +2,7 @@
 
 #include <algorithm>
 
-graphquery::database::analytic::CGraphAlgorithmSSSP::CGraphAlgorithmSSSP(std::string name): IGraphAlgorithm(std::move(name))
-{
-    m_log_system = logger::CLogSystem::get_instance();
-}
+graphquery::database::analytic::CGraphAlgorithmSSSP::CGraphAlgorithmSSSP(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys) {}
 
 double
 graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel * graph_model) noexcept
@@ -91,8 +88,8 @@ graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel 
 
 extern "C"
 {
-    LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm)
+    LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm,  const std::shared_ptr<graphquery::logger::CLogSystem> & logsys)
     {
-        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmSSSP("Connected Components");
+        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmSSSP("ConnectedComponents", logsys);
     }
 }

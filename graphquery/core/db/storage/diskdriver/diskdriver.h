@@ -51,7 +51,7 @@ namespace graphquery::database::storage
             return SRef_t<T>(reference, &m_ref_counter);
         }
 
-        explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
+        explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_PRIVATE);
         ~CDiskDriver();
 
         CDiskDriver(CDiskDriver &&)       = delete;

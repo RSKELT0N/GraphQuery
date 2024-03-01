@@ -43,6 +43,7 @@ namespace graphquery::database::storage
         {
             ref         = cpy.ref;
             counter     = cpy.counter;
+            --(*counter);
             cpy.ref     = nullptr;
             cpy.counter = nullptr;
         };
@@ -51,6 +52,7 @@ namespace graphquery::database::storage
         {
             ref         = cpy.ref;
             counter     = cpy.counter;
+            --(*counter);
             cpy.ref     = nullptr;
             cpy.counter = nullptr;
             return *this;

@@ -6,6 +6,14 @@ add_library(
         bfs.cpp
         bfs.h)
 
+target_compile_options(
+        bfs
+        PUBLIC
+        -fPIC
+        -O3
+        -ffast-math
+        -ffinite-math-only)
+
 target_include_directories(
         bfs
         PUBLIC
