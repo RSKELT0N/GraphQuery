@@ -19,16 +19,16 @@ namespace graphquery::database::analytic
         class CRelaxBFS final : public graphquery::database::analytic::IRelax
         {
           public:
-            CRelaxBFS() {}
+            CRelaxBFS() = default;
 
             ~CRelaxBFS() override = default;
 
-            void relax(const uint64_t src, const uint64_t dst) noexcept override {}
+            void relax(const int64_t src, const int64_t dst) noexcept override {}
         };
 
         explicit CGraphAlgorithmBFS(std::string, const std::shared_ptr<logger::CLogSystem> &);
         ~CGraphAlgorithmBFS() override = default;
 
-        [[nodiscard]] double compute(storage::ILPGModel *) noexcept override;
+        [[nodiscard]] double compute(storage::ILPGModel *) const noexcept override;
     };
 } // namespace graphquery::database::analytic

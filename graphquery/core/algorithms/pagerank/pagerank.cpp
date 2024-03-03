@@ -8,13 +8,13 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::
 CGraphAlgorithmPageRank(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys) {}
 
 double
-graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGModel * graph_model) noexcept
+graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGModel * graph_model) const noexcept
 {
     const uint64_t n = graph_model->get_num_vertices();
 
-    auto x = std::make_shared<double[]>(n);
-    auto v = std::make_shared<double[]>(n);
-    auto y = std::make_shared<double[]>(n);
+    auto x = new double[n];
+    auto v = new double[n];
+    auto y = new double[n];
 
     static constexpr double d     = 0.85;
     static constexpr double tol   = 1e-7;
@@ -28,7 +28,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGMo
         y[i]        = 0;
     }
 
-    auto outdeg = std::make_shared<uint32_t[]>(n);
+    auto outdeg = new uint32_t[n];
     graph_model->calc_outdegree(outdeg);
 
     std::unique_ptr<IRelax> PRrelax = std::make_unique<CRelaxPR>(d, outdeg, x, y);
@@ -61,11 +61,16 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGMo
     if (delta > tol)
         m_log_system->warning("Error: solution has not converged");
 
+    delete[] x;
+    delete[] v;
+    delete[] y;
+    delete[] outdeg;
+
     return delta;
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmPageRank::sum(const std::shared_ptr<double[]> & vals, const uint64_t size) noexcept
+graphquery::database::analytic::CGraphAlgorithmPageRank::sum(const double * vals, const uint64_t size) noexcept
 {
     double d   = 0.0F;
     double err = 0.0F;
@@ -81,8 +86,8 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::sum(const std::shared_p
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmPageRank::norm_diff(const std::shared_ptr<double[]> & _val,
-                                                                   const std::shared_ptr<double[]> & __val,
+graphquery::database::analytic::CGraphAlgorithmPageRank::norm_diff(const double val[],
+                                                                   const double _val[],
                                                                    const uint64_t size) noexcept
 {
     double d   = 0.0F;
@@ -90,7 +95,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::norm_diff(const std::sh
     for (int i = 0; i < size; ++i)
     {
         const double tmp = d;
-        const double y   = abs(__val[i] - _val[i]) + err;
+        const double y   = fabs(_val[i] - val[i]) + err;
         d                = tmp + y;
         err              = tmp - d;
         err += y;

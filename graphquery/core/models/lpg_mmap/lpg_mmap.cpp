@@ -112,7 +112,7 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::store_graph_metadata() noexcept
 {
     auto metadata = read_graph_metadata();
-    strncpy(&metadata->graph_name[0], m_graph_name.c_str(), CFG_GRAPH_NAME_LENGTH);
+    strcpy(&metadata->graph_name[0], m_graph_name.c_str());
     strncpy(&metadata->graph_type[0], "lpg_mmap", CFG_GRAPH_MODEL_TYPE_LENGTH);
     metadata->vertices_c              = 0;
     metadata->edges_c                 = 0;
@@ -1207,7 +1207,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_property_i
 }
 
 void
-graphquery::database::storage::CMemoryModelMMAPLPG::calc_outdegree(const std::shared_ptr<uint32_t[]> outdeg) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::calc_outdegree(uint32_t outdeg[]) noexcept
 {
     int64_t vertex_c       = 0;
     const auto datablock_c = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);

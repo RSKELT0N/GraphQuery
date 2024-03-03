@@ -12,7 +12,6 @@ namespace graphquery::database::utils
 {
 
 #if defined(__GNUC__) || defined(__clang__)
-#include <cstdint>
 #elif defined(_MSC_VER)
 #include <intrin.h>
 #endif

@@ -29,8 +29,8 @@ namespace graphquery::database::storage
             SGraph_Entry_t() = default;
             SGraph_Entry_t(const std::string_view name, const std::string_view type)
             {
-                strncpy(&graph_name[0], name.data(), CFG_GRAPH_NAME_LENGTH);
-                strncpy(&graph_type[0], type.data(), CFG_GRAPH_MODEL_TYPE_LENGTH);
+                strcpy(&graph_name[0], name.data());
+                strcpy(&graph_type[0], type.data());
             }
         };
 

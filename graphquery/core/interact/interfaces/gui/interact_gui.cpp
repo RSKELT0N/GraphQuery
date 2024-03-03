@@ -147,7 +147,9 @@ graphquery::interact::CInteractGUI::initialise_frames() noexcept
     // DB Analytic
     m_frames.emplace_back(std::make_unique<CFrameDBAnalytic>(database::_db_storage->get_is_db_loaded(),
                                                           database::_db_storage->get_is_graph_loaded(),
-                                                          database::_db_storage->get_graph()));
+                                                          database::_db_storage->get_graph(),
+                                                          database::_db_analytic->get_result_table(),
+                                                          database::_db_analytic->get_algorithm_table()));
 }
 
 void

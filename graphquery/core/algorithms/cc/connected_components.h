@@ -19,23 +19,23 @@ namespace graphquery::database::analytic
         class CRelaxCC final : public graphquery::database::analytic::IRelax
         {
           public:
-            CRelaxCC(std::shared_ptr<int[]> _x, std::shared_ptr<int[]> _y)
+            CRelaxCC(int _x[], int _y[])
             {
-                this->x = std::move(_x);
-                this->y = std::move(_y);
+                this->x = _x;
+                this->y = _y;
             }
 
             ~CRelaxCC() override = default;
 
-            void relax(const uint64_t src, const uint64_t dst) noexcept override { y[dst] = std::min(y[dst], y[src]); }
+            void relax(const int64_t src, const int64_t dst) noexcept override { y[dst] = std::min(y[dst], y[src]); }
 
-            std::shared_ptr<int[]> x;
-            std::shared_ptr<int[]> y;
+            int * x;
+            int * y;
         };
 
         explicit CGraphAlgorithmSSSP(std::string, const std::shared_ptr<logger::CLogSystem> &);
         ~CGraphAlgorithmSSSP() override = default;
 
-        [[nodiscard]] double compute(storage::ILPGModel *) noexcept override;
+        [[nodiscard]] double compute(storage::ILPGModel *) const noexcept override;
     };
 } // namespace graphquery::database::analytic

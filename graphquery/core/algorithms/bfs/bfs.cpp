@@ -4,7 +4,7 @@ graphquery::database::analytic::CGraphAlgorithmBFS::
 CGraphAlgorithmBFS(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys) {}
 
 double 
-graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *) noexcept
+graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *) const noexcept
 {
     return 0.0;
 }

@@ -45,22 +45,8 @@ graphquery::interact::CFrameGraphDB::render_state() noexcept
 void
 graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 {
-    ImGui::Text("Database Info");
-    ImGui::Separator();
+    ImGui::SeparatorText("Database Info");
     ImGui::Text("%s", database::_db_storage->get_db_info().c_str());
-
-    if (m_is_graph_loaded)
-    {
-        if(ImGui::Button("PR"))
-        {
-            database::_db_analytic->process_algorithm("PageRank");
-        }
-
-        if(ImGui::Button("CC"))
-        {
-            database::_db_analytic->process_algorithm("ConnectedComponents");
-        }
-    }
 }
 
 void
@@ -69,9 +55,8 @@ graphquery::interact::CFrameGraphDB::render_graph_table() const noexcept
     static constexpr uint8_t columns       = 2;
     static constexpr uint8_t column_width  = 100;
     static constexpr ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders | ImGuiTableFlags_Hideable;
-    ImGui::Text("Graph Table");
+    ImGui::SeparatorText("Graph Table");
 
-    ImGui::Separator();
     if (ImGui::BeginTable("##", columns, flags))
     {
         ImGui::TableSetupColumn("Graph Name", ImGuiTableColumnFlags_WidthFixed, column_width);

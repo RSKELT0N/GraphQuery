@@ -50,7 +50,7 @@ namespace graphquery::database::storage
         uint32_t version         = END_INDEX;
         std::array<T, N> payload = {};
         uint8_t payload_amt      = {};
-    } __attribute__((packed));
+    };
 
     /****************************************************************
      * \struct SDataBlock_t
@@ -68,7 +68,7 @@ namespace graphquery::database::storage
         uint32_t next        = END_INDEX;
         uint32_t version     = END_INDEX;
         T payload            = {};
-    } __attribute__((packed));
+    };
 
     template<typename T, uint8_t N = 1>
         requires(N > 0)

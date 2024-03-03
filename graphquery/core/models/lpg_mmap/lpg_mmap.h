@@ -113,7 +113,7 @@ namespace graphquery::database::storage
         void save_graph() noexcept override;
         void rm_vertex(SNodeID src) override;
         void rm_edge(SNodeID src, SNodeID dst) override;
-        void calc_outdegree(std::shared_ptr<uint32_t[]>) noexcept override;
+        void calc_outdegree(uint32_t[]) noexcept override;
         void rm_edge(SNodeID src, SNodeID dst, std::string_view edge_label) override;
         void edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept override;
         void ranged_edgemap(const std::unique_ptr<analytic::IRelax> & relax, int64_t from, int64_t to) override;

@@ -46,7 +46,7 @@ namespace graphquery::database::storage
         {
             ILPGModel::SNodeID id = {};
             uint32_t offset       = END_INDEX;
-        } __attribute__((packed));
+        };
 
         ~CIndexFile();
         CIndexFile();

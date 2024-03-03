@@ -5,13 +5,13 @@
 graphquery::database::analytic::CGraphAlgorithmSSSP::CGraphAlgorithmSSSP(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys) {}
 
 double
-graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel * graph_model) noexcept
+graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel * graph_model) const noexcept
 {
     const uint64_t n = graph_model->get_num_vertices();
 
-    auto x      = std::make_shared<int[]>(n);
-    auto y      = std::make_shared<int[]>(n);
-    auto degree = std::make_shared<uint32_t[]>(n);
+    auto x      = new int[n];
+    auto y      = new int[n];
+    auto degree = new uint32_t[n];
 
     static constexpr int max_iter = 100;
     bool change                   = true;

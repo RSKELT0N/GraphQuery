@@ -2,10 +2,38 @@
 
 #include <db/system.h>
 
+namespace
+{
+    constexpr int32_t node_display_upper_limit = 20;
+
+    void randomise_nodes(const int64_t num_vertices) noexcept
+    {
+        float x                     = 0.0f;
+        float y                     = 0.0f;
+        static constexpr float dist = 200.0f;
+
+        const int render_c = std::min(static_cast<int64_t>(node_display_upper_limit), num_vertices);
+        const int width    = std::log2(render_c);
+        for (int i = 0; i < render_c; i++)
+        {
+            if (i % width == width - 1)
+            {
+                y += dist;
+                x = 0;
+            }
+
+            ImVec2 pos(x, y);
+            ImNodes::SetNodeGridSpacePos(i, pos);
+            x += dist;
+        }
+    }
+} // namespace
+
 graphquery::interact::CFrameGraphVisual::
 CFrameGraphVisual(const bool & is_db_loaded, const bool & is_graph_loaded, std::shared_ptr<database::storage::ILPGModel *> graph):
     m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph(std::move(graph))
 {
+    std::srand(1);
 }
 
 graphquery::interact::CFrameGraphVisual::~CFrameGraphVisual() = default;
@@ -24,7 +52,8 @@ void
 graphquery::interact::CFrameGraphVisual::render_grid() noexcept
 {
     ImNodes::BeginNodeEditor();
-    ImNodes::MiniMap(0.15, ImNodesMiniMapLocation_BottomRight);
+    ImNodes::MiniMap(0.1, ImNodesMiniMapLocation_BottomRight);
+    ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(0, 0, 255, 205));
 
     if (m_is_db_loaded && m_is_graph_loaded)
     {
@@ -33,6 +62,7 @@ graphquery::interact::CFrameGraphVisual::render_grid() noexcept
     }
 
     ImNodes::EndNodeEditor();
+    ImNodes::PopColorStyle();
 }
 
 void
@@ -40,15 +70,17 @@ graphquery::interact::CFrameGraphVisual::render_nodes() noexcept
 {
     auto vertices = (*m_graph)->get_num_vertices();
 
-    for(int64_t i = 0; i < std::min(50LL, vertices); i++)
+    for (int i = 0; i < std::min(static_cast<int64_t>(node_display_upper_limit), vertices); i++)
     {
         auto vertex_i = (*m_graph)->get_vertex(i);
-
         ImNodes::BeginNode(i);
-        ImGui::Text("Vertex (%lld)", i);
+        ImNodes::BeginNodeTitleBar();
+        ImGui::Text("Vertex (%d)", i);
+        ImNodes::EndNodeTitleBar();
         ImGui::Text("Neighbours (%u)", vertex_i->neighbour_c);
         ImNodes::EndNode();
     }
+    std::call_once(m_init, randomise_nodes, vertices);
 }
 
 void

@@ -5,7 +5,7 @@
 graphquery::database::analytic::CAnalyticEngine::CAnalyticEngine(std::shared_ptr<storage::ILPGModel *> graph)
 {
     this->m_graph      = std::move(graph);
-    this->m_results    = std::vector<SResult>();
+    this->m_results    = std::make_shared<std::vector<SResult>>();
     this->m_algorithms = std::unordered_map<std::string, std::unique_ptr<IGraphAlgorithm *>>();
     this->m_libs       = std::unordered_map<std::string, std::unique_ptr<dylib>>();
     load_libraries(false);
@@ -42,6 +42,18 @@ graphquery::database::analytic::CAnalyticEngine::insert_lib(const std::string_vi
     m_algorithms.emplace((*ptr)->get_name(), std::move(ptr));
 }
 
+std::shared_ptr<std::vector<graphquery::database::analytic::CAnalyticEngine::SResult>>
+graphquery::database::analytic::CAnalyticEngine::get_result_table() const noexcept
+{
+    return this->m_results;
+}
+
+const std::unordered_map<std::string, std::unique_ptr<graphquery::database::analytic::IGraphAlgorithm *>> &
+graphquery::database::analytic::CAnalyticEngine::get_algorithm_table() const noexcept
+{
+    return this->m_algorithms;
+}
+
 void
 graphquery::database::analytic::CAnalyticEngine::process_algorithm(const std::string_view algorithm) noexcept
 {
@@ -49,7 +61,5 @@ graphquery::database::analytic::CAnalyticEngine::process_algorithm(const std::st
         return;
 
     const auto & lib = m_algorithms.at(algorithm.data());
-
-    static auto lambda = [&lib, this]() -> double { return (*lib)->compute(*m_graph); };
-    m_results.emplace_back(lambda);
+    m_results->emplace_back(algorithm, [object_ptr = *lib.get(), capture0 = *m_graph] { return object_ptr->compute(capture0); });
 }

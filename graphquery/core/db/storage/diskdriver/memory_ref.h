@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "db/utils/atomic_intrinsics.h"
+
 #include <cstdint>
 
 namespace graphquery::database::storage
@@ -16,7 +18,7 @@ namespace graphquery::database::storage
     struct SRef_t
     {
         inline SRef_t(): ref(nullptr), counter(nullptr) {};
-        inline SRef_t(T * _t, uint32_t * _counter): ref(_t), counter(_counter) { ++(*counter); }
+        inline SRef_t(T * _t, uint32_t * _counter): ref(_t), counter(_counter) { utils::atomic_fetch_inc(&(*counter)); }
 
         inline ~SRef_t()
         {
@@ -28,14 +30,14 @@ namespace graphquery::database::storage
         {
             ref     = cpy.ref;
             counter = cpy.counter;
-            ++(*counter);
+            utils::atomic_fetch_inc(&(*counter));
         }
 
         SRef_t & operator=(const SRef_t & cpy)
         {
             ref     = cpy.ref;
             counter = cpy.counter;
-            ++(*counter);
+            utils::atomic_fetch_inc(&(*counter));
             return *this;
         }
 
@@ -43,7 +45,7 @@ namespace graphquery::database::storage
         {
             ref         = cpy.ref;
             counter     = cpy.counter;
-            --(*counter);
+            utils::atomic_fetch_dec(&(*counter));
             cpy.ref     = nullptr;
             cpy.counter = nullptr;
         };
@@ -52,7 +54,7 @@ namespace graphquery::database::storage
         {
             ref         = cpy.ref;
             counter     = cpy.counter;
-            --(*counter);
+            utils::atomic_fetch_dec(&(*counter));
             cpy.ref     = nullptr;
             cpy.counter = nullptr;
             return *this;
@@ -67,5 +69,5 @@ namespace graphquery::database::storage
 
         T * ref            = nullptr;
         uint32_t * counter = nullptr;
-    } __attribute__((packed));
+    };
 }; // namespace graphquery::database::storage
