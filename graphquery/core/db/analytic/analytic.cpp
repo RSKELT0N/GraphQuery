@@ -1,11 +1,13 @@
 #include "analytic.h"
 
 #include "db/system.h"
+#include "db/utils/lib.h"
 
-graphquery::database::analytic::CAnalyticEngine::CAnalyticEngine(std::shared_ptr<storage::ILPGModel *> graph)
+graphquery::database::analytic::CAnalyticEngine::
+CAnalyticEngine(std::shared_ptr<storage::ILPGModel *> graph)
 {
     this->m_graph      = std::move(graph);
-    this->m_results    = std::make_shared<std::vector<SResult>>();
+    this->m_results    = std::make_shared<std::vector<utils::SResult<double>>>();
     this->m_algorithms = std::unordered_map<std::string, std::unique_ptr<IGraphAlgorithm *>>();
     this->m_libs       = std::unordered_map<std::string, std::unique_ptr<dylib>>();
     load_libraries(false);
@@ -42,7 +44,7 @@ graphquery::database::analytic::CAnalyticEngine::insert_lib(const std::string_vi
     m_algorithms.emplace((*ptr)->get_name(), std::move(ptr));
 }
 
-std::shared_ptr<std::vector<graphquery::database::analytic::CAnalyticEngine::SResult>>
+std::shared_ptr<std::vector<graphquery::database::utils::SResult<double>>>
 graphquery::database::analytic::CAnalyticEngine::get_result_table() const noexcept
 {
     return this->m_results;
@@ -55,11 +57,17 @@ graphquery::database::analytic::CAnalyticEngine::get_algorithm_table() const noe
 }
 
 void
-graphquery::database::analytic::CAnalyticEngine::process_algorithm(const std::string_view algorithm) noexcept
+graphquery::database::analytic::CAnalyticEngine::process_algorithm(std::string_view algorithm) noexcept
 {
     if (!m_algorithms.contains(algorithm.data()))
         return;
 
     const auto & lib = m_algorithms.at(algorithm.data());
-    m_results->emplace_back(algorithm, [object_ptr = *lib.get(), capture0 = *m_graph] { return object_ptr->compute(capture0); });
+    m_results->emplace_back(algorithm,
+                            [object_ptr = *lib.get(), capture0 = *m_graph, algorithm]
+                            {
+                                auto [res, elapsed] = utils::measure<double>(&IGraphAlgorithm::compute, object_ptr, capture0);
+                                _log_system->info(fmt::format("Graph algorithm ({}) executed within {}s", algorithm, elapsed.count()));
+                                return res;
+                            });
 }

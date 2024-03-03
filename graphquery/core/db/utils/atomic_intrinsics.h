@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <stdatomic.h>
+
 namespace graphquery::database::utils
 {
 
@@ -16,8 +18,10 @@ namespace graphquery::database::utils
 #include <intrin.h>
 #endif
 
+    // ~ Support for integral atomic intrinsics
+
     template<typename T>
-    inline T atomic_fetch_add(T * variable, T value)
+    inline T atomic_fetch_add(volatile T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_add(variable, value, __ATOMIC_ACQ_REL);
@@ -27,7 +31,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    inline T atomic_fetch_sub(T * variable, T value)
+    inline T atomic_fetch_sub(volatile T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_sub(variable, value, __ATOMIC_ACQ_REL);
@@ -37,7 +41,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    inline T atomic_fetch_xor(T * variable, T value)
+    inline T atomic_fetch_xor(volatile T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_xor(variable, value, __ATOMIC_ACQ_REL);
@@ -47,7 +51,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    inline T atomic_fetch_and(T * variable, T value)
+    inline T atomic_fetch_and(volatile T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_and(variable, value, __ATOMIC_ACQ_REL);
@@ -57,7 +61,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    inline T atomic_fetch_or(T * variable, T value)
+    inline T atomic_fetch_or(volatile T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_or(variable, value, __ATOMIC_ACQ_REL);
@@ -67,7 +71,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    inline T atomic_fetch_nand(T * variable, T value)
+    inline T atomic_fetch_nand(volatile T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_fetch_nand(variable, value, __ATOMIC_ACQ_REL);
@@ -78,39 +82,29 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    inline bool atomic_fetch_cas(T * variable, T expected, T new_value)
+    inline bool atomic_fetch_cas(volatile T * variable, T & expected, T & new_value)
     {
 #if defined(__GNUC__) || defined(__clang__)
-        return __atomic_compare_exchange_n(variable, expected, new_value);
+        return __atomic_compare_exchange(variable, expected, new_value, false, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED);
 #elif defined(_MSC_VER)
         return _InterlockedCompareExchange(reinterpret_cast<volatile LONG *>(variable), new_value, expected);
 #endif
     }
 
     template<typename T>
-    inline T atomic_fetch_inc(T * variable)
+    inline T atomic_fetch_inc(volatile T * variable)
     {
         return atomic_fetch_add(variable, static_cast<T>(1));
     }
 
     template<typename T>
-    inline T atomic_fetch_dec(T * variable)
+    inline T atomic_fetch_dec(volatile T * variable)
     {
         return atomic_fetch_sub(variable, static_cast<T>(1));
     }
 
     template<typename T>
-    inline T atomic_exchange(T * variable, T new_value)
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        return __sync_lock_test_and_set(variable, new_value);
-#elif defined(_MSC_VER)
-        return _InterlockedExchange(reinterpret_cast<volatile LONG *>(variable), new_value);
-#endif
-    }
-
-    template<typename T>
-    inline T atomic_load(const T * variable)
+    inline T atomic_load(volatile T * variable)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_load_n(variable, __ATOMIC_RELAXED);
@@ -121,7 +115,7 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    inline void atomic_store(T * variable, T value)
+    inline void atomic_store(volatile T * variable, T value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         __atomic_store_n(variable, value, __ATOMIC_RELAXED);
@@ -132,13 +126,71 @@ namespace graphquery::database::utils
     }
 
     template<typename T, typename I>
-    inline void atomic_store(T * variable, I value)
+    inline void atomic_store(volatile T * variable, I value)
     {
 #if defined(__GNUC__) || defined(__clang__)
         __atomic_store_n(variable, value, __ATOMIC_RELAXED);
 #elif defined(_MSC_VER)
         *variable = value;
         _WriteBarrier();
+#endif
+    }
+
+    // ~ Support for float/double atomic intrinsics
+
+    template<>
+    inline bool atomic_fetch_cas(volatile double * variable, double & expected, double & new_value)
+    {
+#if defined(__GNUC__) || defined(__clang__)
+        return __atomic_compare_exchange(reinterpret_cast<volatile uint64_t *>(variable),
+                                         reinterpret_cast<uint64_t *>(&expected),
+                                         reinterpret_cast<uint64_t *>(&new_value),
+                                         false,
+                                         __ATOMIC_ACQ_REL,
+                                         __ATOMIC_RELAXED);
+#elif defined(_MSC_VER)
+        return _InterlockedCompareExchange64(reinterpret_cast<volatile LONG64 *>(variable), *reinterpret_cast<LONGLONG *>(&new_value), *reinterpret_cast<LONGLONG *>(&expected)) ==
+               *reinterpret_cast<LONGLONG *>(&expected);
+#endif
+    }
+
+    template<>
+    inline bool atomic_fetch_cas(volatile float * variable, float & expected, float & new_value)
+    {
+#if defined(__GNUC__) || defined(__clang__)
+        return __atomic_compare_exchange(reinterpret_cast<volatile uint32_t *>(variable),
+                                         reinterpret_cast<uint32_t *>(&expected),
+                                         reinterpret_cast<uint32_t *>(&new_value),
+                                         false,
+                                         __ATOMIC_ACQ_REL,
+                                         __ATOMIC_RELAXED);
+#elif defined(_MSC_VER)
+        return _InterlockedCompareExchange(reinterpret_cast<volatile LONG *>(variable), *reinterpret_cast<LONG *>(&new_value), *reinterpret_cast<LONG *>(&expected)) ==
+               *reinterpret_cast<LONG *>(&expected);
+#endif
+    }
+
+    template<>
+    inline double atomic_load(volatile double * variable)
+    {
+#if defined(__GNUC__) || defined(__clang__)
+        uint64_t int_value = __atomic_load_n(reinterpret_cast<volatile uint64_t *>(variable), __ATOMIC_RELAXED);
+        return *reinterpret_cast<double*>(&int_value);
+#elif defined(_MSC_VER)
+        _ReadBarrier();
+        return *variable;
+#endif
+    }
+
+    template<>
+    inline float atomic_load(volatile float * variable)
+    {
+#if defined(__GNUC__) || defined(__clang__)
+        uint32_t int_value = __atomic_load_n(reinterpret_cast<volatile uint32_t *>(variable), __ATOMIC_RELAXED);
+        return *reinterpret_cast<float*>(&int_value);
+#elif defined(_MSC_VER)
+        _ReadBarrier();
+        return *variable;
 #endif
     }
 

@@ -44,8 +44,8 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SIndexEntry_t
         {
-            ILPGModel::SNodeID id = {};
-            uint32_t offset       = END_INDEX;
+            uint32_t offset = END_INDEX;
+            uint8_t set     = {};
         };
 
         ~CIndexFile();
@@ -83,11 +83,6 @@ graphquery::database::storage::CIndexFile::store_metadata() noexcept
     metadata->index_c               = 0;
     metadata->index_size            = sizeof(SIndexEntry_t);
     metadata->index_list_start_addr = sizeof(SIndexMetadata_t);
-
-    // ~ Initialise first index block
-    auto ptr    = read_entry(0);
-    ptr->id     = END_INDEX;
-    ptr->offset = END_INDEX;
 }
 
 inline graphquery::database::storage::SRef_t<graphquery::database::storage::CIndexFile::SIndexEntry_t>
@@ -105,8 +100,8 @@ graphquery::database::storage::CIndexFile::store_entry(const ILPGModel::SNodeID 
     auto index_ptr     = read_entry(id);
     const auto index_c = utils::atomic_load(&read_metadata()->index_c);
 
-    utils::atomic_store(&index_ptr->id, id);
     utils::atomic_store(&index_ptr->offset, offset);
+    utils::atomic_store(&index_ptr->set, 1);
 
     if (id >= index_c)
         utils::atomic_fetch_inc(&read_metadata()->index_c);

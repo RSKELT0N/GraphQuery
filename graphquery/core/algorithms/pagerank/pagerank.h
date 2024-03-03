@@ -8,7 +8,6 @@
  ************************************************************/
 
 #pragma once
-
 #include "db/analytic/algorithm.h"
 
 namespace graphquery::database::analytic
@@ -31,8 +30,14 @@ namespace graphquery::database::analytic
 
             void relax(const int64_t src, const int64_t dst) noexcept override
             {
+                double x_src, y_dst_old, y_dst_new;
                 const double w = d / outdeg[src];
-                y[dst] += w * x[src];
+                do
+                {
+                    x_src     = utils::atomic_load(&x[src]);
+                    y_dst_old = utils::atomic_load(&y[dst]);
+                    y_dst_new = y_dst_old + w * x_src;
+                } while (!utils::atomic_fetch_cas(&y[dst], y_dst_old, y_dst_new));
             }
 
             double d;

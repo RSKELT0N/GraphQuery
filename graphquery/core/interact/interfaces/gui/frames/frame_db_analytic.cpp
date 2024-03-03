@@ -3,17 +3,15 @@
 #include "frame_db_query.h"
 #include "db/system.h"
 
-#include <imgui_internal.h>
-
-#include <utility>
+#include <algorithm>
 
 graphquery::interact::CFrameDBAnalytic::
 CFrameDBAnalytic(const bool & is_db_loaded,
                  const bool & is_graph_loaded,
                  std::shared_ptr<database::storage::ILPGModel *> graph,
-                 std::shared_ptr<std::vector<database::analytic::CAnalyticEngine::SResult>> results,
+                 std::shared_ptr<std::vector<database::utils::SResult<double>>> results,
                  const std::unordered_map<std::string, std::unique_ptr<database::analytic::IGraphAlgorithm *>> & algorithms):
-    m_algorithm_choice(0), m_result_choice(0), m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph(std::move(graph)), m_results(std::move(results)), m_algorithms(algorithms)
+    m_algorithm_choice(0), m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph(std::move(graph)), m_results(std::move(results)), m_algorithms(algorithms)
 {
 }
 
@@ -33,7 +31,7 @@ graphquery::interact::CFrameDBAnalytic::render_frame() noexcept
 void
 graphquery::interact::CFrameDBAnalytic::render_analytic_opt() noexcept
 {
-    if (ImGui::BeginChild("#choose_algorithm", {ImGui::GetWindowWidth(), ImGui::GetWindowHeight() - 100}))
+    if (ImGui::BeginChild("#choose_algorithm", {0, ImGui::GetWindowHeight() - 100}))
     {
         ImGui::SeparatorText("Choose an Algorithm");
         ImGui::Dummy(ImVec2(0.0f, 20.0f));
@@ -61,14 +59,14 @@ graphquery::interact::CFrameDBAnalytic::render_results_table() noexcept
     static constexpr uint16_t column_width = 400;
     static constexpr ImGuiTableFlags flags =  ImGuiTableFlags_Borders;
 
-    if (ImGui::BeginTable("#result_table", columns, flags, {ImGui::GetWindowWidth(), ImGui::GetWindowHeight() / 2}))
+    if (ImGui::BeginTable("#result_table", columns, flags, {0, ImGui::GetWindowHeight() / 2}))
     {
         ImGui::TableSetupColumn("name", column_width);
         ImGui::TableSetupColumn("return", column_width);
         ImGui::TableHeadersRow();
         std::for_each(m_results->begin(),
                       m_results->end(),
-                      [this](const database::analytic::CAnalyticEngine::SResult & res) -> void
+                      [](const database::utils::SResult<double> & res) -> void
                       {
                           ImGui::TableNextRow();
                           ImGui::TableSetColumnIndex(0);
@@ -87,7 +85,7 @@ graphquery::interact::CFrameDBAnalytic::render_results_table() noexcept
 void
 graphquery::interact::CFrameDBAnalytic::render_analytic_control() noexcept
 {
-    if (ImGui::BeginChild("#run_and_refresh", {ImGui::GetWindowWidth(), 0}))
+    if (ImGui::BeginChild("#run_and_refresh"))
     {
         if (ImGui::Button("Run Algorithm"))
         {

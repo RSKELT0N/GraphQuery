@@ -120,6 +120,8 @@ namespace graphquery::database::storage
 
         [[nodiscard]] inline int64_t get_num_edges() override;
         [[nodiscard]] inline int64_t get_num_vertices() override;
+        [[nodiscard]] inline int16_t get_num_vertex_labels() override;
+        [[nodiscard]] inline int16_t get_num_edge_labels() override;
         [[nodiscard]] std::string_view get_name() noexcept override;
         [[nodiscard]] std::optional<SVertex_t> get_vertex(SNodeID id) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_label(std::string_view label) override;

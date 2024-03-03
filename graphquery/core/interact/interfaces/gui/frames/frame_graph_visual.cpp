@@ -6,7 +6,7 @@ namespace
 {
     constexpr int32_t node_display_upper_limit = 20;
 
-    void randomise_nodes(const int64_t num_vertices) noexcept
+    [[maybe_unused]] void sparse_node_positions(const int64_t num_vertices) noexcept
     {
         float x                     = 0.0f;
         float y                     = 0.0f;
@@ -51,6 +51,7 @@ graphquery::interact::CFrameGraphVisual::render_frame() noexcept
 void
 graphquery::interact::CFrameGraphVisual::render_grid() noexcept
 {
+    ImGui::SetNextWindowSize({ImGui::GetWindowWidth()-300, ImGui::GetWindowHeight()});
     ImNodes::BeginNodeEditor();
     ImNodes::MiniMap(0.1, ImNodesMiniMapLocation_BottomRight);
     ImNodes::PushColorStyle(ImNodesCol_TitleBar, IM_COL32(0, 0, 255, 205));
@@ -68,19 +69,19 @@ graphquery::interact::CFrameGraphVisual::render_grid() noexcept
 void
 graphquery::interact::CFrameGraphVisual::render_nodes() noexcept
 {
-    auto vertices = (*m_graph)->get_num_vertices();
-
-    for (int i = 0; i < std::min(static_cast<int64_t>(node_display_upper_limit), vertices); i++)
-    {
-        auto vertex_i = (*m_graph)->get_vertex(i);
-        ImNodes::BeginNode(i);
-        ImNodes::BeginNodeTitleBar();
-        ImGui::Text("Vertex (%d)", i);
-        ImNodes::EndNodeTitleBar();
-        ImGui::Text("Neighbours (%u)", vertex_i->neighbour_c);
-        ImNodes::EndNode();
-    }
-    std::call_once(m_init, randomise_nodes, vertices);
+    // auto vertices = (*m_graph)->get_num_vertices();
+    //
+    // for (int i = 0; i < std::min(static_cast<int64_t>(node_display_upper_limit), vertices); i++)
+    // {
+    //     auto vertex_i = (*m_graph)->get_vertex(i);
+    //     ImNodes::BeginNode(i);
+    //     ImNodes::BeginNodeTitleBar();
+    //     ImGui::Text("Vertex (%d)", i);
+    //     ImNodes::EndNodeTitleBar();
+    //     ImGui::Text("Neighbours (%u)", vertex_i->neighbour_c);
+    //     ImNodes::EndNode();
+    // }
+    // std::call_once(m_init, sparse_node_positions, vertices);
 }
 
 void

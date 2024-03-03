@@ -25,6 +25,5 @@ rm -rf [build_directory]
 * Implement individual vertex locking.
 * Implement trees for appending edges.
 * Implement running track of out degrees for vertices.
-* Complete interface for running queries/algorithms.
 * Implement basic environment for random alterations to graph.
 * Testing.

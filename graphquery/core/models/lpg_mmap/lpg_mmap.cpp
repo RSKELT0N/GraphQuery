@@ -829,7 +829,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::ranged_edgemap(const std::un
             for (size_t j = 0; j < curr_edge_ptr->state.size(); j++)
             {
                 if (likely(curr_edge_ptr->state.test(j)))
-                    relax->relax(curr_vertex_ptr->payload.metadata.id, curr_edge_ptr->payload[j].metadata.dst);
+                    relax->relax(curr_edge_ptr->payload[j].metadata.src, curr_edge_ptr->payload[j].metadata.dst);
             }
             edge_ref = curr_edge_ptr->next;
         }
@@ -856,7 +856,10 @@ graphquery::database::storage::CMemoryModelMMAPLPG::edgemap(const std::unique_pt
             for (size_t j = 0; j < curr_edge_ptr->state.size(); j++)
             {
                 if (likely(curr_edge_ptr->state.test(j)))
-                    relax->relax(curr_vertex_ptr->payload.metadata.id, curr_edge_ptr->payload[j].metadata.dst);
+                {
+                    relax->relax(curr_edge_ptr->payload[j].metadata.src, curr_edge_ptr->payload[j].metadata.dst);
+
+                }
             }
             edge_ref = curr_edge_ptr->next;
         }
@@ -1238,7 +1241,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_id(const SNode
 {
     auto index_ptr = m_index_file.read_entry(id);
 
-    if (index_ptr->id != id)
+    if (index_ptr->set == 0)
         return std::nullopt;
 
     return m_vertices_file.read_entry(index_ptr->offset);
@@ -1402,13 +1405,25 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge_entry(const SNodeID 
 int64_t
 graphquery::database::storage::CMemoryModelMMAPLPG::get_num_edges()
 {
-    return utils::atomic_load(&read_graph_metadata()->edges_c);
+    return read_graph_metadata()->edges_c;
 }
 
 int64_t
 graphquery::database::storage::CMemoryModelMMAPLPG::get_num_vertices()
 {
-    return utils::atomic_load(&read_graph_metadata()->vertices_c);
+    return read_graph_metadata()->vertices_c;
+}
+
+int16_t
+graphquery::database::storage::CMemoryModelMMAPLPG::get_num_vertex_labels()
+{
+    return read_graph_metadata()->vertex_label_c;
+}
+
+int16_t
+graphquery::database::storage::CMemoryModelMMAPLPG::get_num_edge_labels()
+{
+    return read_graph_metadata()->edge_label_c;
 }
 
 extern "C"
