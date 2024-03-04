@@ -37,11 +37,8 @@ graphquery::interact::CFrameLog::render_log_box() const noexcept
 bool
 graphquery::interact::CFrameLog::is_scroll_at_end() noexcept
 {
-    if (ImGuiWindow const * window = ImGui::GetCurrentWindow())
-    {
-        return ((window->Scroll.y) >= window->ScrollMax.y);
-    }
-    return false;
+    ImGuiWindow const * window = ImGui::GetCurrentWindow();
+    return window->Scroll.y >= window->ScrollMax.y;
 }
 
 void

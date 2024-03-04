@@ -81,20 +81,27 @@ namespace graphquery::database::utils
     inline constexpr auto measure(Func && func, const Obj & obj, Args &&... args) -> STimedResult_t<Ret>
     {
         const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-        auto func_result                                  = (obj->*func)(args...);
+
+        // Use std::invoke to call the function, which handles both member functions and function pointers
+        auto func_result = std::invoke(std::forward<Func>(func), obj, std::forward<Args>(args)...);
+
         const std::chrono::steady_clock::time_point end   = std::chrono::steady_clock::now();
         const std::chrono::duration<double> elapsed       = end - start;
 
         return STimedResult_t<Ret> {func_result, elapsed};
     }
 
+
     template<typename Func, typename Obj, typename... Args>
     inline constexpr auto measure(Func && func, const Obj & obj, Args &&... args) -> STimedResult_t<void>
     {
         const std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-        (obj->*func)(args...);
-        const std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        const std::chrono::duration<double> elapsed     = end - start;
+
+        // Use std::invoke to call the function, which handles both member functions and function pointers
+        std::invoke(std::forward<Func>(func), obj, std::forward<Args>(args)...);
+
+        const std::chrono::steady_clock::time_point end   = std::chrono::steady_clock::now();
+        const std::chrono::duration<double> elapsed       = end - start;
 
         return STimedResult_t<void> {elapsed};
     }

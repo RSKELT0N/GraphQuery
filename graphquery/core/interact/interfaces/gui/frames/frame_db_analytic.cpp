@@ -56,13 +56,12 @@ void
 graphquery::interact::CFrameDBAnalytic::render_results_table() noexcept
 {
     static constexpr uint8_t columns       = 2;
-    static constexpr uint16_t column_width = 400;
-    static constexpr ImGuiTableFlags flags =  ImGuiTableFlags_Borders;
+    static constexpr ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY;
 
     if (ImGui::BeginTable("#result_table", columns, flags, {0, ImGui::GetWindowHeight() / 2}))
     {
-        ImGui::TableSetupColumn("name", column_width);
-        ImGui::TableSetupColumn("return", column_width);
+        ImGui::TableSetupColumn("name");
+        ImGui::TableSetupColumn("return");
         ImGui::TableHeadersRow();
         std::for_each(m_results->begin(),
                       m_results->end(),

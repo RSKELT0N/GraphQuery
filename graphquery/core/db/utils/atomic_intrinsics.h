@@ -137,6 +137,9 @@ namespace graphquery::database::utils
     }
 
     // ~ Support for float/double atomic intrinsics
+	
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
     template<>
     inline bool atomic_fetch_cas(volatile double * variable, double & expected, double & new_value)
@@ -193,5 +196,7 @@ namespace graphquery::database::utils
         return *variable;
 #endif
     }
+
+#pragma GCC diagnostic pop
 
 } // namespace graphquery::database::utils
