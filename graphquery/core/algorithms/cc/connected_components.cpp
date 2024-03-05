@@ -59,7 +59,7 @@ graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel 
     // 1. Count number of components
     //    and map component IDs to narrow domain
     int ncc    = 0;
-    auto remap = std::make_shared<int[]>(n);
+    auto remap = new int[n];
 
     for (int i = 0; i < n; ++i)
     {
@@ -75,7 +75,7 @@ graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel 
     m_log_system->info(fmt::format("Number of components: {}", ncc));
 
     // 2. Calculate size of each component
-    auto sizes = std::make_shared<int[]>(n);
+    auto sizes = new int[n];
     for (int i = 0; i < n; ++i)
     {
         ++sizes[remap[x[i]]];
@@ -83,6 +83,11 @@ graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel 
 
     m_log_system->info(fmt::format("ConnectedComponents: {} components", ncc));
 
+    delete[] x;
+    delete[] y;
+    delete[] degree;
+    delete[] remap;
+    delete[] sizes;
     return ncc;
 }
 

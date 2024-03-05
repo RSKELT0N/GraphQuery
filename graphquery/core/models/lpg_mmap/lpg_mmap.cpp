@@ -836,6 +836,41 @@ graphquery::database::storage::CMemoryModelMMAPLPG::ranged_edgemap(const std::un
     }
 }
 
+std::unique_ptr<std::vector<std::vector<int64_t>>>
+graphquery::database::storage::CMemoryModelMMAPLPG::make_inverse_graph() noexcept
+{
+    auto inv_graph = std::make_unique<std::vector<std::vector<int64_t>>>();
+    auto vblock_c  = m_vertices_file.read_metadata()->data_block_c;
+    auto edges     = read_graph_metadata()->edges_c;
+
+    auto avg_outdeg = edges == 0 ? 0 : vblock_c / edges;
+
+    inv_graph->resize(vblock_c);
+
+    SRef_t<SVertexDataBlock> v_ptr = m_vertices_file.read_entry(0);
+    for (size_t i = 0; i < vblock_c; i++, ++v_ptr)
+    {
+        (*inv_graph)[i].reserve(avg_outdeg);
+
+        auto edge_head = v_ptr->payload.edge_idx;
+
+        while (edge_head != END_INDEX)
+        {
+            auto e_ptr = m_edges_file.read_entry(edge_head);
+
+            for (size_t j = 0; j < e_ptr->state.size(); j++)
+            {
+                if (!e_ptr->state.test(j))
+                    continue;
+
+                (*inv_graph)[e_ptr->payload[j].metadata.dst].emplace_back(v_ptr->idx);
+            }
+            edge_head = e_ptr->next;
+        }
+    }
+    return inv_graph;
+}
+
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept
 {
@@ -858,11 +893,36 @@ graphquery::database::storage::CMemoryModelMMAPLPG::edgemap(const std::unique_pt
                 if (likely(curr_edge_ptr->state.test(j)))
                 {
                     relax->relax(curr_edge_ptr->payload[j].metadata.src, curr_edge_ptr->payload[j].metadata.dst);
-
                 }
             }
             edge_ref = curr_edge_ptr->next;
         }
+    }
+}
+
+void
+graphquery::database::storage::CMemoryModelMMAPLPG::src_edgemap(const int32_t vertex_offset, const std::function<void(int64_t src, int64_t dst)> & relax)
+{
+    std::optional<SRef_t<SVertexDataBlock>> v_ptr_opt = get_vertex_by_offset(vertex_offset);
+
+    if (!v_ptr_opt.has_value())
+        return;
+
+    auto v_ptr = *v_ptr_opt;
+
+    auto edge_head = v_ptr->payload.edge_idx;
+    while (edge_head != END_INDEX)
+    {
+        auto e_ptr = m_edges_file.read_entry(edge_head);
+
+        for (size_t i = 0; i < e_ptr->state.size(); i++)
+        {
+            if (!e_ptr->state.test(i))
+                continue;
+
+            relax(vertex_offset, e_ptr->payload[i].metadata.dst);
+        }
+        edge_head = e_ptr->next;
     }
 }
 
@@ -1209,6 +1269,19 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_property_i
     return ret;
 }
 
+int32_t
+graphquery::database::storage::CMemoryModelMMAPLPG::out_degree(const int64_t id) noexcept
+{
+    return get_vertex(id)->neighbour_c;
+}
+
+int32_t
+graphquery::database::storage::CMemoryModelMMAPLPG::out_degree_by_offset(const uint32_t id) noexcept
+{
+    assert(id < m_vertices_file.read_metadata()->data_block_c);
+    return (*get_vertex_by_offset(id))->payload.metadata.neighbour_c;
+}
+
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::calc_outdegree(uint32_t outdeg[]) noexcept
 {
@@ -1414,13 +1487,13 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_num_vertices()
     return read_graph_metadata()->vertices_c;
 }
 
-int16_t
+uint16_t
 graphquery::database::storage::CMemoryModelMMAPLPG::get_num_vertex_labels()
 {
     return read_graph_metadata()->vertex_label_c;
 }
 
-int16_t
+uint16_t
 graphquery::database::storage::CMemoryModelMMAPLPG::get_num_edge_labels()
 {
     return read_graph_metadata()->edge_label_c;

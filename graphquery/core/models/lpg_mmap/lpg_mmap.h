@@ -113,15 +113,19 @@ namespace graphquery::database::storage
         void save_graph() noexcept override;
         void rm_vertex(SNodeID src) override;
         void rm_edge(SNodeID src, SNodeID dst) override;
+        int32_t out_degree(int64_t id) noexcept override;
         void calc_outdegree(uint32_t[]) noexcept override;
+        int32_t out_degree_by_offset(uint32_t id) noexcept override;
         void rm_edge(SNodeID src, SNodeID dst, std::string_view edge_label) override;
         void edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept override;
+        void src_edgemap(int32_t vertex_offset, const std::function<void(int64_t src, int64_t dst)> &) override;
+        std::unique_ptr<std::vector<std::vector<int64_t>>> make_inverse_graph() noexcept override;
         void ranged_edgemap(const std::unique_ptr<analytic::IRelax> & relax, int64_t from, int64_t to) override;
 
         [[nodiscard]] inline int64_t get_num_edges() override;
         [[nodiscard]] inline int64_t get_num_vertices() override;
-        [[nodiscard]] inline int16_t get_num_vertex_labels() override;
-        [[nodiscard]] inline int16_t get_num_edge_labels() override;
+        [[nodiscard]] inline uint16_t get_num_vertex_labels() override;
+        [[nodiscard]] inline uint16_t get_num_edge_labels() override;
         [[nodiscard]] std::string_view get_name() noexcept override;
         [[nodiscard]] std::optional<SVertex_t> get_vertex(SNodeID id) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_label(std::string_view label) override;

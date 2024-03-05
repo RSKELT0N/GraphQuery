@@ -10,7 +10,6 @@
 #pragma once
 
 #include "lib.h"
-#include "atomic_intrinsics.h"
 
 #include <complex>
 
@@ -31,8 +30,10 @@ namespace graphquery::database::utils
         CBitset & operator=(const CBitset &)     = delete;
         CBitset & operator=(CBitset &&) noexcept = delete;
 
+        void reset() noexcept;
         void set(size_t pos) noexcept;
         void flip(size_t pos) const noexcept;
+        void swap(CBitset & other) noexcept;
         [[nodiscard]] bool any() const noexcept;
         [[nodiscard]] bool all() const noexcept;
         [[nodiscard]] bool get(size_t pos) const noexcept;
@@ -56,7 +57,14 @@ namespace graphquery::database::utils
         m_word_c = calc_word_amount(m_bit_c);
         m_start  = new WordType[m_word_c];
         m_end    = m_start + m_word_c;
-        memset(m_start, 0, m_word_c);
+        std::fill(m_start, m_end, 0);
+    }
+
+    template<typename T>
+        requires std::is_integral_v<T>
+    void CBitset<T>::reset() noexcept
+    {
+        std::fill(m_start, m_end, 0);
     }
 
     template<typename T>
@@ -68,7 +76,7 @@ namespace graphquery::database::utils
         {
             oldval = m_start[pos / BITS_PER_WORD];
             newval = oldval | (1L << (pos & BITS_PER_WORD - 1));
-        } while (!atomic_cas(m_start[pos / BITS_PER_WORD], oldval, newval));
+        } while (!utils::atomic_fetch_cas(&m_start[pos / BITS_PER_WORD], oldval, newval));
     }
 
     template<typename T>
@@ -88,6 +96,14 @@ namespace graphquery::database::utils
             oldval = m_start[pos / BITS_PER_WORD];
             newval = oldval ^ (1L << (pos & BITS_PER_WORD - 1));
         } while (!atomic_cas(m_start[pos / BITS_PER_WORD], oldval, newval));
+    }
+
+    template<typename T>
+        requires std::is_integral_v<T>
+    void CBitset<T>::swap(CBitset<T> & other) noexcept
+    {
+        std::swap(m_start, other.m_start);
+        std::swap(m_end, other.m_end);
     }
 
     template<typename T>

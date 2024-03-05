@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <stdatomic.h>
+#include <cstdint>
 
 namespace graphquery::database::utils
 {
@@ -85,7 +85,7 @@ namespace graphquery::database::utils
     inline bool atomic_fetch_cas(volatile T * variable, T & expected, T & new_value)
     {
 #if defined(__GNUC__) || defined(__clang__)
-        return __atomic_compare_exchange(variable, expected, new_value, false, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED);
+        return __atomic_compare_exchange(variable, reinterpret_cast<T *>(&expected), reinterpret_cast<T *>(&new_value), false, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED);
 #elif defined(_MSC_VER)
         return _InterlockedCompareExchange(reinterpret_cast<volatile LONG *>(variable), new_value, expected);
 #endif
@@ -137,7 +137,7 @@ namespace graphquery::database::utils
     }
 
     // ~ Support for float/double atomic intrinsics
-	
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
@@ -178,7 +178,7 @@ namespace graphquery::database::utils
     {
 #if defined(__GNUC__) || defined(__clang__)
         uint64_t int_value = __atomic_load_n(reinterpret_cast<volatile uint64_t *>(variable), __ATOMIC_RELAXED);
-        return *reinterpret_cast<double*>(&int_value);
+        return *reinterpret_cast<double *>(&int_value);
 #elif defined(_MSC_VER)
         _ReadBarrier();
         return *variable;
@@ -190,7 +190,7 @@ namespace graphquery::database::utils
     {
 #if defined(__GNUC__) || defined(__clang__)
         uint32_t int_value = __atomic_load_n(reinterpret_cast<volatile uint32_t *>(variable), __ATOMIC_RELAXED);
-        return *reinterpret_cast<float*>(&int_value);
+        return *reinterpret_cast<float *>(&int_value);
 #elif defined(_MSC_VER)
         _ReadBarrier();
         return *variable;

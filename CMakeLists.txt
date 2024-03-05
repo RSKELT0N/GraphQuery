@@ -7,6 +7,9 @@ project(GraphQuery
         DESCRIPTION "A graph database to represent vertices and edges."
         LANGUAGES C CXX)
 
+cmake_policy(SET CMP0079 NEW)
+find_package(OpenMP)
+
 # Only perform if this is the root project
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
@@ -18,11 +21,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   set(EXECUTABLE_NAME graph-query)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-  if (CMAKE_BUILD_TYPE EQUAL "DEBUG")
-    add_compile_options(-g)
-  endif (CMAKE_BUILD_TYPE EQUAL "DEBUG")
-
+  
 # add submodules
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glew)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/googletest)
@@ -38,6 +37,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core/models)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core/algorithms)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core)
+
+  if(OpenMP_CXX_FOUND)
+    target_link_libraries(${EXECUTABLE_NAME} PUBLIC OpenMP::OpenMP_CXX)
+    target_compile_options(${EXECUTABLE_NAME} PUBLIC ${OpenMP_CXX_FLAGS})
+  endif()
 
   if(CMAKE_TESTING_ENABLED)
     enable_testing()

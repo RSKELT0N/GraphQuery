@@ -93,7 +93,7 @@ namespace graphquery::database::utils
         void flush()
         {
             T * shared_queue  = sq.shared;
-            size_t copy_start = utils::atomic_fetch_add(sq.shared_in, in);
+            size_t copy_start = utils::atomic_fetch_add(&sq.shared_in, in);
             std::copy(local_queue, local_queue + in, shared_queue + copy_start);
             in = 0;
         }

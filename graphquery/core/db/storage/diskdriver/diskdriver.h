@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <condition_variable>
 #include <unistd.h>
+#include <bit>
 
 #define KB(x) ((size_t) (x * (1 << 10)))
 #define MB(x) ((size_t) (x * (1 << 20)))

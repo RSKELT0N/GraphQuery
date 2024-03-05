@@ -29,12 +29,16 @@ namespace graphquery::database::storage
         friend class CDBStorage;
         virtual void close() noexcept                                                                          = 0;
         virtual void save_graph() noexcept                                                                     = 0;
+        virtual int32_t out_degree(int64_t id) noexcept                                                        = 0;
         virtual void calc_outdegree(uint32_t[]) noexcept                                                       = 0;
-        virtual void ranged_edgemap(const std::unique_ptr<analytic::IRelax> & relax, int64_t from, int64_t to) = 0;
-        virtual void edgemap(const std::unique_ptr<analytic::IRelax> & relax)                                  = 0;
         [[nodiscard]] virtual std::string_view get_name() noexcept                                             = 0;
+        virtual int32_t out_degree_by_offset(uint32_t id) noexcept                                             = 0;
+        virtual void edgemap(const std::unique_ptr<analytic::IRelax> & relax)                                  = 0;
+        virtual void src_edgemap(int32_t vertex_offset, const std::function<void(int64_t src, int64_t dst)> &) = 0;
         virtual void load_graph(std::filesystem::path path, std::string_view graph) noexcept                   = 0;
         virtual void create_graph(std::filesystem::path path, std::string_view graph) noexcept                 = 0;
+        virtual std::unique_ptr<std::vector<std::vector<int64_t>>> make_inverse_graph() noexcept               = 0;
+        virtual void ranged_edgemap(const std::unique_ptr<analytic::IRelax> & relax, int64_t from, int64_t to) = 0;
 
       private:
         virtual void init(const std::filesystem::path path, std::string_view graph) final
