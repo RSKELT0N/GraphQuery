@@ -2,7 +2,9 @@
 
 #include <algorithm>
 
-graphquery::database::analytic::CGraphAlgorithmSSSP::CGraphAlgorithmSSSP(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys) {}
+graphquery::database::analytic::CGraphAlgorithmSSSP::CGraphAlgorithmSSSP(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys)
+{
+}
 
 double
 graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel * graph_model) const noexcept
@@ -17,6 +19,7 @@ graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel 
     bool change                   = true;
     int iter                      = 0;
 
+#pragma omp parallel for
     for (int i = 0; i < n; ++i)
     {
         x[i] = y[i] = i;
@@ -93,7 +96,7 @@ graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel 
 
 extern "C"
 {
-    LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm,  const std::shared_ptr<graphquery::logger::CLogSystem> & logsys)
+    LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm, const std::shared_ptr<graphquery::logger::CLogSystem> & logsys)
     {
         *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmSSSP("ConnectedComponents", logsys);
     }

@@ -22,6 +22,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGMo
     double delta                  = 2;
     int iter                      = 0;
 
+#pragma omp parallel for
     for (int i = 0; i < n; ++i)
     {
         x[i] = v[i] = 1.0 / static_cast<double>(n);
@@ -40,6 +41,8 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGMo
         graph_model->edgemap(PRrelax);
         // 2. Constants (1-d)v[i] added in separately.
         double w = 1.0 - sum(y, n); // ensure y[] will sum to 1
+
+#pragma omp parallel for
         for (int i = 0; i < n; ++i)
             y[i] += w * v[i];
 
@@ -49,6 +52,8 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGMo
 
         // Rescale to unit length and swap x[] and y[]
         w = 1.0 / sum(y, n);
+
+#pragma omp parallel for
         for (int i = 0; i < n; ++i)
         {
             x[i] = y[i] * w;

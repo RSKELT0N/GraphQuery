@@ -27,7 +27,16 @@ namespace graphquery::database::analytic
 
             ~CRelaxCC() override = default;
 
-            void relax(const int64_t src, const int64_t dst) noexcept override { y[dst] = std::min(y[dst], y[src]); }
+            void relax(const int64_t src, const int64_t dst) noexcept override
+            {
+                int y_dst, y_src, y_dst_n;
+                do
+                {
+                    y_dst = y[dst];
+                    y_src = y[src];
+                    y_dst_n = std::min(y_dst, y_src);
+                } while(!utils::atomic_fetch_cas(&y[dst], y_dst, y_dst_n));
+            }
 
             int * x;
             int * y;

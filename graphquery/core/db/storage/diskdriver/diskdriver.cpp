@@ -32,7 +32,7 @@ CDiskDriver()
 {
     if (this->m_initialised)
     {
-        sync();
+        (void) sync();
         close();
         this->m_initialised = false;
     }

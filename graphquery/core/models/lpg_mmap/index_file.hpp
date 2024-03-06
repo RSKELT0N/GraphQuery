@@ -60,7 +60,7 @@ namespace graphquery::database::storage
         inline SRef_t<SIndexMetadata_t> read_metadata() noexcept;
         inline SRef_t<SIndexEntry_t> read_entry(int64_t offset) noexcept;
         void open(std::filesystem::path path, std::string_view file_name, bool create) noexcept;
-        void store_entry(ILPGModel::SNodeID id, int64_t offset) noexcept;
+        bool store_entry(ILPGModel::SNodeID id, int64_t offset) noexcept;
 
       private:
         CDiskDriver m_file;
@@ -94,17 +94,21 @@ graphquery::database::storage::CIndexFile::read_entry(const int64_t offset) noex
     return m_file.ref<SIndexEntry_t>(effective_addr);
 }
 
-inline void
+inline bool
 graphquery::database::storage::CIndexFile::store_entry(const ILPGModel::SNodeID id, const int64_t offset) noexcept
 {
+    uint8_t expected = 0;
+    uint8_t new_value = 1;
     auto index_ptr     = read_entry(id);
     const auto index_c = utils::atomic_load(&read_metadata()->index_c);
 
-    utils::atomic_store(&index_ptr->offset, offset);
-    utils::atomic_store(&index_ptr->set, 1);
+    if(!utils::atomic_fetch_cas(&index_ptr->set, expected, new_value))
+        return false;
 
+    utils::atomic_store(&index_ptr->offset, offset);
     if (id >= index_c)
         utils::atomic_fetch_inc(&read_metadata()->index_c);
+    return true;
 }
 
 inline graphquery::database::storage::SRef_t<graphquery::database::storage::CIndexFile::SIndexMetadata_t>

@@ -11,7 +11,7 @@ main([[maybe_unused]] const int argc, [[maybe_unused]] char * argv[])
 
     graphquery::database::_log_system->info("GraphQuery has been initialised");
 
-    graphquery::database::_db_storage->init(std::filesystem::current_path(), DB_NAME);
+    graphquery::database::_db_storage->init("/home/ryans/Documents/Projects/GraphQuery", DB_NAME);
 
     if (graphquery::database::_db_storage->check_if_graph_exists(GRAPH_NAME))
         graphquery::database::_db_storage->open_graph(GRAPH_NAME);

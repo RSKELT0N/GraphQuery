@@ -30,13 +30,12 @@ namespace graphquery::database::analytic
 
             void relax(const int64_t src, const int64_t dst) noexcept override
             {
-                double x_src, y_dst_old, y_dst_new;
+                double y_dst_old, y_dst_new;
                 const double w = d / outdeg[src];
                 do
                 {
-                    x_src     = utils::atomic_load(&x[src]);
-                    y_dst_old = utils::atomic_load(&y[dst]);
-                    y_dst_new = y_dst_old + w * x_src;
+                    y_dst_old = y[dst];
+                    y_dst_new = y_dst_old + w * x[src];
                 } while (!utils::atomic_fetch_cas(&y[dst], y_dst_old, y_dst_new));
             }
 

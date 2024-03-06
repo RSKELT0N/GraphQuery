@@ -98,9 +98,21 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
+    inline T atomic_fetch_pre_inc(volatile T * variable)
+    {
+        return atomic_fetch_add(variable, static_cast<T>(1)) + 1;
+    }
+
+    template<typename T>
     inline T atomic_fetch_dec(volatile T * variable)
     {
         return atomic_fetch_sub(variable, static_cast<T>(1));
+    }
+
+    template<typename T>
+    inline T atomic_fetch_pre_dec(volatile T * variable)
+    {
+        return atomic_fetch_sub(variable, static_cast<T>(1)) - 1;
     }
 
     template<typename T>

@@ -111,8 +111,8 @@ namespace graphquery::database::storage
 
         uint32_t create_entry(uint32_t next_ref = END_INDEX) noexcept;
         void append_free_data_block(uint32_t block_offset) noexcept;
-        void foreach_block(const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
-        void foreach_block(uint32_t start_block, const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
+        int64_t foreach_block(const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
+        int64_t foreach_block(uint32_t start_block, const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
         [[nodiscard]] SRef_t<SDataBlock_t<T, N>> attain_data_block(uint32_t next_ref = END_INDEX) noexcept;
         [[nodiscard]] std::optional<SRef_t<SDataBlock_t<T, N>>> attain_free_data_block() noexcept;
 
@@ -204,6 +204,7 @@ graphquery::database::storage::CDatablockFile<T, N>::append_free_data_block(uint
     auto metadata   = read_metadata();
     const auto head = utils::atomic_load(&metadata->free_list);
     utils::atomic_store(&metadata->free_list, block_offset);
+    metadata.~SRef_t();
 
     SRef_t<STypeDataBlock> data_block_ptr = read_entry(block_offset);
     data_block_ptr->idx                   = block_offset;
@@ -230,11 +231,12 @@ graphquery::database::storage::CDatablockFile<T, N>::create_entry(uint32_t next_
 
 template<typename T, uint8_t N>
     requires(N > 0)
-void
+int64_t
 graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const uint32_t start_block, const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> & apply)
 {
+    int64_t c = 0;
     if (start_block >= read_metadata()->data_block_c)
-        return;
+        return c;
 
     auto block_next = start_block;
 
@@ -245,16 +247,19 @@ graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const uint32_
         if (unlikely(!block_ptr->state.any()))
             continue;
 
-        apply(block_ptr);
         block_next = block_ptr->next;
+        apply(block_ptr);
+        c++;
     }
+    return c;
 }
 
 template<typename T, uint8_t N>
     requires(N > 0)
-void
+int64_t
 graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> & apply)
 {
+    int64_t c = 0;
     const uint32_t datablock_c = read_metadata()->data_block_c;
     auto block_ptr             = read_entry(0);
 
@@ -264,7 +269,9 @@ graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const std::fu
             continue;
 
         apply(block_ptr);
+        c++;
     }
+    return c;
 }
 
 template<typename T, uint8_t N>

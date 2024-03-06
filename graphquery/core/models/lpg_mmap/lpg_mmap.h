@@ -113,14 +113,13 @@ namespace graphquery::database::storage
         void save_graph() noexcept override;
         void rm_vertex(SNodeID src) override;
         void rm_edge(SNodeID src, SNodeID dst) override;
-        int32_t out_degree(int64_t id) noexcept override;
+        uint32_t out_degree(int64_t id) noexcept override;
         void calc_outdegree(uint32_t[]) noexcept override;
-        int32_t out_degree_by_offset(uint32_t id) noexcept override;
+        uint32_t out_degree_by_offset(uint32_t id) noexcept override;
         void rm_edge(SNodeID src, SNodeID dst, std::string_view edge_label) override;
         void edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept override;
         void src_edgemap(int32_t vertex_offset, const std::function<void(int64_t src, int64_t dst)> &) override;
         std::unique_ptr<std::vector<std::vector<int64_t>>> make_inverse_graph() noexcept override;
-        void ranged_edgemap(const std::unique_ptr<analytic::IRelax> & relax, int64_t from, int64_t to) override;
 
         [[nodiscard]] inline int64_t get_num_edges() override;
         [[nodiscard]] inline int64_t get_num_vertices() override;
@@ -173,11 +172,11 @@ namespace graphquery::database::storage
         void read_index_list() noexcept;
         void define_luts() noexcept;
         void store_graph_metadata() noexcept;
-        uint32_t store_label_entry(uint16_t label_id, uint32_t next_ref) noexcept;
-        uint32_t store_property_entry(const SProperty_t & prop, uint32_t next_ref) noexcept;
-        void store_index_entry(SNodeID id, const std::unordered_set<uint16_t> & label_ids, uint32_t vertex_offset) noexcept;
-        uint32_t store_vertex_entry(SNodeID id, const std::unordered_set<uint16_t> & label_id, const std::vector<SProperty_t> & props) noexcept;
-        uint32_t store_edge_entry(uint32_t next_ref, SNodeID src, SNodeID dst, uint16_t edge_label_id, const std::vector<SProperty_t> & props) noexcept;
+        [[nodiscard]] uint32_t store_label_entry(uint16_t label_id, uint32_t next_ref) noexcept;
+        [[nodiscard]] uint32_t store_property_entry(const SProperty_t & prop, uint32_t next_ref) noexcept;
+        [[nodiscard]]bool store_index_entry(SNodeID id, const std::unordered_set<uint16_t> & label_ids, uint32_t vertex_offset) noexcept;
+        [[nodiscard]] bool store_vertex_entry(SNodeID id, const std::unordered_set<uint16_t> & label_id, const std::vector<SProperty_t> & props) noexcept;
+        [[nodiscard]] uint32_t store_edge_entry(uint32_t next_ref, SNodeID src, SNodeID dst, uint16_t edge_label_id, const std::vector<SProperty_t> & props) noexcept;
 
         inline SRef_t<SGraphMetaData_t> read_graph_metadata() noexcept;
         inline SRef_t<SLabel_t> read_vertex_label_entry(uint32_t offset) noexcept;

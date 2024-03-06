@@ -20,10 +20,9 @@ rm -rf [build_directory]
 ```
 
 ## TODO
-* Implement BFS Direction Optimising.
-* Complete implementation for thread pooling to support generic parallelism (basic openmp for mac support).
 * Implement individual vertex locking.
 * Implement trees for appending edges.
-* Implement running track of out degrees for vertices.
+* Implement top roots for edge labels.
+* Implement lock free linked list.
 * Implement basic environment for random alterations to graph.
 * Testing.

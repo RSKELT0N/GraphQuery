@@ -10,7 +10,7 @@ graphquery::database::analytic::CGraphAlgorithmBFS::CGraphAlgorithmBFS(std::stri
 double
 graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel * graph) const noexcept
 {
-    int64_t source                  = 0;
+    int64_t source                  = 7955;
     static constexpr int32_t alpha  = 15;
     static constexpr int32_t beta   = 18;
     const auto num_vertices         = graph->get_num_vertices();
@@ -70,6 +70,10 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *
             parent[n] = -1;
 
     double is_reachable_c = 0;
+    fmt::print("ddd");
+    fmt::print("ddd");
+    fmt::print("ddd");
+    fmt::print("ddd");
 
     std::for_each(parent.begin(),
                   parent.end(),
@@ -79,7 +83,7 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *
                           is_reachable_c++;
                   });
 
-    return is_reachable_c;
+     return is_reachable_c;
 }
 
 std::vector<int64_t>
@@ -90,7 +94,8 @@ graphquery::database::analytic::CGraphAlgorithmBFS::init_parent(storage::ILPGMod
 
 #pragma omp parallel for
     for (int64_t n = 0; n < vertex_c; n++)
-        parent[n] = graph->out_degree_by_offset(n) != 0 ? -graph->out_degree_by_offset(n) : -1;
+        parent[n] = graph->out_degree_by_offset(n) != 0 ? -static_cast<int32_t>(graph->out_degree_by_offset(n)) : -1;
+
     return parent;
 }
 
