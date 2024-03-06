@@ -1,90 +1,81 @@
-#include <algorithm>
 #include "frame_output.h"
+
 #include "imgui_internal.h"
 
-graphquery::interact::CFrameLog::CFrameLog()
+graphquery::interact::CFrameLog::
+CFrameLog()
 {
-    m_flags = ImGuiWindowFlags_NoCollapse |
-              ImGuiWindowFlags_AlwaysVerticalScrollbar;
+    m_flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysVerticalScrollbar;
 }
 
-void graphquery::interact::CFrameLog::render_frame() noexcept
+void
+graphquery::interact::CFrameLog::render_frame() noexcept
 {
-    if(ImGui::Begin("Output"))
+    if (ImGui::Begin("Output"))
     {
-        render_clear_button();
+        if (ImGui::Button("Clear"))
+            m_buffer.clear();
+
         render_log_output();
-    }
-
-    ImGui::End();
-}
-
-void graphquery::interact::CFrameLog::render_clear_button() noexcept
-{
-    if(ImGui::Button("Clear"))
-    {
-        m_buffer.clear();
+        ImGui::End();
     }
 }
 
-void graphquery::interact::CFrameLog::render_log_box() noexcept
+void
+graphquery::interact::CFrameLog::render_log_box() const noexcept
 {
-    if(ImGui::BeginChild("Logs"))
+    if (ImGui::BeginChild("Logs"))
     {
         render_log_output();
 
-        if(is_scroll_at_end())
+        if (is_scroll_at_end())
             ImGui::SetScrollHereY(1.0F);
+        ImGui::EndChild();
     }
-
-    ImGui::EndChild();
 }
 
-void graphquery::interact::CFrameLog::render_log_output() const noexcept
+bool
+graphquery::interact::CFrameLog::is_scroll_at_end() noexcept
 {
-    std::size_t size = this->m_buffer.get_current_capacity();
-    std::size_t head = this->m_buffer.get_head();
+    ImGuiWindow const * window = ImGui::GetCurrentWindow();
+    return window->Scroll.y >= window->ScrollMax.y;
+}
 
-    for(std::size_t i = 0; i < size; i++)
+void
+graphquery::interact::CFrameLog::render_log_output() const noexcept
+{
+    const std::size_t size = this->m_buffer.get_current_capacity();
+    std::size_t head       = this->m_buffer.get_head();
+
+    for (std::size_t i = 0; i < size; i++)
     {
         head = (head + 1) % this->m_buffer.get_buffer_size();
-        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0,255,0,255));
-        ImGui::TextUnformatted(m_buffer[head].c_str());
+        ImGui::PushStyleColor(ImGuiCol_Text, m_buffer[head].first);
+        ImGui::TextUnformatted(m_buffer[head].second.c_str());
         ImGui::PopStyleColor();
     }
 }
 
-bool graphquery::interact::CFrameLog::is_scroll_at_end() noexcept
+void
+graphquery::interact::CFrameLog::debug(const std::string_view out) noexcept
 {
-    if (ImGuiWindow const *window = ImGui::GetCurrentWindow()) {
-        return ((window->Scroll.y) >= window->ScrollMax.y);
-    }
-    return false;
+    m_buffer.add({EImGuiColour::blue, std::string(out)});
 }
 
-ImVec4 graphquery::interact::CFrameLog::colourise() const noexcept
+void
+graphquery::interact::CFrameLog::info(const std::string_view out) noexcept
 {
-    return {0,0,0,0};
+    m_buffer.add({EImGuiColour::green, std::string(out)});
 }
 
-void graphquery::interact::CFrameLog::debug(std::string_view out) noexcept
+void
+graphquery::interact::CFrameLog::warning(const std::string_view out) noexcept
 {
-    m_buffer.add(std::string(out));
+    m_buffer.add({EImGuiColour::yellow, std::string(out)});
 }
 
-void graphquery::interact::CFrameLog::info(std::string_view out) noexcept
+void
+graphquery::interact::CFrameLog::error(const std::string_view out) noexcept
 {
-    m_buffer.add(std::string(out));
+    m_buffer.add({EImGuiColour::red, std::string(out)});
 }
-
-void graphquery::interact::CFrameLog::warning(std::string_view out) noexcept
-{
-    m_buffer.add(std::string(out));
-
-}
-
-void graphquery::interact::CFrameLog::error(std::string_view out) noexcept
-{
-    m_buffer.add(std::string(out));
-}
-

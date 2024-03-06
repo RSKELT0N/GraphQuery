@@ -1,18 +1,17 @@
 #pragma once
 
-#include "log/logsystem/logsystem.h"
 #include "fmt/color.h"
+#include "log/logsystem/logsystem.h"
 
 namespace graphquery::logger
 {
     class CLogSTDO final : public ILog
     {
-    public:
-        CLogSTDO() = default;
-        ~CLogSTDO() = default;
+      public:
+        CLogSTDO()  = default;
+        ~CLogSTDO() override = default;
 
-    protected:
-
+      protected:
         /****************************************************************
         ** \brief Virtual debug function for the logging system to call
         **        to render output towards the derived class.
@@ -45,8 +44,7 @@ namespace graphquery::logger
         ***************************************************************/
         void error(std::string_view) noexcept override;
 
-    private:
+      private:
         [[nodiscard]] std::string colourise(ELogType type, std::string_view) const noexcept;
     };
-}
-
+} // namespace graphquery::logger

@@ -1,84 +1,92 @@
 /************************************************************
-* \author Ryan Skelton
-* \date 18/09/2023
-* \file dbstorage.h
-* \brief Storage header file providing an API class to access
-*        graph underlying on-disk and in-memory datamodels.
-************************************************************/
+ * \author Ryan Skelton
+ * \date 18/09/2023
+ * \file dbstorage.h
+ * \brief Storage header file providing an API class to access
+ *        graph underlying on-disk and in-memory datamodels.
+ ************************************************************/
 
 #pragma once
 
-#include "db/storage/diskdriver/diskdriver.h"
-#include "db/storage/config.h"
-#include "memory_model.h"
-
+#include "dataset.h"
 #include "dylib.hpp"
-#include <filesystem>
-#include <vector>
+#include "graph_model.h"
+#include "db/storage/config.h"
+#include "diskdriver/memory_ref.h"
+
+#include <string_view>
 
 namespace graphquery::database::storage
 {
     class CDBStorage final
     {
-    public:
+      public:
         struct SGraph_Entry_t
         {
-            char graph_name[GRAPH_NAME_LENGTH] = {};
-            char graph_type[GRAPH_MODEL_TYPE_LENGTH] = {};
+            char graph_name[CFG_GRAPH_NAME_LENGTH]       = {};
+            char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH] = {};
 
-        } __attribute__((packed));
+            SGraph_Entry_t() = default;
+            SGraph_Entry_t(const std::string_view name, const std::string_view type)
+            {
+                strcpy(&graph_name[0], name.data());
+                strcpy(&graph_type[0], type.data());
+            }
+        };
 
         struct SDBInfo_t
         {
-            int64_t graph_table_size = {};
-            int64_t graph_entry_size = {};
+            int64_t graph_entry_size       = {};
             int64_t graph_table_start_addr = {};
-        } __attribute__((packed));
+            uint8_t graph_table_c          = {};
+        };
 
         struct SDB_Superblock_t
         {
             int64_t magic_check_sum = {};
-            int64_t version = {};
-            int64_t timestamp = {};
-            SDBInfo_t db_info = {};
-        } __attribute__((packed));
+            int64_t version         = {};
+            int64_t timestamp       = {};
+            SDBInfo_t db_info       = {};
+        };
 
         CDBStorage();
         ~CDBStorage();
         void close() noexcept;
-        void load(std::string file_path);
-        void setUp(std::string file_path);
-        void init(std::string_view file_path);
-        void create_graph(const std::string & name, const std::string & type) noexcept;
-        void open_graph(std::string name, std::string type) noexcept;
+        void load(std::string_view db_name);
+        void set_up(std::string_view db_name);
+        void open_graph(std::string_view name) noexcept;
+        void init(const std::filesystem::path & path, std::string_view db_name);
+        void create_graph(std::string_view name, std::string_view type) noexcept;
+        void load_dataset(std::filesystem::path dataset_path) const noexcept;
+        [[nodiscard]] bool check_if_graph_exists(std::string_view graph_name) const noexcept;
 
         void close_graph() noexcept;
-        [[nodiscard]] const std::vector<SGraph_Entry_t> & get_graph_table() const noexcept;
+        [[nodiscard]] std::string get_db_info() noexcept;
+        [[nodiscard]] std::shared_ptr<ILPGModel *> get_graph() const noexcept;
         [[nodiscard]] const bool & get_is_db_loaded() const noexcept;
-        [[nodiscard]] const std::string get_db_info() const noexcept;
+        [[nodiscard]] const bool & get_is_graph_loaded() const noexcept;
+        [[nodiscard]] const std::unordered_map<std::string, SGraph_Entry_t> & get_graph_table() const noexcept;
 
-    private:
-        void store_db_graph_table() noexcept;
-        void load_db_graph_table() noexcept;
-        void define_db_graph_table() noexcept;
+      private:
         void store_db_superblock() noexcept;
-        void load_db_superblock() noexcept;
-        void define_db_superblock() noexcept;
+        void store_graph_entry(const SGraph_Entry_t & entry) noexcept;
+        SRef_t<SDB_Superblock_t> read_db_superblock() noexcept;
+        SRef_t<SGraph_Entry_t> read_graph_entry(uint8_t entry_offset) noexcept;
 
-        SGraph_Entry_t define_graph(std::string name, std::string type) noexcept;
-        [[nodiscard]] SGraph_Entry_t define_graph_entry(const std::string & name, const std::string & type) noexcept;
-        [[nodiscard]] bool define_graph_model(const std::string & name, const std::string & type) noexcept;
-        void create_graph_entry(const std::string & name, const std::string & type) noexcept;
+        void define_graph_map() noexcept;
+        [[nodiscard]] bool define_graph_model(std::string_view name, std::string_view type) noexcept;
 
-        CDiskDriver m_db_disk;                                      //~ Instance of the DiskDriver for the DB master file.
-        SDB_Superblock_t m_db_superblock = {};                      //~ Instance of the current SDBMaster structure.
-        std::vector<SGraph_Entry_t> m_db_graph_table = {};          //~ Array of the existing graphs
-        std::unique_ptr<IMemoryModel> m_loaded_graph;                //~ Instance of the currently linked graph model.
-        std::unique_ptr<dylib> m_graph_model_lib;                   //~ Library of the currently loaded graph model.
+        CDiskDriver m_db_file;                                 //~ Instance of the DiskDriver for the DB master file.
+        std::unique_ptr<CDataset> m_dataset_loader;            //~ Instance of the dataset loader.
+        std::unique_ptr<dylib> m_graph_model_lib    = nullptr; //~ Library of the currently loaded graph model.
+        std::shared_ptr<ILPGModel *> m_loaded_graph = {};      //~ Instance of the currently linked graph model.
 
-        bool m_existing_db_loaded = false;                          //~ Bool to check if a current database is loaded.
-        static constexpr uint8_t GRAPH_ENTRIES_AMT = 0;             //~ Max amount of graph entries
-        static constexpr uint64_t DB_SUPERBLOCK_START_ADDR = 0x0;   //~ MasterDB struct entry;
-        static constexpr uint32_t MASTER_DB_FILE_SIZE = (sizeof(SDB_Superblock_t) + (sizeof(SGraph_Entry_t) * GRAPH_ENTRIES_AMT));  //~ Storage size MAX for database master file.
+        bool m_existing_db_loaded    = false;                              //~ Bool to check if a current database is loaded.
+        bool m_existing_graph_loaded = false;                              //~ Bool to check if a current graph is loaded.
+        std::unordered_map<std::string, SGraph_Entry_t> m_graph_entry_map; //~ mapping graph name to entry record.
+
+        static constexpr uint8_t GRAPH_ENTRIES_AMT         = 0;            //~ Max amount of graph entries
+        static constexpr uint64_t DB_SUPERBLOCK_START_ADDR = 0x0;          //~ MasterDB struct entry;
+        static constexpr const char * MASTER_DB_FILE_NAME  = "master.gdb"; //~ Storage size MAX for database master file.
     };
-}
+} // namespace graphquery::database::storage

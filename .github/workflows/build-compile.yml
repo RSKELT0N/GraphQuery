@@ -2,7 +2,7 @@ name: Build & Compile on Multiple platforms
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "master", "dev" ]
 
 jobs:
   build-compile-linux:
@@ -59,8 +59,6 @@ jobs:
 
       - name: Compile
         run: cmake --build ${{ steps.strings.outputs.build-output-dir }}
-
-
 
 #  build-compile-windows:
 #    strategy:

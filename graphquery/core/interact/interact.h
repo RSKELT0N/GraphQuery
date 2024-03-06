@@ -9,7 +9,7 @@ namespace graphquery::interact
     ***************************************************************/
     class IInteract
     {
-    public:
+      public:
         /****************************************************************
         ** \brief Creates an instance of the class (for derived classes).
         ***************************************************************/
@@ -20,12 +20,12 @@ namespace graphquery::interact
         virtual ~IInteract() = default;
 
         /****************************************************************
-        * \brief Virtual render function for the database to call
-        *        to provide an interaction for the user to the system.
-        *
+         * \brief Virtual render function for the database to call
+         *        to provide an interaction for the user to the system.
+         *
          * \return void
-        **************************************************************/
+         **************************************************************/
         virtual void render() noexcept = 0;
         virtual void clean_up() {};
     };
-}
+} // namespace graphquery::interact

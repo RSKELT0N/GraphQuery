@@ -9,9 +9,17 @@ target_include_directories(
         PUBLIC
         ${PROJECT_SOURCE_DIR}/graphquery/core)
 
+target_compile_options(
+        diskdriver
+        PUBLIC
+        -fPIC
+        -O3
+        -ffast-math
+        -ffinite-math-only)
+
 target_sources(
         diskdriver
-        PRIVATE
+        PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/diskdriver.cpp)
 
 target_link_libraries(

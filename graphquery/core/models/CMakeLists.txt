@@ -1,1 +1,1 @@
-add_subdirectory(lpg)
+add_subdirectory(lpg_mmap)

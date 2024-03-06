@@ -8,9 +8,10 @@ file(GLOB_RECURSE
         SOURCES
         main.cpp
         db/*.cpp
+        db/*.h
+        db/*.hpp
         interact/*.cpp
-        log/loggers/*.cpp
-        db/utils/ring_buffer.h)
+        log/loggers/*.cpp)
 
 # Set source files to compile for generating executable
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
@@ -19,21 +20,30 @@ target_compile_definitions(${EXECUTABLE_NAME}
         PUBLIC
         PROJECT_NAME="${PROJECT_NAME}")
 
-target_compile_options(${EXECUTABLE_NAME}
+target_compile_options(
+        ${EXECUTABLE_NAME}
         PUBLIC
         -Wall
         -Werror
         -Wpedantic
-        -g)
+        -Wshadow
+        -Wextra
+        -pthread
+        -O3
+        -ffast-math
+        -ffinite-math-only)
 
 target_link_libraries(${EXECUTABLE_NAME}
-        PRIVATE
+        PUBLIC
         diskdriver
         imgui
-        dylib)
+        dylib
+        logsystem
+        csv "--coverage")
 
 # Add program include directories
 target_include_directories(${EXECUTABLE_NAME}
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR})
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ../external/)
 
