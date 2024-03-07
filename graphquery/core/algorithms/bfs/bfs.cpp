@@ -70,10 +70,6 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *
             parent[n] = -1;
 
     double is_reachable_c = 0;
-    fmt::print("ddd");
-    fmt::print("ddd");
-    fmt::print("ddd");
-    fmt::print("ddd");
 
     std::for_each(parent.begin(),
                   parent.end(),

@@ -76,10 +76,12 @@ graphquery::database::storage::CDiskDriver::resize(const int64_t file_size) noex
 {
     m_resizing = 1;
     m_cv_lock.wait(m_unq_lock, wait_on_refs);
-
-    (void) unmap();
-    truncate(resize_to_pagesize(file_size));
-    map();
+    if (file_size > m_fd_info.st_size)
+    {
+        const auto old_size = m_fd_info.st_size;
+        truncate(resize_to_pagesize(file_size));
+        remap(old_size);
+    }
 
     m_resizing = 0;
     m_cv_lock.notify_all();
@@ -114,9 +116,24 @@ graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::map() noexcept
 {
     this->m_memory_mapped_file = static_cast<char *>(mmap(nullptr, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
+
     if (this->m_memory_mapped_file == MAP_FAILED)
     {
         m_log_system->error(fmt::format("Error mapping file to memory"));
+        return SRet_t::ERROR;
+    }
+
+    return SRet_t::VALID;
+}
+
+graphquery::database::storage::CDiskDriver::SRet_t
+graphquery::database::storage::CDiskDriver::remap([[maybe_unused]] const int64_t old_size) noexcept
+{
+    this->m_memory_mapped_file = static_cast<char *>(mremap(m_memory_mapped_file, old_size, m_fd_info.st_size, MREMAP_MAYMOVE));
+
+    if (this->m_memory_mapped_file == MAP_FAILED)
+    {
+        m_log_system->error(fmt::format("Error mapping file to memory {} ({})", strerror(errno), errno));
         return SRet_t::ERROR;
     }
 
@@ -128,7 +145,7 @@ graphquery::database::storage::CDiskDriver::unmap() const noexcept
 {
     if (munmap(this->m_memory_mapped_file, this->m_fd_info.st_size) == -1)
     {
-        m_log_system->error(fmt::format("Error unmapping file from memory {}", errno));
+        m_log_system->error(fmt::format("Error unmapping file from memory {} ({})", strerror(errno), errno));
         return SRet_t::ERROR;
     }
 

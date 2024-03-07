@@ -28,7 +28,7 @@ namespace graphquery::database::storage
 
         friend class CDBStorage;
         virtual void close() noexcept                                                                          = 0;
-        virtual void save_graph() noexcept                                                                     = 0;
+        virtual void flush_graph() noexcept                                                                     = 0;
         virtual uint32_t out_degree(int64_t id) noexcept                                                        = 0;
         virtual void calc_outdegree(uint32_t[]) noexcept                                                       = 0;
         [[nodiscard]] virtual std::string_view get_name() noexcept                                             = 0;

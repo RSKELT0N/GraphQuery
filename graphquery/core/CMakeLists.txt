@@ -32,7 +32,8 @@ target_compile_options(
         -O3
         -ffast-math
         -ffinite-math-only
-        -lpthread)
+        -pthread
+        -g)
 
 target_link_libraries(${EXECUTABLE_NAME}
         PUBLIC

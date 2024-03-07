@@ -5,13 +5,13 @@
 
 #include <algorithm>
 
-graphquery::interact::CFrameDBAnalytic::
-CFrameDBAnalytic(const bool & is_db_loaded,
-                 const bool & is_graph_loaded,
-                 std::shared_ptr<database::storage::ILPGModel *> graph,
-                 std::shared_ptr<std::vector<database::utils::SResult<double>>> results,
-                 const std::unordered_map<std::string, std::unique_ptr<database::analytic::IGraphAlgorithm *>> & algorithms):
-    m_algorithm_choice(0), m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph(std::move(graph)), m_results(std::move(results)), m_algorithms(algorithms)
+graphquery::interact::CFrameDBAnalytic::CFrameDBAnalytic(const bool & is_db_loaded,
+                                                         const bool & is_graph_loaded,
+                                                         std::shared_ptr<database::storage::ILPGModel *> graph,
+                                                         std::shared_ptr<std::vector<database::utils::SResult<double>>> results,
+                                                         const std::unordered_map<std::string, std::shared_ptr<database::analytic::IGraphAlgorithm *>> & algorithms):
+    m_algorithm_choice(0),
+    m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph(std::move(graph)), m_results(std::move(results)), m_algorithms(algorithms)
 {
 }
 

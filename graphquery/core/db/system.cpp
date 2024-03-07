@@ -30,7 +30,7 @@ namespace
         while (true)
         {
             if (graphquery::database::_db_storage->get_is_graph_loaded())
-                (*graphquery::database::_db_graph)->save_graph();
+                (*graphquery::database::_db_graph)->flush_graph();
 
             std::this_thread::sleep_for(graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL);
         }

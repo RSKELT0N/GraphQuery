@@ -169,10 +169,10 @@ graphquery::database::storage::CDBStorage::define_graph_model(const std::string_
 void
 graphquery::database::storage::CDBStorage::close_graph() noexcept
 {
+    _log_system->info(fmt::format("Graph closing and changes will been synced"));
     m_existing_graph_loaded = false;
     delete *m_loaded_graph;
     m_graph_model_lib.reset();
-    _log_system->info(fmt::format("Graph has been unloaded from memory and changes have been synced"));
 }
 
 void

@@ -110,7 +110,7 @@ namespace graphquery::database::storage
         ~CMemoryModelMMAPLPG() override;
 
         void close() noexcept override;
-        void save_graph() noexcept override;
+        void flush_graph() noexcept override;
         void rm_vertex(SNodeID src) override;
         void rm_edge(SNodeID src, SNodeID dst) override;
         uint32_t out_degree(int64_t id) noexcept override;
@@ -167,6 +167,7 @@ namespace graphquery::database::storage
         void inline setup_files(const std::filesystem::path & path, bool initialise) noexcept;
         void inline transaction_preamble() noexcept;
         void inline transaction_epilogue() noexcept;
+        void persist_graph_changes() noexcept;
 
         std::optional<SRef_t<SVertexDataBlock>> get_vertex_by_offset(uint32_t offset) noexcept;
         void read_index_list() noexcept;
@@ -174,7 +175,7 @@ namespace graphquery::database::storage
         void store_graph_metadata() noexcept;
         [[nodiscard]] uint32_t store_label_entry(uint16_t label_id, uint32_t next_ref) noexcept;
         [[nodiscard]] uint32_t store_property_entry(const SProperty_t & prop, uint32_t next_ref) noexcept;
-        [[nodiscard]]bool store_index_entry(SNodeID id, const std::unordered_set<uint16_t> & label_ids, uint32_t vertex_offset) noexcept;
+        [[nodiscard]] bool store_index_entry(SNodeID id, const std::unordered_set<uint16_t> & label_ids, uint32_t vertex_offset) noexcept;
         [[nodiscard]] bool store_vertex_entry(SNodeID id, const std::unordered_set<uint16_t> & label_id, const std::vector<SProperty_t> & props) noexcept;
         [[nodiscard]] uint32_t store_edge_entry(uint32_t next_ref, SNodeID src, SNodeID dst, uint16_t edge_label_id, const std::vector<SProperty_t> & props) noexcept;
 
@@ -206,6 +207,7 @@ namespace graphquery::database::storage
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_id(int64_t src, const std::function<bool(const SEdge_t &)> & pred);
 
         bool m_sync_needed;
+        bool m_persist_needed;
         std::string m_graph_name;
         std::string m_graph_path;
         std::vector<std::vector<SNodeID>> m_label_vertex;

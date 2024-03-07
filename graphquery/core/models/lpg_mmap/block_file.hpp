@@ -63,13 +63,12 @@ namespace graphquery::database::storage
     template<typename T>
     struct SDataBlock_t<T, 1>
     {
-        uint32_t idx         = END_INDEX;
-        std::bitset<1> state = {0};
-        uint32_t next        = END_INDEX;
-        uint32_t version     = END_INDEX;
-        T payload            = {};
+        uint32_t idx     = END_INDEX;
+        uint32_t next    = END_INDEX;
+        uint32_t version = END_INDEX;
+        T payload        = {};
+        uint8_t state    = {0};
     };
-
     template<typename T, uint8_t N = 1>
         requires(N > 0)
     class CDatablockFile
@@ -162,8 +161,9 @@ graphquery::database::storage::CDatablockFile<T, N>::attain_data_block(const uin
     {
         auto data_block_ptr = read_entry(next_ref);
 
-        if (!data_block_ptr->state.all())
-            return data_block_ptr;
+        if constexpr (N > 1)
+            if (!data_block_ptr->state.all())
+                return data_block_ptr;
     }
 
     auto head_free_block_opt = attain_free_data_block();
@@ -259,7 +259,7 @@ template<typename T, uint8_t N>
 int64_t
 graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> & apply)
 {
-    int64_t c = 0;
+    int64_t c                  = 0;
     const uint32_t datablock_c = read_metadata()->data_block_c;
     auto block_ptr             = read_entry(0);
 

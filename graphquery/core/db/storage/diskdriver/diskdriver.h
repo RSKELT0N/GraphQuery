@@ -87,6 +87,7 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t open_fd() noexcept;
         [[maybe_unused]] SRet_t close_fd() noexcept;
         [[maybe_unused]] SRet_t map() noexcept;
+        [[maybe_unused]] SRet_t remap(int64_t old_size) noexcept;
         [[maybe_unused]] SRet_t truncate(int64_t) noexcept;
 
         inline static int64_t resize_to_pagesize(int64_t size) noexcept;
