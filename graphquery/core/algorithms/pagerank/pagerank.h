@@ -51,7 +51,7 @@ namespace graphquery::database::analytic
         [[nodiscard]] double compute(storage::ILPGModel *) const noexcept override;
 
       private:
-        static double sum(const double vals[], uint64_t size) noexcept;
-        static double norm_diff(const double _val[], const double __val[], uint64_t size) noexcept;
+        static double sum(const double vals[], int64_t sparse[], uint64_t size) noexcept;
+        static double norm_diff(const double _val[], const double __val[], int64_t sparse[], uint64_t size) noexcept;
     };
 } // namespace graphquery::database::analytic

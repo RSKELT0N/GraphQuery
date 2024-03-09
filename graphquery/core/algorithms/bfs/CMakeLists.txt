@@ -13,7 +13,7 @@ target_compile_options(
         -O3
         -ffast-math
         -ffinite-math-only
-        -lpthread)
+        -pthread)
 
 target_include_directories(
         bfs

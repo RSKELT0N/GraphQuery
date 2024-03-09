@@ -211,6 +211,7 @@ graphquery::database::storage::CDatablockFile<T, N>::append_free_data_block(uint
     data_block_ptr->state                 = 0;
     data_block_ptr->next                  = head;
     data_block_ptr->version               = END_INDEX;
+    data_block_ptr->payload               = {};
 }
 
 template<typename T, uint8_t N>

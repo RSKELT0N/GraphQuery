@@ -115,6 +115,7 @@ namespace graphquery::database::storage
         void rm_edge(SNodeID src, SNodeID dst) override;
         uint32_t out_degree(int64_t id) noexcept override;
         void calc_outdegree(uint32_t[]) noexcept override;
+        void calc_vertex_sparse_map(int64_t[]) noexcept override;
         uint32_t out_degree_by_offset(uint32_t id) noexcept override;
         void rm_edge(SNodeID src, SNodeID dst, std::string_view edge_label) override;
         void edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept override;
@@ -123,6 +124,7 @@ namespace graphquery::database::storage
 
         [[nodiscard]] inline int64_t get_num_edges() override;
         [[nodiscard]] inline int64_t get_num_vertices() override;
+        [[nodiscard]] int64_t get_total_num_vertices() noexcept override;
         [[nodiscard]] inline uint16_t get_num_vertex_labels() override;
         [[nodiscard]] inline uint16_t get_num_edge_labels() override;
         [[nodiscard]] std::string_view get_name() noexcept override;

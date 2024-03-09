@@ -129,7 +129,11 @@ graphquery::database::storage::CDiskDriver::map() noexcept
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::remap([[maybe_unused]] const int64_t old_size) noexcept
 {
+#if defined(__APPLE__)
+    this->m_memory_mapped_file = static_cast<char *>(mmap(m_memory_mapped_file, m_fd_info.st_size, m_map_mode_prot, m_map_mode_flags, m_file_descriptor, 0));
+#else
     this->m_memory_mapped_file = static_cast<char *>(mremap(m_memory_mapped_file, old_size, m_fd_info.st_size, MREMAP_MAYMOVE));
+#endif
 
     if (this->m_memory_mapped_file == MAP_FAILED)
     {

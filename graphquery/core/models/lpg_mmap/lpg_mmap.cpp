@@ -414,6 +414,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(SNodeID src, 
     // ~ Update vertex tail and connect edges
     utils::atomic_store(&src_vertex_exists.value()->payload.edge_idx, edge_offset);
     utils::atomic_fetch_inc(&src_vertex_exists.value()->payload.metadata.neighbour_c);
+    utils::atomic_fetch_inc(&dst_vertex_exists.value()->payload.metadata.neighbour_c);
     utils::atomic_fetch_inc(&read_graph_metadata()->edges_c);
 
     if (undirected)
@@ -423,6 +424,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(SNodeID src, 
 
         // ~ Update vertex tail and connect edges
         utils::atomic_store(&dst_vertex_exists.value()->payload.edge_idx, edge_offset);
+        utils::atomic_fetch_inc(&src_vertex_exists.value()->payload.metadata.neighbour_c);
         utils::atomic_fetch_inc(&dst_vertex_exists.value()->payload.metadata.neighbour_c);
         utils::atomic_fetch_inc(&read_graph_metadata()->edges_c);
     }
@@ -954,6 +956,13 @@ graphquery::database::storage::CMemoryModelMMAPLPG::persist_graph_changes() noex
                         edge_ptr->state[j].flip();
                         edge_ptr->payload_amt--;
                         utils::atomic_fetch_dec(&read_graph_metadata()->edges_c);
+                        utils::atomic_fetch_dec(&dst_vertex_ptr->payload.metadata.neighbour_c);
+
+                        if(dst_vertex_ptr->payload.metadata.neighbour_c == 0)
+                        {
+                            m_vertices_file.append_free_data_block(dst_vertex_ptr->idx);
+                            utils::atomic_store(&m_index_file.read_entry(dst_vertex_ptr->payload.metadata.id)->set, static_cast<uint8_t>(0));
+                        }
                     }
                 }
             }
@@ -1347,6 +1356,21 @@ graphquery::database::storage::CMemoryModelMMAPLPG::calc_outdegree(uint32_t outd
     }
 }
 
+void
+graphquery::database::storage::CMemoryModelMMAPLPG::calc_vertex_sparse_map(int64_t arr[]) noexcept
+{
+    SRef_t<SVertexDataBlock> gbl_vertex_ptr = m_vertices_file.read_entry(0);
+    int64_t block_c = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
+    int64_t vertex_i = 0;
+
+    for(int64_t i = 0; i < block_c; i++)
+    {
+        auto local_ptr = gbl_vertex_ptr + i;
+        if(local_ptr->state == 1)
+            arr[vertex_i++] = i;
+    }
+}
+
 std::optional<graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SVertexDataBlock>>
 graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_offset(const uint32_t offset) noexcept
 {
@@ -1462,12 +1486,12 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex_entry(SNodeID src)
     int64_t count            = m_edges_file.foreach_block(head_edge_idx, [this](SRef_t<SEdgeDataBlock> & edge_block_ptr) -> void { m_edges_file.append_free_data_block(edge_block_ptr->idx); });
 
     //~ Mark deletion for vertex
-    const auto vertex_idx = utils::atomic_load(&vertex_ptr->idx);
-    m_vertices_file.append_free_data_block(vertex_idx);
+    utils::atomic_store(&vertex_ptr->state, 0);
+    utils::atomic_fetch_sub(&vertex_ptr->payload.metadata.neighbour_c, static_cast<uint32_t>(count));
     utils::atomic_fetch_dec(&read_graph_metadata()->vertices_c);
     utils::atomic_fetch_sub(&read_graph_metadata()->edges_c, count);
+    utils::atomic_store(&m_index_file.read_entry(vertex_ptr->payload.metadata.id)->set, static_cast<uint8_t>(0));
 
-    utils::atomic_store(&m_index_file.read_entry(src)->set, static_cast<uint8_t>(0));
     return EActionState_t::valid;
 }
 
@@ -1540,6 +1564,12 @@ int64_t
 graphquery::database::storage::CMemoryModelMMAPLPG::get_num_vertices()
 {
     return read_graph_metadata()->vertices_c;
+}
+
+int64_t
+graphquery::database::storage::CMemoryModelMMAPLPG::get_total_num_vertices() noexcept
+{
+    return m_vertices_file.read_metadata()->data_block_c;
 }
 
 uint16_t

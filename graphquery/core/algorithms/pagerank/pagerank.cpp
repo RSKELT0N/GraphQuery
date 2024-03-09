@@ -11,10 +11,14 @@ double
 graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGModel * graph_model) const noexcept
 {
     const uint64_t n = graph_model->get_num_vertices();
+    const int64_t n_total = graph_model->get_total_num_vertices();
 
-    auto x = new double[n];
-    auto v = new double[n];
-    auto y = new double[n];
+    auto x = new double[n_total];
+    auto v = new double[n_total];
+    auto y = new double[n_total];
+    auto sparse = new int64_t[n];
+
+    graph_model->calc_vertex_sparse_map(sparse);
 
     static constexpr double d     = 0.85;
     static constexpr double tol   = 1e-7;
@@ -25,11 +29,11 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGMo
 #pragma omp parallel for
     for (int i = 0; i < n; ++i)
     {
-        x[i] = v[i] = 1.0 / static_cast<double>(n);
-        y[i]        = 0;
+        x[sparse[i]] = v[sparse[i]] = 1.0 / static_cast<double>(n);
+        y[sparse[i]]        = 0;
     }
 
-    auto outdeg = new uint32_t[n];
+    auto outdeg = new uint32_t[n_total];
     graph_model->calc_outdegree(outdeg);
 
     std::unique_ptr<IRelax> PRrelax = std::make_unique<CRelaxPR>(d, outdeg, x, y);
@@ -40,27 +44,27 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGMo
         // 1. Transfering weight over out-going links (summation part)
         graph_model->edgemap(PRrelax);
         // 2. Constants (1-d)v[i] added in separately.
-        double w = 1.0 - sum(y, n); // ensure y[] will sum to 1
+        double w = 1.0 - sum(y, sparse, n); // ensure y[] will sum to 1
 
 #pragma omp parallel for
         for (int i = 0; i < n; ++i)
-            y[i] += w * v[i];
+            y[sparse[i]] += w * v[sparse[i]];
 
         // Calculate residual error
-        delta = norm_diff(x, y, n);
+        delta = norm_diff(x, y, sparse, n);
         iter++;
 
         // Rescale to unit length and swap x[] and y[]
-        w = 1.0 / sum(y, n);
+        w = 1.0 / sum(y, sparse, n);
 
 #pragma omp parallel for
         for (int i = 0; i < n; ++i)
         {
-            x[i] = y[i] * w;
-            y[i] = 0.;
+            x[sparse[i]] = y[sparse[i]] * w;
+            y[sparse[i]] = 0.;
         }
 
-        m_log_system->info(fmt::format("iteration {}: residual error= {} xnorm= {}", iter, delta, sum(x, n)));
+        m_log_system->info(fmt::format("iteration {}: residual error= {} xnorm= {}", iter, delta, sum(x, sparse, n)));
     }
 
     if (delta > tol)
@@ -75,14 +79,14 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGMo
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmPageRank::sum(const double * vals, const uint64_t size) noexcept
+graphquery::database::analytic::CGraphAlgorithmPageRank::sum(const double * vals, int64_t sparse[], const uint64_t size) noexcept
 {
     double d   = 0.0F;
     double err = 0.0F;
     for (int i = 0; i < size; ++i)
     {
         const double tmp = d;
-        double y         = vals[i] + err;
+        double y         = vals[sparse[i]] + err;
         d                = tmp + y;
         err              = tmp - d;
         err += y;
@@ -93,6 +97,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::sum(const double * vals
 double
 graphquery::database::analytic::CGraphAlgorithmPageRank::norm_diff(const double val[],
                                                                    const double _val[],
+                                                                   int64_t sparse[],
                                                                    const uint64_t size) noexcept
 {
     double d   = 0.0F;
@@ -100,7 +105,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::norm_diff(const double 
     for (int i = 0; i < size; ++i)
     {
         const double tmp = d;
-        const double y   = fabs(_val[i] - val[i]) + err;
+        const double y   = fabs(_val[sparse[i]] - val[sparse[i]]) + err;
         d                = tmp + y;
         err              = tmp - d;
         err += y;
