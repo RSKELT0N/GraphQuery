@@ -31,6 +31,11 @@ namespace graphquery::database::storage
 
         typedef int64_t SNodeID;
 
+        struct SLabel
+        {
+            char label[CFG_LPG_LABEL_LENGTH] = {""};
+        } __attribute__((packed));
+
         /****************************************************************
          * \struct SLabel_t
          * \brief Structure of a label type within the graph

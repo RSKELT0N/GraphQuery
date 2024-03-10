@@ -340,7 +340,7 @@ graphquery::database::storage::CDiskDriver::read(void * ptr, const int64_t size,
 {
     if (this->m_initialised)
     {
-        if (m_fd_info.st_size <= static_cast<int64_t>(size * amt + m_seek_offset))
+        if (m_fd_info.st_size <= size * amt + m_seek_offset)
             resize((size * amt + m_seek_offset) * 2);
 
         memcpy(ptr, &this->m_memory_mapped_file[this->m_seek_offset], size * amt);
@@ -358,7 +358,7 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
 {
     if (this->m_initialised)
     {
-        if (m_fd_info.st_size <= static_cast<int64_t>(size * amt + m_seek_offset))
+        if (m_fd_info.st_size <= size * amt + m_seek_offset)
             resize((size * amt + m_seek_offset) * 2);
 
         memcpy(&this->m_memory_mapped_file[this->m_seek_offset], ptr, size * amt);

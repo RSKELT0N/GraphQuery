@@ -24,11 +24,6 @@ namespace graphquery::database::storage
             edge
         };
 
-        struct SLabel
-        {
-            char label[CFG_LPG_LABEL_LENGTH] = {""};
-        };
-
         struct SHeaderBlock
         {
             uint64_t transaction_c               = {0};
@@ -86,6 +81,7 @@ namespace graphquery::database::storage
         void commit_edge(ILPGModel::SNodeID src, ILPGModel::SNodeID dst, std::string_view edge_label, const std::vector<ILPGModel::SProperty_t> & props, bool undirected) noexcept;
 
         [[nodiscard]] std::vector<std::string> fetch_rollback_table() noexcept;
+
       private:
         using SVertexTransaction = STransaction<SVertexCommit>;
         using SEdgeTransaction   = STransaction<SEdgeCommit>;
@@ -99,8 +95,9 @@ namespace graphquery::database::storage
         inline SRef_t<SHeaderBlock> read_transaction_header();
         inline SRef_t<SRollbackEntry> read_rollback_entry(uint8_t) noexcept;
 
+        static inline std::vector<std::string_view> slabel_to_strview_vector(const std::vector<ILPGModel::SLabel> & vec) noexcept;
         void process_edge_transaction(SRef_t<SEdgeTransaction> &, const std::vector<ILPGModel::SProperty_t> & props) const noexcept;
-        void process_vertex_transaction(SRef_t<SVertexTransaction> &, const std::vector<std::string_view> & src_labels, const std::vector<ILPGModel::SProperty_t> & props) const noexcept;
+        void process_vertex_transaction(SRef_t<SVertexTransaction> &, const std::vector<ILPGModel::SLabel> & src_labels, const std::vector<ILPGModel::SProperty_t> & props) const noexcept;
 
         ILPGModel * m_lpg;
         CDiskDriver m_transaction_file;
