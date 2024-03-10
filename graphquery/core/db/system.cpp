@@ -30,8 +30,8 @@ namespace
     {
         while (true)
         {
-            // if (graphquery::database::_db_storage->get_is_graph_loaded())
-                // (*graphquery::database::_db_graph)->sync_graph();
+            if (graphquery::database::_db_storage->get_is_graph_loaded())
+                (*graphquery::database::_db_graph)->sync_graph();
 
             std::this_thread::sleep_for(graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL);
         }

@@ -1566,7 +1566,6 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex_entry(const SNodeI
     utils::atomic_fetch_dec(&read_graph_metadata()->vertices_c);
     utils::atomic_fetch_sub(&read_graph_metadata()->edges_c, count);
     utils::atomic_fetch_sub(&vertex_ptr->payload.metadata.outdegree, static_cast<uint32_t>(count));
-    utils::atomic_store(&m_index_file.read_entry(vertex_ptr->payload.metadata.id)->set, static_cast<uint8_t>(0));
 
     if (vertex_ptr->payload.metadata.indegree == 0)
         m_vertices_file.append_free_data_block(vertex_ptr->idx);

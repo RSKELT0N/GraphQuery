@@ -76,7 +76,7 @@ graphquery::database::storage::CDiskDriver::resize(const int64_t file_size) noex
     std::lock_guard resize_lock(m_resize_lock);
     m_resizing = 1;
 
-    while (wait_on_refs) {}
+    while (m_ref_counter > 0) {}
     const auto old_size = m_fd_info.st_size;
     truncate(resize_to_pagesize(file_size));
     remap(old_size);
@@ -340,7 +340,7 @@ graphquery::database::storage::CDiskDriver::read(void * ptr, const int64_t size,
 {
     if (this->m_initialised)
     {
-        if (m_fd_info.st_size <= static_cast<int64_t>(size * amt + m_seek_offset))
+        if (m_fd_info.st_size <= size * amt + m_seek_offset)
             resize((size * amt + m_seek_offset) * 2);
 
         memcpy(ptr, &this->m_memory_mapped_file[this->m_seek_offset], size * amt);
@@ -358,7 +358,7 @@ graphquery::database::storage::CDiskDriver::write(const void * ptr, const int64_
 {
     if (this->m_initialised)
     {
-        if (m_fd_info.st_size <= static_cast<int64_t>(size * amt + m_seek_offset))
+        if (m_fd_info.st_size <= size * amt + m_seek_offset)
             resize((size * amt + m_seek_offset) * 2);
 
         memcpy(&this->m_memory_mapped_file[this->m_seek_offset], ptr, size * amt);
@@ -381,7 +381,7 @@ graphquery::database::storage::CDiskDriver::ref(int64_t seek, const int64_t size
         if (m_fd_info.st_size <= seek + size)
             resize((seek + size) * 2);
 
-        while (wait_on_resizing) {}
+        while (m_resizing != 0) {}
         ptr = &this->m_memory_mapped_file[seek];
     }
 
@@ -397,7 +397,7 @@ graphquery::database::storage::CDiskDriver::ref_update(const int64_t size) noexc
         if (m_fd_info.st_size <= m_seek_offset + size)
             resize((m_seek_offset + size) * 2);
 
-        while (wait_on_resizing) {}
+        while (m_resizing != 0) {}
         ptr = &this->m_memory_mapped_file[m_seek_offset];
         m_seek_offset += size;
     }

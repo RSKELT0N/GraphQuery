@@ -45,10 +45,10 @@ graphquery::interact::CFrameDBQuery::render_frame() noexcept
             if (ImGui::BeginChild("#db_query_result"))
             {
                 render_result();
-                ImGui::EndChild();
             }
-            ImGui::End();
+            ImGui::EndChild();
         }
+        ImGui::End();
     }
 }
 
@@ -60,7 +60,7 @@ graphquery::interact::CFrameDBQuery::render_query() noexcept
 
     ImGui::TextUnformatted("Input: ");
     ImGui::SameLine();
-    ImGui::InputText("", &this->m_query_str, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CtrlEnterForNewLine);
+    ImGui::InputText("##", &this->m_query_str, ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CtrlEnterForNewLine);
     ImGui::SameLine();
 
     if (ImGui::Button("Query"))
@@ -280,8 +280,8 @@ graphquery::interact::CFrameDBQuery::render_result_table() noexcept
         }
         ImGui::NewLine();
         render_clear_selection();
-        ImGui::EndChild();
     }
+    ImGui::EndChild();
 }
 
 void

@@ -110,8 +110,5 @@ namespace graphquery::database::storage
         int64_t m_seek_offset        = {}; //~ Current offset within the memory map.
         char * m_memory_mapped_file  = {}; //~ buffer address of the memory mapped file.
         std::filesystem::path m_path = {}; //~ Set path of the current context.
-
-        const std::function<bool()> wait_on_resizing = [this]() -> bool { return m_resizing == 1; };
-        const std::function<bool()> wait_on_refs     = [this]() -> bool { return m_ref_counter > 0; };
     };
 } // namespace graphquery::database::storage

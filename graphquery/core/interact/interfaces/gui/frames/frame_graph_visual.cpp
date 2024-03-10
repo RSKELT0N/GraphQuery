@@ -44,8 +44,8 @@ graphquery::interact::CFrameGraphVisual::render_frame() noexcept
     if (ImGui::Begin("Graph Visual"))
     {
         render_grid();
-        ImGui::End();
     }
+    ImGui::End();
 }
 
 void
