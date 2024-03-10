@@ -55,6 +55,7 @@ namespace graphquery::database::storage
         CIndexFile & operator=(const CIndexFile &)     = delete;
         CIndexFile & operator=(CIndexFile &&) noexcept = delete;
 
+        void reset() noexcept;
         CDiskDriver & get_file() noexcept;
         inline void store_metadata() noexcept;
         inline SRef_t<SIndexMetadata_t> read_metadata() noexcept;
@@ -131,4 +132,13 @@ inline graphquery::database::storage::CDiskDriver &
 graphquery::database::storage::CIndexFile::get_file() noexcept
 {
     return m_file;
+}
+
+inline void
+graphquery::database::storage::CIndexFile::reset() noexcept
+{
+    m_file.resize(CDiskDriver::DEFAULT_FILE_SIZE);
+    m_file.clear_contents();
+    store_metadata();
+    (void) m_file.sync();
 }

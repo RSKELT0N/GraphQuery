@@ -18,8 +18,7 @@ target_compile_options(
         -O3
         -ffast-math
         -ffinite-math-only
-        -pthread
-        -g)
+        -pthread)
 
 target_sources(
         cc

@@ -39,7 +39,7 @@ namespace graphquery::database::storage
         };
 
         template<typename T>
-        inline SRef_t<T> ref(const int64_t seek)
+        inline SRef_t<T> ref(const int64_t seek = -1)
         {
             auto reference = std::bit_cast<T *>(ref(seek, sizeof(T)));
             return SRef_t<T>(reference, &m_ref_counter);
@@ -55,10 +55,11 @@ namespace graphquery::database::storage
         explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
         ~CDiskDriver();
 
-        CDiskDriver(CDiskDriver &&)       = delete;
-        CDiskDriver(const CDiskDriver &)  = delete;
-        static constexpr int64_t PAGESIZE = KB(4);
+        static constexpr auto PAGE_SIZE = KB(4);
+        CDiskDriver(CDiskDriver &&)      = delete;
+        CDiskDriver(const CDiskDriver &) = delete;
 
+        void clear_contents() noexcept;
         [[nodiscard]] size_t get_filesize() const noexcept;
         [[maybe_unused]] SRet_t close();
         [[maybe_unused]] SRet_t seek(int64_t offset);
@@ -78,14 +79,16 @@ namespace graphquery::database::storage
         [[nodiscard]] static bool check_if_folder_exists(std::string_view file_path) noexcept;
         [[nodiscard]] static bool check_if_file_exists(std::string_view path, std::string_view file_name) noexcept;
         [[maybe_unused]] static SRet_t create_folder(const std::filesystem::path & path, std::string_view folder_name);
-        [[maybe_unused]] static SRet_t create_file(const std::filesystem::path & path, std::string_view file_name, int64_t file_size = PAGESIZE);
+        [[maybe_unused]] static SRet_t create_file(const std::filesystem::path & path, std::string_view file_name, int64_t file_size = PAGE_SIZE);
+
+        static constexpr auto DEFAULT_FILE_SIZE = PAGE_SIZE;
 
       private:
         [[maybe_unused]] void * ref(int64_t seek, int64_t size) noexcept;
         [[maybe_unused]] void * ref_update(int64_t size) noexcept;
         [[nodiscard]] SRet_t unmap() const noexcept;
         [[maybe_unused]] SRet_t open_fd() noexcept;
-        [[maybe_unused]] SRet_t close_fd() noexcept;
+        [[nodiscard]] SRet_t close_fd() const noexcept;
         [[maybe_unused]] SRet_t map() noexcept;
         [[maybe_unused]] SRet_t remap(int64_t old_size) noexcept;
         [[maybe_unused]] SRet_t truncate(int64_t) noexcept;
@@ -95,8 +98,6 @@ namespace graphquery::database::storage
         uint8_t m_resizing;
         uint32_t m_ref_counter;
         std::mutex m_resize_lock;
-        std::unique_lock<std::mutex> m_unq_lock;
-        std::condition_variable m_cv_lock;
         static std::shared_ptr<logger::CLogSystem> m_log_system;
 
         int m_file_mode      = {}; //~ Set file mode of the descriptor when opened.
@@ -110,7 +111,7 @@ namespace graphquery::database::storage
         char * m_memory_mapped_file  = {}; //~ buffer address of the memory mapped file.
         std::filesystem::path m_path = {}; //~ Set path of the current context.
 
-        const std::function<bool()> wait_on_resizing = [this]() -> bool { return m_resizing == 0; };
-        const std::function<bool()> wait_on_refs     = [this]() -> bool { return m_ref_counter == 0; };
+        const std::function<bool()> wait_on_resizing = [this]() -> bool { return m_resizing == 1; };
+        const std::function<bool()> wait_on_refs     = [this]() -> bool { return m_ref_counter > 0; };
     };
 } // namespace graphquery::database::storage

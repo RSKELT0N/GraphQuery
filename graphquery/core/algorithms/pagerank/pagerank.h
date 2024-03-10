@@ -1,5 +1,5 @@
 /************************************************************
- * \author Ryan Skelton
+* \author Ryan Skelton
  * \date 18/09/2023
  * \file pagerank.h
  * \brief PageRank is a analytic algorithm for measuring the
@@ -14,10 +14,10 @@ namespace graphquery::database::analytic
 {
     class CGraphAlgorithmPageRank final : public IGraphAlgorithm
     {
-      public:
+    public:
         class CRelaxPR final : public IRelax
         {
-          public:
+        public:
             CRelaxPR(const double _d, uint32_t _outdeg[], double _x[], double _y[])
             {
                 this->d      = _d;
@@ -50,7 +50,7 @@ namespace graphquery::database::analytic
 
         [[nodiscard]] double compute(storage::ILPGModel *) const noexcept override;
 
-      private:
+    private:
         static double sum(const double vals[], int64_t sparse[], uint64_t size) noexcept;
         static double norm_diff(const double _val[], const double __val[], int64_t sparse[], uint64_t size) noexcept;
     };

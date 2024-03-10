@@ -13,7 +13,7 @@ target_compile_options(
         diskdriver
         PUBLIC
         -fPIC
-        -g)
+        -O3)
 
 target_sources(
         diskdriver

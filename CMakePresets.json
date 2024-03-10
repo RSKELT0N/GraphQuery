@@ -1,0 +1,72 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+     "major": 3,
+     "minor": 23,
+     "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "unix_release_makefile",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/unix/release/makefile",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "ENABLE_TESTING": "OFF",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "unix_debug_makefile",
+            "generator": "Unix Makefiles",
+            "binaryDir": "${sourceDir}/build/unix/debug/makefile",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "ENABLE_TESTING": "ON",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "unix_release_ninja",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/unix/release/ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "ENABLE_TESTING": "OFF",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        },
+        {
+            "name": "unix_debug_ninja",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/unix/debug/ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "ENABLE_TESTING": "ON",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "unix_release_makefile",
+            "configurePreset": "unix_release_makefile"
+        },
+        {
+            "name": "unix_debug_makefile",
+            "configurePreset": "unix_debug_makefile"
+        },
+        {
+            "name": "unix_release_ninja",
+            "configurePreset": "unix_release_ninja"
+        },
+        {
+            "name": "unix_debug_ninja",
+            "configurePreset": "unix_debug_ninja"
+        }
+    ]
+  }

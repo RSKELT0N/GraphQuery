@@ -49,7 +49,7 @@ namespace graphquery::database::utils
             const auto curr_time_c = std::chrono::system_clock::to_time_t(curr_time);
 
             ss << std::put_time(std::localtime(&curr_time_c), "%Y-%m-%d %X");
-            m_name = fmt::format("{} ({})\n", ss.str(), algorithm_name);
+            m_name = fmt::format("{} ({})", ss.str(), algorithm_name);
         }
 
         inline void process_function()

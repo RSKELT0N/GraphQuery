@@ -78,7 +78,8 @@ namespace graphquery::database::storage
         struct SVertex_t
         {
             SNodeID id            = {};
-            uint32_t neighbour_c  = {};
+            uint32_t outdegree    = {};
+            uint32_t indegree     = {};
             uint32_t property_id  = {};
             uint32_t label_id     = {};
             uint16_t property_c   = {};
@@ -88,7 +89,8 @@ namespace graphquery::database::storage
             SVertex_t(const SVertex_t & cpy)
             {
                 this->id           = cpy.id;
-                this->neighbour_c  = cpy.neighbour_c;
+                this->outdegree    = cpy.outdegree;
+                this->indegree     = cpy.indegree;
                 this->property_id  = cpy.property_id;
                 this->property_c   = cpy.property_c;
                 this->label_id     = cpy.label_id;
@@ -98,7 +100,8 @@ namespace graphquery::database::storage
             SVertex_t & operator=(const SVertex_t & cpy)
             {
                 this->id           = cpy.id;
-                this->neighbour_c  = cpy.neighbour_c;
+                this->outdegree    = cpy.outdegree;
+                this->indegree     = cpy.indegree;
                 this->property_id  = cpy.property_id;
                 this->property_c   = cpy.property_c;
                 this->label_id     = cpy.label_id;

@@ -29,9 +29,13 @@
 #include <vector>
 #include <optional>
 
-#define DATABLOCK_EDGE_PAYLOAD_C      3
-#define DATABLOCK_PROPERTY_PAYLOAD_C  3
-#define DATABLOCK_LABEL_REF_PAYLOAD_C 3
+#define DATABLOCK_EDGE_PAYLOAD_C      3 // ~ Amount of edges for edge block.
+#define DATABLOCK_PROPERTY_PAYLOAD_C  3 // ~ Amount of edges for property block.
+#define DATABLOCK_LABEL_REF_PAYLOAD_C 3 // ~ Amount of edges for label ref block.
+
+#define VERTEX_INITIALISED_STATE_BIT 0 // ~ Vertex state bit 0 (initialised (1) unitialised (0)), used to check if the vertex is initialised or not.
+#define VERTEX_MARKED_STATE_BIT      1 // ~ Vertex state bit 1 (marked (1) unmarked(0)), used to check if vertex has been marked for deletion.
+#define VERTEX_VALID_STATE_BIT       2 // ~ Vertex state bit 1 (valid (1) invalid(0)), used to check if vertex can be retrieved.
 
 namespace graphquery::database::storage
 {
@@ -79,6 +83,8 @@ namespace graphquery::database::storage
             uint32_t label_size                          = {};
             uint16_t vertex_label_c                      = {};
             uint16_t edge_label_c                        = {};
+            uint8_t flush_needed                         = {};
+            uint8_t prune_needed                         = {};
         };
 
         /****************************************************************
@@ -110,11 +116,16 @@ namespace graphquery::database::storage
         ~CMemoryModelMMAPLPG() override;
 
         void close() noexcept override;
-        void flush_graph() noexcept override;
+        void create_rollback(std::string_view) noexcept override;
+        void rollback(uint8_t rollback_entry) noexcept override;
+        std::vector<std::string> fetch_rollback_table() const noexcept override;
+        void sync_graph() noexcept override;
         void rm_vertex(SNodeID src) override;
         void rm_edge(SNodeID src, SNodeID dst) override;
         uint32_t out_degree(int64_t id) noexcept override;
+        uint32_t in_degree(int64_t id) noexcept override;
         void calc_outdegree(uint32_t[]) noexcept override;
+        void calc_indegree(uint32_t[]) noexcept override;
         void calc_vertex_sparse_map(int64_t[]) noexcept override;
         uint32_t out_degree_by_offset(uint32_t id) noexcept override;
         void rm_edge(SNodeID src, SNodeID dst, std::string_view edge_label) override;
@@ -166,6 +177,7 @@ namespace graphquery::database::storage
         using SPropertyDataBlock = SDataBlock_t<SProperty_t, DATABLOCK_PROPERTY_PAYLOAD_C>;
         using SLabelRefDataBlock = SDataBlock_t<uint16_t, DATABLOCK_LABEL_REF_PAYLOAD_C>;
 
+        void inline reset_graph() noexcept;
         void inline setup_files(const std::filesystem::path & path, bool initialise) noexcept;
         void inline transaction_preamble() noexcept;
         void inline transaction_epilogue() noexcept;
@@ -208,8 +220,6 @@ namespace graphquery::database::storage
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_offset(uint32_t vertex_id, uint16_t edge_label_id, const std::function<bool(const SEdge_t &)> & pred);
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_id(int64_t src, const std::function<bool(const SEdge_t &)> & pred);
 
-        bool m_sync_needed;
-        bool m_persist_needed;
         std::string m_graph_name;
         std::string m_graph_path;
         std::vector<std::vector<SNodeID>> m_label_vertex;

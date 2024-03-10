@@ -1,12 +1,14 @@
 #include "lpg_mmap.h"
 
+#include "db/utils/lib.h"
+
 #include <cassert>
 #include <string_view>
 #include <optional>
 #include <vector>
 
-graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> & log_system):
-    ILPGModel(log_system), m_sync_needed(false), m_persist_needed(false), m_syncing(0), m_transaction_ref_c(0)
+graphquery::database::storage::CMemoryModelMMAPLPG::
+CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> & log_system): ILPGModel(log_system), m_syncing(0), m_transaction_ref_c(0)
 {
     m_label_vertex = std::vector<std::vector<SNodeID>>();
     m_unq_lock     = std::unique_lock(m_sync_lock);
@@ -15,7 +17,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(const st
 graphquery::database::storage::CMemoryModelMMAPLPG::~
 CMemoryModelMMAPLPG()
 {
-    flush_graph();
+    sync_graph();
     close();
 }
 
@@ -33,25 +35,46 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_name() noexcept
 }
 
 void
-graphquery::database::storage::CMemoryModelMMAPLPG::flush_graph() noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::create_rollback(const std::string_view name) noexcept
 {
-    if (m_sync_needed)
+    m_transactions->store_rollback_entry(name);
+}
+
+void
+graphquery::database::storage::CMemoryModelMMAPLPG::rollback(uint8_t rollback_entry) noexcept
+{
+    // ~ Reset graph to initial state.
+    reset_graph();
+    // ~ Rollback graph based on your entry index.
+    const auto & [elapsed] = utils::measure(&CTransaction::rollback, m_transactions, rollback_entry);
+    m_log_system->info(fmt::format("Rollback has completed within {}s", elapsed.count()));
+}
+
+std::vector<std::string>
+graphquery::database::storage::CMemoryModelMMAPLPG::fetch_rollback_table() const noexcept
+{
+    return m_transactions->fetch_rollback_table();
+}
+
+void
+graphquery::database::storage::CMemoryModelMMAPLPG::sync_graph() noexcept
+{
+    if (read_graph_metadata()->flush_needed)
     {
         m_cv_sync.wait(m_unq_lock, wait_on_transactions);
         utils::atomic_store(&m_syncing, 1);
 
-        if (m_persist_needed)
+        if (read_graph_metadata()->prune_needed)
         {
             persist_graph_changes();
-            utils::atomic_store(&m_persist_needed, false);
+            utils::atomic_store(&read_graph_metadata()->prune_needed, false);
         }
 
-        m_transactions->reset();
         utils::atomic_store(&m_syncing, 0);
         m_cv_sync.notify_all();
 
-        utils::atomic_store(&m_sync_needed, false);
-        m_log_system->debug("Graph has been flushed");
+        utils::atomic_store(&read_graph_metadata()->flush_needed, false);
+        m_log_system->debug("Graph has been synced");
     }
 }
 
@@ -88,7 +111,27 @@ graphquery::database::storage::CMemoryModelMMAPLPG::load_graph(const std::filesy
     //~ Load graph memory.
     m_transactions->init();
     read_index_list();
-    m_transactions->handle_transactions();
+}
+
+void
+graphquery::database::storage::CMemoryModelMMAPLPG::reset_graph() noexcept
+{
+    // ~ Reset master file
+    m_master_file.resize(CDiskDriver::DEFAULT_FILE_SIZE);
+    m_master_file.clear_contents();
+    store_graph_metadata();
+
+    // ~ Reset graph data
+    m_vertices_file.reset();
+    m_edges_file.reset();
+    m_index_file.reset();
+    m_properties_file.reset();
+    m_label_ref_file.reset();
+
+    // ~ Reset running in-memory data
+    m_label_vertex.clear();
+    m_v_label_map.clear();
+    m_e_label_map.clear();
 }
 
 void
@@ -97,7 +140,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::setup_files(const std::files
     //~ Set path for master file and initialise transactions
     m_master_file.set_path(path);
     m_master_file.open(MASTER_FILE_NAME);
-    m_transactions = std::make_shared<CTransaction>(path, this);
+    m_transactions = std::make_shared<CTransaction>(path, this, m_log_system);
 
     //~ Open mapping to model files
     m_index_file.open(path, INDEX_FILE_NAME, initialise);
@@ -120,6 +163,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_graph_metadata() noexc
     metadata->vertex_label_table_addr = VERTEX_LABELS_START_ADDR;
     metadata->edge_label_table_addr   = EDGE_LABELS_START_ADDR;
     metadata->label_size              = sizeof(SLabel_t);
+    metadata->flush_needed            = false;
+    metadata->prune_needed            = false;
 }
 
 bool
@@ -128,18 +173,18 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const SNo
     SRef_t<SVertexDataBlock> data_block_ptr = m_vertices_file.attain_data_block();
     const uint32_t entry_offset             = data_block_ptr->idx;
 
-    if(!store_index_entry(id, label_ids, entry_offset))
+    if (!store_index_entry(id, label_ids, entry_offset))
     {
         m_vertices_file.append_free_data_block(entry_offset);
         return false;
     }
 
-    data_block_ptr->state    = 1;
-    data_block_ptr->version  = END_INDEX;
+    data_block_ptr->state   = 1 << VERTEX_INITIALISED_STATE_BIT | 1 << VERTEX_VALID_STATE_BIT;
+    data_block_ptr->version = END_INDEX;
 
     data_block_ptr->payload.edge_idx              = END_INDEX;
     data_block_ptr->payload.metadata.id           = id;
-    data_block_ptr->payload.metadata.neighbour_c  = 0;
+    data_block_ptr->payload.metadata.outdegree    = 0;
     data_block_ptr->payload.metadata.property_c   = props.size();
     data_block_ptr->payload.metadata.edge_label_c = 0;
 
@@ -162,7 +207,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const SNo
 bool
 graphquery::database::storage::CMemoryModelMMAPLPG::store_index_entry(const int64_t id, const std::unordered_set<uint16_t> & label_ids, const uint32_t vertex_offset) noexcept
 {
-    if(!m_index_file.store_entry(id, vertex_offset))
+    if (!m_index_file.store_entry(id, vertex_offset))
         return false;
 
     for (const auto label_id : label_ids)
@@ -364,10 +409,10 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const SNode
 {
     std::unordered_set<uint16_t> label_ids = get_vertex_labels(labels, true);
 
-    if(get_vertex_by_id(id).has_value())
+    if (get_vertex_by_id(id).has_value())
         return EActionState_t::invalid;
 
-    if(!store_vertex_entry(id, label_ids, props))
+    if (!store_vertex_entry(id, label_ids, props))
         return EActionState_t::invalid;
 
     utils::atomic_fetch_inc(&read_graph_metadata()->vertices_c);
@@ -383,12 +428,11 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const std::
     std::unordered_set<uint16_t> label_ids = get_vertex_labels(labels, true);
 
     const auto vertex_id = utils::atomic_fetch_inc(&read_graph_metadata()->vertices_c);
-    if(!store_vertex_entry(vertex_id, label_ids, props))
+    if (!store_vertex_entry(vertex_id, label_ids, props))
     {
         utils::atomic_fetch_dec(&read_graph_metadata()->vertices_c);
         return EActionState_t::invalid;
     }
-    fmt::print("{}\n", vertex_id);
 
     for (const auto label_id : label_ids)
         utils::atomic_fetch_inc(&read_vertex_label_entry(label_id)->item_c);
@@ -397,7 +441,11 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const std::
 }
 
 graphquery::database::storage::CMemoryModelMMAPLPG::EActionState_t
-graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(SNodeID src, SNodeID dst, const std::string_view edge_label, const std::vector<SProperty_t> & props, bool undirected) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(const SNodeID src,
+                                                                   const SNodeID dst,
+                                                                   const std::string_view edge_label,
+                                                                   const std::vector<SProperty_t> & props,
+                                                                   const bool undirected) noexcept
 {
     auto src_vertex_exists = get_vertex_by_id(src);
     auto dst_vertex_exists = get_vertex_by_id(dst);
@@ -413,8 +461,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(SNodeID src, 
 
     // ~ Update vertex tail and connect edges
     utils::atomic_store(&src_vertex_exists.value()->payload.edge_idx, edge_offset);
-    utils::atomic_fetch_inc(&src_vertex_exists.value()->payload.metadata.neighbour_c);
-    utils::atomic_fetch_inc(&dst_vertex_exists.value()->payload.metadata.neighbour_c);
+    utils::atomic_fetch_inc(&src_vertex_exists.value()->payload.metadata.outdegree);
+    utils::atomic_fetch_inc(&dst_vertex_exists.value()->payload.metadata.indegree);
     utils::atomic_fetch_inc(&read_graph_metadata()->edges_c);
 
     if (undirected)
@@ -424,8 +472,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(SNodeID src, 
 
         // ~ Update vertex tail and connect edges
         utils::atomic_store(&dst_vertex_exists.value()->payload.edge_idx, edge_offset);
-        utils::atomic_fetch_inc(&src_vertex_exists.value()->payload.metadata.neighbour_c);
-        utils::atomic_fetch_inc(&dst_vertex_exists.value()->payload.metadata.neighbour_c);
+        utils::atomic_fetch_inc(&src_vertex_exists.value()->payload.metadata.indegree);
+        utils::atomic_fetch_inc(&dst_vertex_exists.value()->payload.metadata.outdegree);
         utils::atomic_fetch_inc(&read_graph_metadata()->edges_c);
     }
 
@@ -445,7 +493,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(SNodeID src, cons
 
     m_transactions->commit_vertex(labels, prop, src);
     transaction_epilogue();
-    utils::atomic_store(&m_sync_needed, true);
+    utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 
 void
@@ -461,7 +509,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge(SNodeID src, SNodeI
 
     m_transactions->commit_edge(src, dst, edge_label, prop, undirected);
     transaction_epilogue();
-    utils::atomic_store(&m_sync_needed, true);
+    utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 
 void
@@ -472,7 +520,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const std::vector
     m_transactions->commit_vertex(labels, prop);
 
     transaction_epilogue();
-    utils::atomic_store(&m_sync_needed, true);
+    utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 
 void
@@ -488,8 +536,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex(SNodeID src)
 
     m_transactions->commit_rm_vertex(src);
     transaction_epilogue();
-    utils::atomic_store(&m_sync_needed, true);
-    utils::atomic_store(&m_persist_needed, true);
+    utils::atomic_store(&read_graph_metadata()->flush_needed, true);
+    utils::atomic_store(&read_graph_metadata()->prune_needed, true);
 }
 
 void
@@ -505,8 +553,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(SNodeID src, SNodeID
 
     m_transactions->commit_rm_edge(src, dst);
     transaction_epilogue();
-    utils::atomic_store(&m_sync_needed, true);
-    utils::atomic_store(&m_persist_needed, true);
+    utils::atomic_store(&read_graph_metadata()->flush_needed, true);
+    utils::atomic_store(&read_graph_metadata()->prune_needed, true);
 }
 
 void
@@ -522,7 +570,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(SNodeID src, SNodeID
 
     m_transactions->commit_rm_edge(src, dst, edge_label);
     transaction_epilogue();
-    utils::atomic_store(&m_sync_needed, true);
+    utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 
 std::optional<graphquery::database::storage::ILPGModel::SVertex_t>
@@ -548,7 +596,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertices(const std::func
     {
         auto curr_vertex_ptr = m_vertices_file.read_entry(i);
 
-        if (unlikely(curr_vertex_ptr->state == 0))
+        if (unlikely(!(curr_vertex_ptr->state & 1 << VERTEX_INITIALISED_STATE_BIT)))
             continue;
 
         if (pred(curr_vertex_ptr->payload.metadata))
@@ -701,7 +749,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges_by_offset(const ui
     if (!vertex_ptr.has_value())
         return ret;
 
-    const auto neighbours = utils::atomic_load(&vertex_ptr.value()->payload.metadata.neighbour_c);
+    const auto neighbours = utils::atomic_load(&vertex_ptr.value()->payload.metadata.outdegree);
     ret.reserve(neighbours);
 
     uint32_t curr = utils::atomic_load(&vertex_ptr.value()->payload.edge_idx);
@@ -736,7 +784,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges_by_offset(const ui
     if (!(src_vertex_ptr.has_value() && dst_vertex_ptr.has_value()))
         return ret;
 
-    ret.reserve(utils::atomic_load(&src_vertex_ptr.value()->payload.metadata.neighbour_c));
+    ret.reserve(utils::atomic_load(&src_vertex_ptr.value()->payload.metadata.outdegree));
     uint32_t curr           = utils::atomic_load(&src_vertex_ptr.value()->payload.edge_idx);
     auto dst_vertex_ptr_idx = utils::atomic_load(&dst_vertex_ptr->ref->idx);
 
@@ -770,7 +818,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges_by_offset(const ui
     if (!(src_vertex_ptr.has_value() && dst_vertex_ptr.has_value()))
         return ret;
 
-    ret.reserve(utils::atomic_load(&src_vertex_ptr.value()->payload.metadata.neighbour_c));
+    ret.reserve(utils::atomic_load(&src_vertex_ptr.value()->payload.metadata.outdegree));
     uint32_t curr           = utils::atomic_load(&src_vertex_ptr.value()->payload.edge_idx);
     auto dst_vertex_ptr_idx = utils::atomic_load(&dst_vertex_ptr->ref->idx);
 
@@ -813,7 +861,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges_by_id(const int64_
     if (unlikely(!vertex_ptr.has_value()))
         return ret;
 
-    ret.reserve(utils::atomic_load(&vertex_ptr->ref->payload.metadata.neighbour_c));
+    ret.reserve(utils::atomic_load(&vertex_ptr->ref->payload.metadata.outdegree));
     uint32_t curr = utils::atomic_load(&vertex_ptr->ref->payload.edge_idx);
 
     while (curr != END_INDEX)
@@ -873,18 +921,19 @@ graphquery::database::storage::CMemoryModelMMAPLPG::make_inverse_graph() noexcep
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept
 {
-    const auto datablock_c = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
-
+    const auto datablock_c   = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
     auto gbl_curr_vertex_ptr = m_vertices_file.read_entry(0);
     auto gbl_curr_edge_ptr   = m_edges_file.read_entry(0);
-#pragma omp parallel for shared(gbl_curr_vertex_ptr, gbl_curr_edge_ptr) schedule(auto)
+
+#pragma omp parallel for shared(gbl_curr_vertex_ptr, gbl_curr_edge_ptr) num_threads(64)
     for (uint32_t i = 0; i < datablock_c; i++)
     {
-        auto curr_vertex_ptr = gbl_curr_vertex_ptr + i;
-        if (unlikely(!curr_vertex_ptr->state))
+        auto src_vertex_ptr = gbl_curr_vertex_ptr + i;
+
+        if (unlikely(!(src_vertex_ptr->state & 1 << VERTEX_INITIALISED_STATE_BIT)))
             continue;
 
-        uint32_t edge_ref = curr_vertex_ptr->payload.edge_idx;
+        uint32_t edge_ref = src_vertex_ptr->payload.edge_idx;
 
         while (edge_ref != END_INDEX)
         {
@@ -936,7 +985,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::persist_graph_changes() noex
     for (uint32_t i = 0; i < datablock_c; i++)
     {
         auto src_vertex_ptr = gbl_vertex_ptr + i;
-        if (unlikely(!src_vertex_ptr->state))
+        if (unlikely(!(src_vertex_ptr->state & 1 << VERTEX_INITIALISED_STATE_BIT)))
             continue;
 
         uint32_t edge_ref      = src_vertex_ptr->payload.edge_idx;
@@ -951,18 +1000,16 @@ graphquery::database::storage::CMemoryModelMMAPLPG::persist_graph_changes() noex
                 {
                     auto dst_vertex_ptr = gbl_vertex_ptr + edge_ptr->payload[j].metadata.dst;
 
-                    if (dst_vertex_ptr->state == 0)
+                    if (dst_vertex_ptr->state & 1 << VERTEX_MARKED_STATE_BIT)
                     {
                         edge_ptr->state[j].flip();
                         edge_ptr->payload_amt--;
                         utils::atomic_fetch_dec(&read_graph_metadata()->edges_c);
-                        utils::atomic_fetch_dec(&dst_vertex_ptr->payload.metadata.neighbour_c);
+                        utils::atomic_fetch_dec(&dst_vertex_ptr->payload.metadata.indegree);
+                        utils::atomic_fetch_dec(&src_vertex_ptr->payload.metadata.outdegree);
 
-                        if(dst_vertex_ptr->payload.metadata.neighbour_c == 0)
-                        {
+                        if (dst_vertex_ptr->payload.metadata.indegree == 0)
                             m_vertices_file.append_free_data_block(dst_vertex_ptr->idx);
-                            utils::atomic_store(&m_index_file.read_entry(dst_vertex_ptr->payload.metadata.id)->set, static_cast<uint8_t>(0));
-                        }
                     }
                 }
             }
@@ -1081,7 +1128,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edge_dst_vertices(SNodeI
         vertex_ptr = exists.value();
 
     std::unordered_set<int64_t> ret = {};
-    const auto neighbours           = utils::atomic_load(&vertex_ptr->payload.metadata.neighbour_c);
+    const auto neighbours           = utils::atomic_load(&vertex_ptr->payload.metadata.outdegree);
     ret.reserve(neighbours);
 
     uint32_t curr = utils::atomic_load(&vertex_ptr->payload.edge_idx);
@@ -1120,7 +1167,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edge_dst_vertices(SNodeI
                                      if (unlikely(!dst_vertex_ptr.has_value()))
                                          return false;
 
-                                     if (!dst_vertex_ptr.value()->state)
+                                     if (!(dst_vertex_ptr.value()->state & 1 << VERTEX_INITIALISED_STATE_BIT))
                                          return false;
 
                                      auto label_head = dst_vertex_ptr->ref->payload.metadata.label_id;
@@ -1168,7 +1215,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_recursive_edges(SNodeID 
 }
 
 std::vector<graphquery::database::storage::ILPGModel::SProperty_t>
-graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_vertex(SNodeID src)
+graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_vertex(const SNodeID src)
 {
     SRef_t<SVertexDataBlock> src_vertex = {};
     std::vector<SProperty_t> ret        = {};
@@ -1329,30 +1376,53 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_property_i
 uint32_t
 graphquery::database::storage::CMemoryModelMMAPLPG::out_degree(const int64_t id) noexcept
 {
-    return get_vertex(id)->neighbour_c;
+    return get_vertex(id)->outdegree;
+}
+
+uint32_t
+graphquery::database::storage::CMemoryModelMMAPLPG::in_degree(const int64_t id) noexcept
+{
+    return get_vertex(id)->indegree;
 }
 
 uint32_t
 graphquery::database::storage::CMemoryModelMMAPLPG::out_degree_by_offset(const uint32_t id) noexcept
 {
     assert(id < m_vertices_file.read_metadata()->data_block_c);
-    return (*get_vertex_by_offset(id))->payload.metadata.neighbour_c;
+    return (*get_vertex_by_offset(id))->payload.metadata.outdegree;
 }
 
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::calc_outdegree(uint32_t outdeg[]) noexcept
 {
-    const auto datablock_c = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
-
+    const auto datablock_c   = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
     auto gbl_curr_vertex_ptr = m_vertices_file.read_entry(0);
+
 #pragma omp parallel for shared(gbl_curr_vertex_ptr) schedule(auto)
     for (uint32_t i = 0; i < datablock_c; i++)
     {
         auto curr_vertex_ptr = gbl_curr_vertex_ptr + i;
-        if (unlikely(!curr_vertex_ptr->state))
+        if (unlikely(!(curr_vertex_ptr->state & 1 << VERTEX_INITIALISED_STATE_BIT)))
             continue;
 
-        outdeg[i] = utils::atomic_load(&curr_vertex_ptr->payload.metadata.neighbour_c);
+        outdeg[i] = utils::atomic_load(&curr_vertex_ptr->payload.metadata.outdegree);
+    }
+}
+
+void
+graphquery::database::storage::CMemoryModelMMAPLPG::calc_indegree(uint32_t indeg[]) noexcept
+{
+    const auto datablock_c   = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
+    auto gbl_curr_vertex_ptr = m_vertices_file.read_entry(0);
+
+#pragma omp parallel for shared(gbl_curr_vertex_ptr) schedule(auto)
+    for (uint32_t i = 0; i < datablock_c; i++)
+    {
+        auto curr_vertex_ptr = gbl_curr_vertex_ptr + i;
+        if (unlikely(!(curr_vertex_ptr->state & 1 << VERTEX_INITIALISED_STATE_BIT)))
+            continue;
+
+        indeg[i] = utils::atomic_load(&curr_vertex_ptr->payload.metadata.indegree);
     }
 }
 
@@ -1360,13 +1430,13 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::calc_vertex_sparse_map(int64_t arr[]) noexcept
 {
     SRef_t<SVertexDataBlock> gbl_vertex_ptr = m_vertices_file.read_entry(0);
-    int64_t block_c = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
-    int64_t vertex_i = 0;
+    int64_t block_c                         = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
+    int64_t vertex_i                        = 0;
 
-    for(int64_t i = 0; i < block_c; i++)
+    for (int64_t i = 0; i < block_c; i++)
     {
         auto local_ptr = gbl_vertex_ptr + i;
-        if(local_ptr->state == 1)
+        if (local_ptr->state & 1 << VERTEX_VALID_STATE_BIT)
             arr[vertex_i++] = i;
     }
 }
@@ -1379,7 +1449,10 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_offset(const u
     if (offset >= block_c)
         return std::nullopt;
 
-    return m_vertices_file.read_entry(offset);
+    auto v_ptr = m_vertices_file.read_entry(offset);
+    if (v_ptr->state & 1 << VERTEX_MARKED_STATE_BIT)
+        return std::nullopt;
+    return v_ptr;
 }
 
 std::optional<graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SVertexDataBlock>>
@@ -1390,7 +1463,10 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_id(const SNode
     if (index_ptr->set == 0)
         return std::nullopt;
 
-    return m_vertices_file.read_entry(index_ptr->offset);
+    auto v_ptr = m_vertices_file.read_entry(index_ptr->offset);
+    if (v_ptr->state & 1 << VERTEX_MARKED_STATE_BIT)
+        return std::nullopt;
+    return v_ptr;
 }
 
 graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SGraphMetaData_t>
@@ -1432,7 +1508,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::read_index_list() noexcept
     auto vertex_ptr = m_vertices_file.read_entry(0);
     for (uint32_t vertex_i = 0; vertex_i < block_c; vertex_i++, ++vertex_ptr)
     {
-        if (unlikely(!vertex_ptr->state))
+        if (unlikely(!(vertex_ptr->state & 1 << VERTEX_INITIALISED_STATE_BIT)))
             continue;
 
         auto label_head = vertex_ptr->payload.metadata.label_id;
@@ -1472,7 +1548,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::read_edge_label_entry(const 
 }
 
 graphquery::database::storage::CMemoryModelMMAPLPG::EActionState_t
-graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex_entry(SNodeID src) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex_entry(const SNodeID src) noexcept
 {
     SRef_t<SVertexDataBlock> vertex_ptr = {};
 
@@ -1486,17 +1562,20 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex_entry(SNodeID src)
     int64_t count            = m_edges_file.foreach_block(head_edge_idx, [this](SRef_t<SEdgeDataBlock> & edge_block_ptr) -> void { m_edges_file.append_free_data_block(edge_block_ptr->idx); });
 
     //~ Mark deletion for vertex
-    utils::atomic_store(&vertex_ptr->state, 0);
-    utils::atomic_fetch_sub(&vertex_ptr->payload.metadata.neighbour_c, static_cast<uint32_t>(count));
+    utils::atomic_store(&vertex_ptr->state, 1 << VERTEX_MARKED_STATE_BIT);
     utils::atomic_fetch_dec(&read_graph_metadata()->vertices_c);
     utils::atomic_fetch_sub(&read_graph_metadata()->edges_c, count);
+    utils::atomic_fetch_sub(&vertex_ptr->payload.metadata.outdegree, static_cast<uint32_t>(count));
     utils::atomic_store(&m_index_file.read_entry(vertex_ptr->payload.metadata.id)->set, static_cast<uint8_t>(0));
+
+    if (vertex_ptr->payload.metadata.indegree == 0)
+        m_vertices_file.append_free_data_block(vertex_ptr->idx);
 
     return EActionState_t::valid;
 }
 
 graphquery::database::storage::CMemoryModelMMAPLPG::EActionState_t
-graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge_entry(SNodeID src, SNodeID dst) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge_entry(const SNodeID src, const SNodeID dst) noexcept
 {
     std::optional<SRef_t<SVertexDataBlock>> src_vertex_ptr = get_vertex_by_id(src);
     std::optional<SRef_t<SVertexDataBlock>> dst_vertex_ptr = get_vertex_by_id(dst);
@@ -1508,19 +1587,23 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge_entry(SNodeID src, S
     const auto dst_idx           = utils::atomic_load(&dst_vertex_ptr.value()->idx);
 
     int64_t count = m_edges_file.foreach_block(head_edge_idx,
-                                               [dst_idx](SRef_t<SEdgeDataBlock> & edge_block_ptr) -> void
+                                               [dst_idx, &dst_vertex_ptr](SRef_t<SEdgeDataBlock> & edge_block_ptr) -> void
                                                {
                                                    for (size_t i = 0; i < edge_block_ptr->state.size(); i++)
                                                    {
                                                        if (edge_block_ptr->state.test(i))
                                                        {
                                                            if (edge_block_ptr->payload[i].metadata.dst == dst_idx)
+                                                           {
                                                                edge_block_ptr->state[i].flip();
+                                                               utils::atomic_fetch_dec(&dst_vertex_ptr->ref->payload.metadata.indegree);
+                                                           }
                                                        }
                                                    }
                                                });
 
     utils::atomic_fetch_sub(&read_graph_metadata()->edges_c, count);
+    utils::atomic_fetch_sub(&src_vertex_ptr->ref->payload.metadata.outdegree, static_cast<uint32_t>(count));
 
     return EActionState_t::valid;
 }
@@ -1538,18 +1621,24 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge_entry(const SNodeID 
     const uint32_t head_edge_idx = utils::atomic_load(&src_vertex_ptr.value()->payload.edge_idx);
     const auto dst_idx           = utils::atomic_load(&dst_vertex_ptr.value()->idx);
 
-    m_edges_file.foreach_block(head_edge_idx,
-                               [dst_idx, &edge_label_id](SRef_t<SEdgeDataBlock> & edge_block_ptr) -> void
-                               {
-                                   for (size_t i = 0; i < edge_block_ptr->state.size(); i++)
-                                   {
-                                       if (edge_block_ptr->state.test(i))
-                                       {
-                                           if (edge_block_ptr->payload[i].metadata.dst == dst_idx && edge_block_ptr->payload[i].metadata.edge_label_id == *edge_label_id)
-                                               edge_block_ptr->state[i].flip();
-                                       }
-                                   }
-                               });
+    int64_t count = m_edges_file.foreach_block(head_edge_idx,
+                                               [dst_idx, &edge_label_id, &dst_vertex_ptr](SRef_t<SEdgeDataBlock> & edge_block_ptr) -> void
+                                               {
+                                                   for (size_t i = 0; i < edge_block_ptr->state.size(); i++)
+                                                   {
+                                                       if (edge_block_ptr->state.test(i))
+                                                       {
+                                                           if (edge_block_ptr->payload[i].metadata.dst == dst_idx && edge_block_ptr->payload[i].metadata.edge_label_id == *edge_label_id)
+                                                           {
+                                                               edge_block_ptr->state[i].flip();
+                                                               utils::atomic_fetch_dec(&dst_vertex_ptr->ref->payload.metadata.indegree);
+                                                           }
+                                                       }
+                                                   }
+                                               });
+
+    utils::atomic_fetch_sub(&read_graph_metadata()->edges_c, count);
+    utils::atomic_fetch_sub(&src_vertex_ptr->ref->payload.metadata.outdegree, static_cast<uint32_t>(count));
 
     return EActionState_t::valid;
 }

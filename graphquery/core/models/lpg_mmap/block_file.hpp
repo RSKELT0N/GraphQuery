@@ -8,8 +8,9 @@
 
 #pragma once
 
-#include "db/utils/atomic_intrinsics.h"
+#include "../../../external/libcsv-parser/include/internal/common.hpp"
 #include "db/storage/diskdriver/diskdriver.h"
+#include "db/utils/atomic_intrinsics.h"
 
 #include <cstdint>
 #include <bitset>
@@ -102,6 +103,7 @@ namespace graphquery::database::storage
         CDatablockFile & operator=(const CDatablockFile &)     = default;
         CDatablockFile & operator=(CDatablockFile &&) noexcept = default;
 
+        void reset() noexcept;
         CDiskDriver & get_file() noexcept;
         inline void store_metadata() noexcept;
         inline SRef_t<SBlockFileMetadata_t> read_metadata() noexcept;
@@ -293,4 +295,15 @@ graphquery::database::storage::CDiskDriver &
 graphquery::database::storage::CDatablockFile<T, N>::get_file() noexcept
 {
     return m_file;
+}
+
+template<typename T, uint8_t N>
+    requires(N > 0)
+void
+graphquery::database::storage::CDatablockFile<T, N>::reset() noexcept
+{
+    m_file.resize(CDiskDriver::DEFAULT_FILE_SIZE);
+    m_file.clear_contents();
+    store_metadata();
+    (void) m_file.sync();
 }

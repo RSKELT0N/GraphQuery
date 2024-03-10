@@ -18,6 +18,7 @@ namespace
                    exit(param);
                });
     }
+
     graphquery::database::EStatus Initialise_Logging() noexcept
     {
         // graphquery::database::_log_system->add_logger(std::make_shared<graphquery::logger::CLogSTDO>());
@@ -29,8 +30,8 @@ namespace
     {
         while (true)
         {
-            if (graphquery::database::_db_storage->get_is_graph_loaded())
-                (*graphquery::database::_db_graph)->flush_graph();
+            // if (graphquery::database::_db_storage->get_is_graph_loaded())
+                // (*graphquery::database::_db_graph)->sync_graph();
 
             std::this_thread::sleep_for(graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL);
         }
