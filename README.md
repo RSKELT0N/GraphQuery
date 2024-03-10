@@ -24,4 +24,5 @@ rm -rf [build_directory]
 * Implement top roots for edge labels.
 * Implement lock free linked list.
 * Implement basic environment for random alterations to graph.
+* Implement analytic after querying.
 * Testing.
