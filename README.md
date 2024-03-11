@@ -22,6 +22,5 @@ rm -rf [build_directory]
 ## TODO
 * Implement individual vertex locking.
 * Implement top roots for edge labels.
-* Implement lock free linked list.
 * Implement basic environment for random alterations to graph.
 * Testing.
