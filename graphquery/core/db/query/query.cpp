@@ -9,7 +9,7 @@
 
 namespace
 {
-    std::vector<std::map<std::string, std::string>> _interaction_complex_2(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id, const uint32_t _max_date) noexcept
+    std::vector<std::map<std::string, std::string>> _interaction_complex_2(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id, const int64_t _max_date) noexcept
     {
         //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
         std::unordered_set<int64_t> _friends = graph->get_edge_dst_vertices(_person_id, "knows", "Person");
@@ -28,7 +28,7 @@ namespace
             auto message_props = graph->get_properties_by_id_map(edge.src);
 
             //~ WHERE message.creationDate < $maxDate
-            if (static_cast<int64_t>(std::stol(message_props.at("creationDate"))) >= _max_date)
+            if (std::stoll(message_props.at("creationDate")) >= _max_date)
                 continue;
 
             message_props["postOrCommendId"]           = std::to_string(edge.src);
@@ -274,7 +274,7 @@ graphquery::database::query::CQueryEngine::get_graph() const noexcept
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_complex_2(int64_t _person_id, uint32_t _max_date) const noexcept
+graphquery::database::query::CQueryEngine::interaction_complex_2(int64_t _person_id, int64_t _max_date) const noexcept
 {
     m_results->emplace_back("IC2",
                             [capture0 = *m_graph, _person_id, _max_date]

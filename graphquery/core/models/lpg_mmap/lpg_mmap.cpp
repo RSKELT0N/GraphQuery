@@ -7,7 +7,8 @@
 #include <optional>
 #include <vector>
 
-graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> & log_system): ILPGModel(log_system), m_syncing(0), m_transaction_ref_c(0)
+graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> & log_system):
+    ILPGModel(log_system), m_syncing(0), m_transaction_ref_c(0)
 {
     m_label_vertex = std::vector<std::vector<SNodeID>>();
     m_unq_lock     = std::unique_lock(m_sync_lock);
@@ -944,37 +945,19 @@ graphquery::database::storage::CMemoryModelMMAPLPG::make_inverse_graph() noexcep
 {
     auto inv_graph = std::make_unique<std::vector<std::vector<int64_t>>>();
     auto vblock_c  = m_vertices_file.read_metadata()->data_block_c;
-    auto edges     = read_graph_metadata()->edges_c;
-
-    auto avg_outdeg = edges == 0 ? 0 : vblock_c / edges;
+    auto eblock_c  = m_edges_file.read_metadata()->data_block_c;
 
     inv_graph->resize(vblock_c);
+    SRef_t<SEdgeDataBlock> e_ptr = m_edges_file.read_entry(0);
 
-    SRef_t<SVertexDataBlock> v_ptr = m_vertices_file.read_entry(0);
-    for (size_t i = 0; i < vblock_c; i++, ++v_ptr)
+    for (size_t i = 0; i < eblock_c; i++, ++e_ptr)
     {
-        (*inv_graph)[i].reserve(avg_outdeg);
-
-        auto edge_off_head = v_ptr->payload.edge_off_ptr_idx;
-
-        while (edge_off_head != END_INDEX)
+        for (size_t j = 0; j < e_ptr->state.size(); j++)
         {
-            auto edge_off_ptr = m_edge_offset_ptr_file.read_entry(edge_off_head);
-            auto edge_head    = edge_off_ptr->payload.edge_idx;
-            while (edge_head != END_INDEX)
-            {
-                auto e_ptr = m_edges_file.read_entry(edge_head);
+            if (!e_ptr->state.test(j))
+                continue;
 
-                for (size_t j = 0; j < e_ptr->state.size(); j++)
-                {
-                    if (!e_ptr->state.test(j))
-                        continue;
-
-                    (*inv_graph)[e_ptr->payload[j].metadata.dst].emplace_back(v_ptr->idx);
-                }
-                edge_head = e_ptr->next;
-            }
-            edge_off_head = edge_off_ptr->next;
+            (*inv_graph)[e_ptr->payload[j].metadata.dst].emplace_back(e_ptr->payload[j].metadata.src);
         }
     }
     return inv_graph;
@@ -983,37 +966,18 @@ graphquery::database::storage::CMemoryModelMMAPLPG::make_inverse_graph() noexcep
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept
 {
-    const auto datablock_c     = utils::atomic_load(&m_vertices_file.read_metadata()->data_block_c);
-    auto gbl_curr_vertex_ptr   = m_vertices_file.read_entry(0);
-    auto gbl_curr_edge_ptr     = m_edges_file.read_entry(0);
-    auto gbl_curr_edge_off_ptr = m_edge_offset_ptr_file.read_entry(0);
+    const auto datablock_c = utils::atomic_load(&m_edges_file.read_metadata()->data_block_c);
+    auto gbl_curr_edge_ptr = m_edges_file.read_entry(0);
 
-#pragma omp parallel for shared(gbl_curr_vertex_ptr, gbl_curr_edge_ptr, gbl_curr_edge_off_ptr) num_threads(1)
+#pragma omp parallel for shared(gbl_curr_edge_ptr) num_threads(128)
     for (uint32_t i = 0; i < datablock_c; i++)
     {
-        auto src_vertex_ptr = gbl_curr_vertex_ptr + i;
+        const auto curr_edge_ptr = gbl_curr_edge_ptr + i;
 
-        if (unlikely(!(src_vertex_ptr->state & 1 << VERTEX_INITIALISED_STATE_BIT)))
-            continue;
-
-        uint32_t edge_off_ref = src_vertex_ptr->payload.edge_off_ptr_idx;
-
-        while (edge_off_ref != END_INDEX)
+        for (size_t j = 0; j < curr_edge_ptr->state.size(); j++)
         {
-            auto lcl_curr_edge_off_ptr = gbl_curr_edge_off_ptr + edge_off_ref;
-            auto edge_ref              = lcl_curr_edge_off_ptr->payload.edge_idx;
-            while (edge_ref != END_INDEX)
-            {
-                auto curr_edge_ptr = gbl_curr_edge_ptr + edge_ref;
-
-                for (size_t j = 0; j < curr_edge_ptr->state.size(); j++)
-                {
-                    if (likely(curr_edge_ptr->state.test(j)))
-                        relax->relax(curr_edge_ptr->payload[j].metadata.src, curr_edge_ptr->payload[j].metadata.dst);
-                }
-                edge_ref = curr_edge_ptr->next;
-            }
-            edge_off_ref = lcl_curr_edge_off_ptr->next;
+            if (likely(curr_edge_ptr->state.test(j)))
+                relax->relax(curr_edge_ptr->payload[j].metadata.src, curr_edge_ptr->payload[j].metadata.dst);
         }
     }
 }
@@ -1673,7 +1637,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::define_luts() noexcept
     m_e_label_map.reserve(label_c);
     label_ptr = read_edge_label_entry(0);
 
-    for (uint16_t i = 0; i < label_c; i++, ++label_ptr)
+    for (uint16_t i                       = 0; i < label_c; i++, ++label_ptr)
         m_e_label_map[label_ptr->label_s] = label_ptr->label_id;
 }
 
@@ -1879,9 +1843,10 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_avg_outdegree()
 
 extern "C"
 {
-    LIB_EXPORT void create_graph_model(graphquery::database::storage::ILPGModel ** graph_model, const std::shared_ptr<graphquery::logger::CLogSystem> & log_system)
-    {
-        assert(log_system != nullptr);
-        *graph_model = new graphquery::database::storage::CMemoryModelMMAPLPG(log_system);
-    }
+LIB_EXPORT void
+create_graph_model(graphquery::database::storage::ILPGModel ** graph_model, const std::shared_ptr<graphquery::logger::CLogSystem> & log_system)
+{
+    assert(log_system != nullptr);
+    *graph_model = new graphquery::database::storage::CMemoryModelMMAPLPG(log_system);
+}
 }

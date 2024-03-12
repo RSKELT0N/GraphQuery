@@ -51,7 +51,7 @@ namespace graphquery::database::query
         *  \param _person_id int64_t _person_id - ID of person
         *  \param _max_date uint32_t - max date threshold
         ***************************************************************/
-        void interaction_complex_2(int64_t _person_id, uint32_t _max_date) const noexcept;
+        void interaction_complex_2(int64_t _person_id, int64_t _max_date) const noexcept;
 
         /****************************************************************
          ** \brief Provided a person ID, find the most recent comments that

@@ -92,6 +92,7 @@ graphquery::interact::CFrameDBQuery::render_predefined_query_input() noexcept
         ImGui::OpenPopup("Enter query input");
 
     static int in0, in1;
+    static std::string sn0, sn1;
 
     ImGui::SetNextWindowSize({200, 0});
     if (ImGui::BeginPopupModal("Enter query input", &m_is_excute_query_open, ImGuiWindowFlags_NoResize))
@@ -102,17 +103,17 @@ graphquery::interact::CFrameDBQuery::render_predefined_query_input() noexcept
         {
             ImGui::Text("Person ID: ");
             ImGui::SameLine();
-            ImGui::InputInt("##_pid0", &in0, 0, 0);
+            ImGui::InputText("##_pid0", &sn0, 0, nullptr);
             ImGui::Text("Date Threshold: ");
             ImGui::SameLine();
-            ImGui::InputInt("##_dt1", &in1, 0, 0);
+            ImGui::InputText("##_dt1", &sn1, 0, nullptr);
             ImGui::NewLine();
 
             if (ImGui::Button("Ok"))
             {
                 ImGui::CloseCurrentPopup();
                 m_is_excute_query_open = false;
-                database::_db_query->interaction_complex_2(in0, in1);
+                database::_db_query->interaction_complex_2(std::stoll(sn0), std::stoll(sn1));
             }
             break;
         }
