@@ -2,12 +2,14 @@ cmake_minimum_required(VERSION 3.9)
 
 add_library(
         lpg_mmap
-        SHARED)
+        SHARED
+)
 
 target_include_directories(
         lpg_mmap
         PUBLIC
-        ${PROJECT_SOURCE_DIR}/graphquery/core)
+        ${PROJECT_SOURCE_DIR}/graphquery/core
+)
 
 target_sources(
         lpg_mmap
@@ -15,7 +17,8 @@ target_sources(
         ${CMAKE_CURRENT_SOURCE_DIR}/lpg_mmap.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/transaction.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/block_file.hpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/index_file.hpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/index_file.hpp
+)
 
 target_compile_options(
         lpg_mmap
@@ -27,17 +30,20 @@ target_compile_options(
         -Wextra
         -pthread
         -fPIC
-        -O3
+        -O0
         -ffast-math
         -ffinite-math-only
-        -pthread)
+        -pthread
+        -g
+)
 
 target_link_libraries(
         lpg_mmap
         PUBLIC
         diskdriver
         logsystem
-        fmt)
+        fmt
+)
 
 if(OpenMP_CXX_FOUND)
     target_link_libraries(lpg_mmap PUBLIC OpenMP::OpenMP_CXX)
@@ -49,4 +55,5 @@ set(output_directory ${PROJECT_SOURCE_DIR}/lib/models)
 add_custom_command(
         TARGET lpg_mmap POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory ${output_directory}
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:lpg_mmap> ${output_directory})
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:lpg_mmap> ${output_directory}
+)

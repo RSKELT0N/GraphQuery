@@ -32,9 +32,12 @@
 #define DATABLOCK_EDGE_PAYLOAD_C      3 // ~ Amount of edges for edge block.
 #define DATABLOCK_PROPERTY_PAYLOAD_C  3 // ~ Amount of edges for property block.
 #define DATABLOCK_LABEL_REF_PAYLOAD_C 3 // ~ Amount of edges for label ref block.
+#define DATABLOCK_EDGE_LABEL_OFF_PTR_PAYLOAD_C 1 // ~ Amount of edges for label ref block.
 
 #define VERTEX_INITIALISED_STATE_BIT 0 // ~ Vertex state bit 0 (initialised (1) unitialised (0)), used to check if the vertex is initialised or not.
+
 #define VERTEX_MARKED_STATE_BIT      1 // ~ Vertex state bit 1 (marked (1) unmarked(0)), used to check if vertex has been marked for deletion.
+
 #define VERTEX_VALID_STATE_BIT       2 // ~ Vertex state bit 1 (valid (1) invalid(0)), used to check if vertex can be retrieved.
 
 namespace graphquery::database::storage
@@ -98,6 +101,12 @@ namespace graphquery::database::storage
             SEdge_t metadata = {};
         };
 
+        struct SEdgeLabelOffPtr_t
+        {
+            uint32_t edge_idx      = END_INDEX;
+            uint16_t edge_label_id = {};
+        };
+
         /****************************************************************
          * \struct SVertexEntry_t
          * \brief Structure of a vertex entry to the vertex list.
@@ -108,7 +117,7 @@ namespace graphquery::database::storage
         struct SVertexEntry_t
         {
             SVertex_t metadata = {};
-            uint32_t edge_idx  = END_INDEX;
+            uint32_t edge_off_ptr_idx = {};
         };
 
       public:
@@ -138,6 +147,7 @@ namespace graphquery::database::storage
         [[nodiscard]] int64_t get_total_num_vertices() noexcept override;
         [[nodiscard]] inline uint16_t get_num_vertex_labels() override;
         [[nodiscard]] inline uint16_t get_num_edge_labels() override;
+        [[nodiscard]] inline double get_avg_outdegree() override;
         [[nodiscard]] std::string_view get_name() noexcept override;
         [[nodiscard]] std::optional<SVertex_t> get_vertex(SNodeID id) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_label(std::string_view label) override;
@@ -152,7 +162,6 @@ namespace graphquery::database::storage
 
         [[nodiscard]] std::vector<SEdge_t> get_edges(SNodeID src, SNodeID dst) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(SNodeID src, std::string_view edge_label, std::string_view vertex_label) override;
-        [[nodiscard]] std::unordered_set<int64_t> get_edge_dst_vertices(SNodeID src, std::string_view edge_label, std::string_view vertex_label) override;
         [[nodiscard]] std::vector<SEdge_t> get_recursive_edges(SNodeID src, std::vector<SProperty_t> edge_vertex_label_pairs) override;
 
         [[nodiscard]] std::optional<SEdge_t> get_edge(int64_t src_vertex_id, std::string_view edge_label, int64_t dst_vertex_id) override;
@@ -162,6 +171,8 @@ namespace graphquery::database::storage
         [[nodiscard]] std::vector<SEdge_t> get_edges(uint32_t vertex_id, std::string_view edge_label, std::string_view vertex_label) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, const std::function<bool(const SEdge_t &)> & pred) override;
         [[nodiscard]] std::unordered_set<int64_t> get_edge_dst_vertices(SNodeID src, const std::function<bool(const SEdge_t &)> & pred) override;
+        [[nodiscard]] std::unordered_set<int64_t> get_edge_dst_vertices(SNodeID src, std::string_view edge_label, const std::function<bool(const SEdge_t &)> & pred) override;
+        [[nodiscard]] std::unordered_set<int64_t> get_edge_dst_vertices(SNodeID src, std::string_view edge_label, std::string_view vertex_label) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, const std::function<bool(const SEdge_t &)> & pred) override;
 
         void load_graph(std::filesystem::path path, std::string_view graph) noexcept override;
@@ -172,10 +183,11 @@ namespace graphquery::database::storage
 
       private:
         friend class CTransaction;
-        using SVertexDataBlock   = SDataBlock_t<SVertexEntry_t, 1>;
-        using SEdgeDataBlock     = SDataBlock_t<SEdgeEntry_t, DATABLOCK_EDGE_PAYLOAD_C>;
+        using SVertexDataBlock        = SDataBlock_t<SVertexEntry_t, 1>;
+        using SEdgeDataBlock          = SDataBlock_t<SEdgeEntry_t, DATABLOCK_EDGE_PAYLOAD_C>;
         using SPropertyDataBlock = SDataBlock_t<SProperty_t, DATABLOCK_PROPERTY_PAYLOAD_C>;
         using SLabelRefDataBlock = SDataBlock_t<uint16_t, DATABLOCK_LABEL_REF_PAYLOAD_C>;
+        using SEdgeOffsetPtrDataBlock = SDataBlock_t<SEdgeLabelOffPtr_t, DATABLOCK_EDGE_LABEL_OFF_PTR_PAYLOAD_C>;
 
         void inline reset_graph() noexcept;
         void inline setup_files(const std::filesystem::path & path, bool initialise) noexcept;
@@ -183,6 +195,7 @@ namespace graphquery::database::storage
         void inline transaction_epilogue() noexcept;
         void persist_graph_changes() noexcept;
 
+        std::optional<uint32_t> get_edge_offset_ptr(uint32_t edge_off_ptr_idx, uint16_t edge_label_id) noexcept;
         std::optional<SRef_t<SVertexDataBlock>> get_vertex_by_offset(uint32_t offset) noexcept;
         void read_index_list() noexcept;
         void define_luts() noexcept;
@@ -191,7 +204,8 @@ namespace graphquery::database::storage
         [[nodiscard]] uint32_t store_property_entry(const SProperty_t & prop, uint32_t next_ref) noexcept;
         [[nodiscard]] bool store_index_entry(SNodeID id, const std::unordered_set<uint16_t> & label_ids, uint32_t vertex_offset) noexcept;
         [[nodiscard]] bool store_vertex_entry(SNodeID id, const std::unordered_set<uint16_t> & label_id, const std::vector<SProperty_t> & props) noexcept;
-        [[nodiscard]] uint32_t store_edge_entry(uint32_t next_ref, SNodeID src, SNodeID dst, uint16_t edge_label_id, const std::vector<SProperty_t> & props) noexcept;
+        [[nodiscard]] uint32_t store_edge_entry(uint32_t next_ref, SNodeID src, SNodeID dst, const std::vector<SProperty_t> & props) noexcept;
+        [[nodiscard]] uint32_t store_edge_off_ptr_entry(uint32_t next_ref, uint16_t edge_label_id) noexcept;
 
         inline SRef_t<SGraphMetaData_t> read_graph_metadata() noexcept;
         inline SRef_t<SLabel_t> read_vertex_label_entry(uint32_t offset) noexcept;
@@ -216,7 +230,6 @@ namespace graphquery::database::storage
         [[nodiscard]] std::vector<int64_t> get_vertices_offset_by_label(std::string_view label);
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_offset(uint32_t src_vertex_id, uint32_t dst_vertex_id);
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_offset(uint32_t vertex_id, const std::function<bool(const SEdge_t &)> & pred);
-        [[nodiscard]] std::vector<SEdge_t> get_edges_by_offset(uint32_t src_vertex_id, uint32_t dst_vertex_id, const std::function<bool(const SEdge_t &)> & pred);
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_offset(uint32_t vertex_id, uint16_t edge_label_id, const std::function<bool(const SEdge_t &)> & pred);
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_id(int64_t src, const std::function<bool(const SEdge_t &)> & pred);
 
@@ -239,6 +252,8 @@ namespace graphquery::database::storage
         CDatablockFile<SEdgeEntry_t, DATABLOCK_EDGE_PAYLOAD_C> m_edges_file;
         CDatablockFile<SProperty_t, DATABLOCK_PROPERTY_PAYLOAD_C> m_properties_file;
         CDatablockFile<uint16_t, DATABLOCK_LABEL_REF_PAYLOAD_C> m_label_ref_file;
+        CDatablockFile<SEdgeLabelOffPtr_t, DATABLOCK_EDGE_LABEL_OFF_PTR_PAYLOAD_C> m_edge_offset_ptr_file;
+
         std::shared_ptr<CTransaction> m_transactions = {};
 
         utils::CThreadPool<8> m_thread_pool;
@@ -246,12 +261,13 @@ namespace graphquery::database::storage
         static constexpr uint8_t EDGE_LABELS_MAX_AMT   = 128;
         static constexpr uint32_t METADATA_START_ADDR  = 0x00000000;
 
-        static constexpr const char * MASTER_FILE_NAME     = "master";
-        static constexpr const char * INDEX_FILE_NAME      = "index";
-        static constexpr const char * VERTICES_FILE_NAME   = "vertices";
-        static constexpr const char * EDGES_FILE_NAME      = "edges";
-        static constexpr const char * PROPERTIES_FILE_NAME = "properties";
-        static constexpr const char * LABEL_REF_FILE_NAME  = "label_map";
+        static constexpr const char * MASTER_FILE_NAME        = "master";
+        static constexpr const char * INDEX_FILE_NAME         = "index";
+        static constexpr const char * VERTICES_FILE_NAME      = "vertices";
+        static constexpr const char * EDGES_FILE_NAME         = "edges";
+        static constexpr const char * PROPERTIES_FILE_NAME    = "properties";
+        static constexpr const char * LABEL_REF_FILE_NAME     = "vlabels";
+        static constexpr const char * EDGE_OFF_PTRS_FILE_NAME = "eoffsets";
 
         static constexpr uint32_t VERTEX_LABELS_START_ADDR = METADATA_START_ADDR + sizeof(SGraphMetaData_t);
         static constexpr uint32_t EDGE_LABELS_START_ADDR   = METADATA_START_ADDR + sizeof(SGraphMetaData_t) + sizeof(SLabel_t) * VERTEX_LABELS_MAX_AMT;
