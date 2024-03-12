@@ -17,7 +17,7 @@ namespace graphquery::database::storage
 {
     class CIndexFile
     {
-      public:
+    public:
         /****************************************************************
          * \struct SIndexMetadata_t
          * \brief Describes the metadata for the index table, holding neccessary
@@ -30,8 +30,8 @@ namespace graphquery::database::storage
         struct SIndexMetadata_t
         {
             int64_t index_list_start_addr = {};
-            int64_t index_c               = {};
             int64_t index_size            = {};
+            ILPGModel::Id_t index_c       = {};
         };
 
         /****************************************************************
@@ -44,8 +44,8 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SIndexEntry_t
         {
-            uint32_t offset = END_INDEX;
-            uint8_t set     = {};
+            ILPGModel::Id_t offset = END_INDEX;
+            uint8_t set            = {};
         };
 
         ~CIndexFile();
@@ -61,9 +61,9 @@ namespace graphquery::database::storage
         inline SRef_t<SIndexMetadata_t> read_metadata() noexcept;
         inline SRef_t<SIndexEntry_t> read_entry(int64_t offset) noexcept;
         void open(std::filesystem::path path, std::string_view file_name, bool create) noexcept;
-        bool store_entry(ILPGModel::SNodeID id, int64_t offset) noexcept;
+        bool store_entry(ILPGModel::Id_t id, int64_t offset) noexcept;
 
-      private:
+    private:
         CDiskDriver m_file;
         static constexpr uint32_t METADATA_START_ADDR = 0x00000000;
     };
@@ -71,7 +71,8 @@ namespace graphquery::database::storage
 
 inline graphquery::database::storage::CIndexFile::CIndexFile() = default;
 
-inline graphquery::database::storage::CIndexFile::~
+inline
+graphquery::database::storage::CIndexFile::~
 CIndexFile()
 {
     (void) m_file.close();
@@ -96,14 +97,14 @@ graphquery::database::storage::CIndexFile::read_entry(const int64_t offset) noex
 }
 
 inline bool
-graphquery::database::storage::CIndexFile::store_entry(const ILPGModel::SNodeID id, const int64_t offset) noexcept
+graphquery::database::storage::CIndexFile::store_entry(const ILPGModel::Id_t id, const int64_t offset) noexcept
 {
-    uint8_t expected = 0;
-    uint8_t new_value = 1;
+    uint8_t expected   = 0;
+    uint8_t new_value  = 1;
     auto index_ptr     = read_entry(id);
     const auto index_c = utils::atomic_load(&read_metadata()->index_c);
 
-    if(!utils::atomic_fetch_cas(&index_ptr->set, expected, new_value))
+    if (!utils::atomic_fetch_cas(&index_ptr->set, expected, new_value))
         return false;
 
     utils::atomic_store(&index_ptr->offset, offset);

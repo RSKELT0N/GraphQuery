@@ -41,7 +41,7 @@ namespace graphquery::database::storage
 
         struct SVertexCommit
         {
-            ILPGModel::SNodeID optional_id = {0};
+            ILPGModel::Id_t optional_id = {0};
             uint16_t label_c               = {0};
             uint16_t property_c            = {0};
             uint8_t remove                 = {0};
@@ -50,8 +50,8 @@ namespace graphquery::database::storage
         struct SEdgeCommit
         {
             char edge_label[CFG_LPG_LABEL_LENGTH] = {""};
-            ILPGModel::SNodeID src                = {0};
-            ILPGModel::SNodeID dst                = {0};
+            ILPGModel::Id_t src                = {0};
+            ILPGModel::Id_t dst                = {0};
             uint16_t property_c                   = {0};
             uint8_t remove                        = {0};
             uint8_t undirected                    = {0};
@@ -74,11 +74,11 @@ namespace graphquery::database::storage
         void rollback(uint8_t) noexcept;
         void handle_transactions() noexcept;
         void store_rollback_entry(std::string_view name) noexcept;
-        void commit_rm_vertex(ILPGModel::SNodeID src) noexcept;
-        void commit_rm_edge(ILPGModel::SNodeID src, ILPGModel::SNodeID dst, std::string_view edge_label = "") noexcept;
+        void commit_rm_vertex(ILPGModel::Id_t src) noexcept;
+        void commit_rm_edge(ILPGModel::Id_t src, ILPGModel::Id_t dst, std::string_view edge_label = "") noexcept;
 
-        void commit_vertex(const std::vector<std::string_view> & labels, const std::vector<ILPGModel::SProperty_t> & props, ILPGModel::SNodeID optional_id = LONG_LONG_MAX) noexcept;
-        void commit_edge(ILPGModel::SNodeID src, ILPGModel::SNodeID dst, std::string_view edge_label, const std::vector<ILPGModel::SProperty_t> & props, bool undirected) noexcept;
+        void commit_vertex(const std::vector<std::string_view> & labels, const std::vector<ILPGModel::SProperty_t> & props, ILPGModel::Id_t optional_id = std::numeric_limits<ILPGModel::Id_t>::max()) noexcept;
+        void commit_edge(ILPGModel::Id_t src, ILPGModel::Id_t dst, std::string_view edge_label, const std::vector<ILPGModel::SProperty_t> & props, bool undirected) noexcept;
 
         [[nodiscard]] std::vector<std::string> fetch_rollback_table() noexcept;
 

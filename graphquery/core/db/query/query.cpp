@@ -9,7 +9,7 @@
 
 namespace
 {
-    std::vector<std::map<std::string, std::string>> _interaction_complex_2(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id, const uint32_t _max_date) noexcept
+    std::vector<std::map<std::string, std::string>> _interaction_complex_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::ILPGModel::Id_t _person_id, const int64_t _max_date) noexcept
     {
         //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
         std::unordered_set<int64_t> _friends = graph->get_edge_dst_vertices(_person_id, "knows", "Person");
@@ -28,7 +28,7 @@ namespace
             auto message_props = graph->get_properties_by_id_map(edge.src);
 
             //~ WHERE message.creationDate < $maxDate
-            if (static_cast<int64_t>(std::stol(message_props.at("creationDate"))) >= _max_date)
+            if (std::stol(message_props.at("creationDate")) >= _max_date)
                 continue;
 
             message_props["postOrCommendId"]           = std::to_string(edge.src);
@@ -53,7 +53,7 @@ namespace
         return properties_map;
     }
 
-    std::vector<std::map<std::string, std::string>> _interaction_complex_8(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id) noexcept
+    std::vector<std::map<std::string, std::string>> _interaction_complex_8(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::ILPGModel::Id_t _person_id) noexcept
     {
         //~ MATCH (start:Person {id: $personId})<-[:HAS_CREATOR]-(:Message)
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> person_comments = graph->get_edges("Message", "hasCreator", _person_id);
@@ -109,7 +109,7 @@ namespace
         return properties_map;
     }
 
-    void _interaction_update_2(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id, const int64_t _post_id) noexcept
+    void _interaction_update_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::ILPGModel::Id_t _person_id, const graphquery::database::storage::ILPGModel::Id_t _post_id) noexcept
     {
         static auto time = std::time(nullptr);
         static std::stringstream date;
@@ -118,7 +118,7 @@ namespace
         graph->add_edge(_person_id, _post_id, "likes", {{"creationDate", date.str()}});
     }
 
-    void _interaction_update_8(graphquery::database::storage::ILPGModel * graph, const int64_t _src_person_id, const int64_t _dst_person_id) noexcept
+    void _interaction_update_8(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::ILPGModel::Id_t _src_person_id, const graphquery::database::storage::ILPGModel::Id_t _dst_person_id) noexcept
     {
         static auto time = std::time(nullptr);
         static std::stringstream date;
@@ -127,17 +127,17 @@ namespace
         graph->add_edge(_src_person_id, _dst_person_id, "knows", {{"creationDate", date.str()}});
     }
 
-    void _interaction_delete_2(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id, const int64_t _post_id) noexcept
+    void _interaction_delete_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::ILPGModel::Id_t _person_id, const graphquery::database::storage::ILPGModel::Id_t _post_id) noexcept
     {
         graph->rm_edge(_person_id, _post_id, "LIKES");
     }
 
-    void _interaction_delete_8(graphquery::database::storage::ILPGModel * graph, const int64_t _src_person_id, const int64_t _dst_person_id) noexcept
+    void _interaction_delete_8(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::ILPGModel::Id_t _src_person_id, const graphquery::database::storage::ILPGModel::Id_t _dst_person_id) noexcept
     {
         graph->rm_edge(_src_person_id, _dst_person_id, "KNOWS");
     }
 
-    std::vector<std::map<std::string, std::string>> _interaction_short_2(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id) noexcept
+    std::vector<std::map<std::string, std::string>> _interaction_short_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::ILPGModel::Id_t _person_id) noexcept
     {
         constexpr size_t message_limit = 10;
 
@@ -195,7 +195,7 @@ namespace
         return properties_map;
     }
 
-    std::vector<std::map<std::string, std::string>> _interaction_short_7(graphquery::database::storage::ILPGModel * graph, const int64_t _message_id) noexcept
+    std::vector<std::map<std::string, std::string>> _interaction_short_7(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::ILPGModel::Id_t _message_id) noexcept
     {
         //~ MATCH (m:Message {id: $messageId })<-[:REPLY_OF]-(c:Comment)
         const auto message_comments = graph->get_edges("Comment", "replyOf", _message_id);
@@ -274,7 +274,7 @@ graphquery::database::query::CQueryEngine::get_graph() const noexcept
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_complex_2(int64_t _person_id, uint32_t _max_date) const noexcept
+graphquery::database::query::CQueryEngine::interaction_complex_2(storage::ILPGModel::Id_t _person_id, int64_t _max_date) const noexcept
 {
     m_results->emplace_back("IC2",
                             [capture0 = *m_graph, _person_id, _max_date]
@@ -286,7 +286,7 @@ graphquery::database::query::CQueryEngine::interaction_complex_2(int64_t _person
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_complex_8(int64_t _person_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_complex_8(storage::ILPGModel::Id_t _person_id) const noexcept
 {
     m_results->emplace_back("IC8",
                         [capture0 = *m_graph, _person_id]
@@ -298,35 +298,35 @@ graphquery::database::query::CQueryEngine::interaction_complex_8(int64_t _person
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_update_2(int64_t _person_id, int64_t _post_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_update_2(storage::ILPGModel::Id_t _person_id, storage::ILPGModel::Id_t _post_id) const noexcept
 {
     auto [elapsed] = utils::measure(&_interaction_update_2, *m_graph, _person_id, _post_id);
     _log_system->info(fmt::format("Query ({}) executed within {}s", "IU2", elapsed.count()));
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_update_8(int64_t _src_person_id, int64_t _dst_person_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_update_8(storage::ILPGModel::Id_t _src_person_id, storage::ILPGModel::Id_t _dst_person_id) const noexcept
 {
     auto [elapsed] = utils::measure(&_interaction_update_8, *m_graph, _src_person_id, _dst_person_id);
     _log_system->info(fmt::format("Query ({}) executed within {}s", "IU8", elapsed.count()));
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_delete_2(int64_t _person_id, int64_t _post_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_delete_2(storage::ILPGModel::Id_t _person_id, storage::ILPGModel::Id_t _post_id) const noexcept
 {
     auto [elapsed] = utils::measure(&_interaction_delete_2, *m_graph, _person_id, _post_id);
     _log_system->info(fmt::format("Query ({}) executed within {}s", "ID2", elapsed.count()));
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_delete_8(int64_t _src_person_id, int64_t _dst_person_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_delete_8(storage::ILPGModel::Id_t _src_person_id, storage::ILPGModel::Id_t _dst_person_id) const noexcept
 {
     auto [elapsed] = utils::measure(&_interaction_delete_8, *m_graph, _src_person_id, _dst_person_id);
     _log_system->info(fmt::format("Query ({}) executed within {}s", "ID8", elapsed.count()));
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_short_2(int64_t _person_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_short_2(storage::ILPGModel::Id_t _person_id) const noexcept
 {
     m_results->emplace_back("IS2",
                     [capture0 = *m_graph, _person_id]
@@ -338,7 +338,7 @@ graphquery::database::query::CQueryEngine::interaction_short_2(int64_t _person_i
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_short_7(int64_t _message_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_short_7(storage::ILPGModel::Id_t _message_id) const noexcept
 {
     m_results->emplace_back("IS7",
                     [capture0 = *m_graph, _message_id]

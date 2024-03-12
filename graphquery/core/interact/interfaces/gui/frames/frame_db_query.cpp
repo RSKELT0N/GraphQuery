@@ -39,8 +39,8 @@ graphquery::interact::CFrameDBQuery::render_frame() noexcept
                 render_predefined_queries();
                 render_predefined_query_input();
                 render_result_table();
-                ImGui::EndChild();
             }
+            ImGui::EndChild();
             ImGui::SameLine();
             if (ImGui::BeginChild("#db_query_result"))
             {
@@ -78,7 +78,7 @@ graphquery::interact::CFrameDBQuery::render_predefined_queries() noexcept
     ImGui::Dummy(ImVec2(0.0f, 20.0f));
     ImGui::TextUnformatted("Select: ");
     ImGui::SameLine();
-    ImGui::Combo("##", &m_predefined_choice, predefined_queries);
+    ImGui::Combo("##choices", &m_predefined_choice, predefined_queries);
     ImGui::SameLine();
 
     if (ImGui::Button("Execute"))
@@ -91,10 +91,11 @@ graphquery::interact::CFrameDBQuery::render_predefined_query_input() noexcept
     if (m_is_excute_query_open)
         ImGui::OpenPopup("Enter query input");
 
-    static int in0, in1;
+    static int32_t in0, in1;
+    static std::string sn0, sn1;
 
-    ImGui::SetNextWindowSize({200, 0});
-    if (ImGui::BeginPopupModal("Enter query input", &m_is_excute_query_open, ImGuiWindowFlags_NoResize))
+    ImGui::SetNextWindowSize({0, 0});
+    if (ImGui::BeginPopupModal("Enter query input", &m_is_excute_query_open))
     {
         switch (m_predefined_choice)
         {
@@ -102,17 +103,17 @@ graphquery::interact::CFrameDBQuery::render_predefined_query_input() noexcept
         {
             ImGui::Text("Person ID: ");
             ImGui::SameLine();
-            ImGui::InputInt("##_pid0", &in0, 0, 0);
-            ImGui::Text("Date Threshold: ");
+            ImGui::InputText("##_pid0", &sn0, 0, nullptr);
+            ImGui::Text("Max date: ");
             ImGui::SameLine();
-            ImGui::InputInt("##_dt1", &in1, 0, 0);
+            ImGui::InputText("##_dt1", &sn1, 0, nullptr);
             ImGui::NewLine();
 
             if (ImGui::Button("Ok"))
             {
                 ImGui::CloseCurrentPopup();
                 m_is_excute_query_open = false;
-                database::_db_query->interaction_complex_2(in0, in1);
+                database::_db_query->interaction_complex_2(std::stoll(sn0), std::stol(sn1));
             }
             break;
         }

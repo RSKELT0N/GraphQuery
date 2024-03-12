@@ -112,7 +112,7 @@ graphquery::database::storage::CTransaction::read_rollback_entry(const uint8_t i
 }
 
 void
-graphquery::database::storage::CTransaction::commit_rm_vertex(const ILPGModel::SNodeID src) noexcept
+graphquery::database::storage::CTransaction::commit_rm_vertex(const ILPGModel::Id_t src) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
     const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint64_t>(sizeof(SVertexTransaction)));
@@ -131,7 +131,7 @@ graphquery::database::storage::CTransaction::commit_rm_vertex(const ILPGModel::S
 }
 
 void
-graphquery::database::storage::CTransaction::commit_rm_edge(const ILPGModel::SNodeID src, const ILPGModel::SNodeID dst, const std::string_view edge_label) noexcept
+graphquery::database::storage::CTransaction::commit_rm_edge(const ILPGModel::Id_t src, const ILPGModel::Id_t dst, const std::string_view edge_label) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
     const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, static_cast<uint64_t>(sizeof(SEdgeTransaction)));
@@ -153,7 +153,7 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const ILPGModel::SNo
 void
 graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std::string_view> & labels,
                                                            const std::vector<ILPGModel::SProperty_t> & props,
-                                                           const ILPGModel::SNodeID optional_id) noexcept
+                                                           const ILPGModel::Id_t optional_id) noexcept
 {
     auto transaction_hdr = read_transaction_header();
     const auto commit_addr =
@@ -192,8 +192,8 @@ graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std
 }
 
 void
-graphquery::database::storage::CTransaction::commit_edge(const ILPGModel::SNodeID src,
-                                                         const ILPGModel::SNodeID dst,
+graphquery::database::storage::CTransaction::commit_edge(const ILPGModel::Id_t src,
+                                                         const ILPGModel::Id_t dst,
                                                          const std::string_view edge_label,
                                                          const std::vector<ILPGModel::SProperty_t> & props,
                                                          const bool undirected) noexcept
@@ -368,7 +368,7 @@ graphquery::database::storage::CTransaction::process_vertex_transaction(SRef_t<S
 {
     auto labels = slabel_to_strview_vector(src_labels);
     if (transaction->commit.remove == 0)
-        if (transaction->commit.optional_id != LONG_LONG_MAX)
+        if (transaction->commit.optional_id != std::numeric_limits<ILPGModel::Id_t>::max())
             (void) dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->add_vertex_entry(transaction->commit.optional_id, labels, props);
         else
             (void) dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->add_vertex_entry(labels, props);

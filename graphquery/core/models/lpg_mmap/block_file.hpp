@@ -29,7 +29,7 @@ namespace graphquery::database::storage
     enum EIndexValue_t : uint32_t
     {
         MARKED_DELETED = 0xFFFFFFFF,
-        END_INDEX      = 0xFFFFFFF0,
+        END_INDEX = 0xFFFFFFF0,
     };
 
     /****************************************************************
@@ -45,11 +45,11 @@ namespace graphquery::database::storage
         requires(N > 0)
     struct SDataBlock_t
     {
-        uint32_t idx             = {};
-        std::bitset<N> state     = {};
-        uint32_t next            = END_INDEX;
-        uint32_t version         = END_INDEX;
+        ILPGModel::Id_t idx      = {};
+        ILPGModel::Id_t next     = END_INDEX;
         std::array<T, N> payload = {};
+        std::bitset<N> state     = {};
+        uint32_t version         = END_INDEX;
         uint8_t payload_amt      = {};
     };
 
@@ -64,17 +64,18 @@ namespace graphquery::database::storage
     template<typename T>
     struct SDataBlock_t<T, 1>
     {
-        uint32_t idx     = END_INDEX;
-        uint32_t next    = END_INDEX;
-        uint32_t version = END_INDEX;
-        T payload        = {};
-        uint8_t state    = {0};
+        ILPGModel::Id_t idx  = END_INDEX;
+        ILPGModel::Id_t next = END_INDEX;
+        uint32_t version     = END_INDEX;
+        T payload            = {};
+        uint8_t state        = {0};
     };
+
     template<typename T, uint8_t N = 1>
         requires(N > 0)
     class CDatablockFile
     {
-      public:
+    public:
         /****************************************************************
          * \struct SBlockFileMetadata_t
          * \brief Describes the metadata for a generic data block file,
@@ -89,9 +90,9 @@ namespace graphquery::database::storage
         struct SBlockFileMetadata_t
         {
             uint32_t data_blocks_start_addr = {};
-            uint32_t data_block_c           = {};
             uint32_t data_block_size        = {};
-            uint32_t free_list              = END_INDEX;
+            ILPGModel::Id_t free_list       = END_INDEX;
+            ILPGModel::Id_t data_block_c    = {};
         };
 
         using STypeDataBlock = SDataBlock_t<T, N>;
@@ -117,7 +118,7 @@ namespace graphquery::database::storage
         [[nodiscard]] SRef_t<SDataBlock_t<T, N>> attain_data_block(uint32_t next_ref = END_INDEX) noexcept;
         [[nodiscard]] std::optional<SRef_t<SDataBlock_t<T, N>>> attain_free_data_block() noexcept;
 
-      private:
+    private:
         CDiskDriver m_file;
         static constexpr uint32_t METADATA_START_ADDR = 0x00000000;
     };
