@@ -26,14 +26,12 @@ namespace graphquery::database::storage
     class ILPGModel : public IMemoryModel
     {
     public:
-        explicit ILPGModel(const std::shared_ptr<graphquery::logger::CLogSystem> & log_system):
+        explicit ILPGModel(const std::shared_ptr<logger::CLogSystem> & log_system):
             m_log_system(log_system)
         {
         }
 
         ~ILPGModel() override = default;
-
-        typedef int32_t Id_t;
 
         struct SLabel
         {
@@ -152,17 +150,19 @@ namespace graphquery::database::storage
 
         virtual std::vector<SEdge_t> get_edges(Id_t src, Id_t dst) = 0;
         virtual std::vector<SEdge_t> get_edges(Id_t src, std::string_view edge_label, std::string_view vertex_label) = 0;
-        virtual std::unordered_set<int64_t> get_edge_dst_vertices(Id_t src, std::string_view edge_label, std::string_view vertex_label) = 0;
+        virtual std::unordered_set<Id_t> get_edge_dst_vertices(Id_t src, std::string_view edge_label, std::string_view vertex_label) = 0;
         virtual std::vector<SEdge_t> get_recursive_edges(Id_t src, std::vector<SProperty_t> edge_vertex_label_pairs) = 0;
 
-        virtual std::optional<SEdge_t> get_edge(int64_t src_vertex_id, std::string_view edge_label, int64_t dst_vertex_id) = 0;
+        virtual std::optional<SEdge_t> get_edge(Id_t src_vertex_id, std::string_view edge_label, int64_t dst_vertex_id) = 0;
         virtual std::vector<SEdge_t> get_edges(const std::function<bool(const SEdge_t &)> &) = 0;
         virtual std::vector<SVertex_t> get_vertices(const std::function<bool(const SVertex_t &)> &) = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, const std::function<bool(const SEdge_t &)> &) = 0;
-        virtual std::unordered_set<int64_t> get_edge_dst_vertices(Id_t src, const std::function<bool(const SEdge_t &)> &) = 0;
+        virtual std::unordered_set<Id_t> get_edge_dst_vertices(Id_t src, const std::function<bool(const SEdge_t &)> &) = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, const std::function<bool(const SEdge_t &)> &) = 0;
+        virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label) = 0;
+        virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, std::string_view dst_vertex_label) = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, Id_t dst) = 0;
-        virtual std::vector<SEdge_t> get_edges(uint32_t vertex_id, std::string_view edge_label, std::string_view vertex_label) = 0;
+        virtual std::vector<SEdge_t> get_edges_by_offset(Id_t vertex_id, std::string_view edge_label, std::string_view vertex_label) = 0;
 
         virtual void rm_vertex(Id_t vertex_id) = 0;
         virtual void rm_edge(Id_t src, Id_t dst) = 0;

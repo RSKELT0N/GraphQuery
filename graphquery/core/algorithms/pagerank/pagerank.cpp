@@ -16,7 +16,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGMo
     auto x = new double[n_total];
     auto v = new double[n_total];
     auto y = new double[n_total];
-    auto sparse = new int64_t[n];
+    auto sparse = new storage::Id_t[n];
 
     graph_model->calc_vertex_sparse_map(sparse);
 
@@ -79,7 +79,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGMo
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmPageRank::sum(const double * vals, int64_t sparse[], const uint64_t size) noexcept
+graphquery::database::analytic::CGraphAlgorithmPageRank::sum(const double * vals, const storage::Id_t sparse[], const uint64_t size) noexcept
 {
     double d   = 0.0F;
     double err = 0.0F;
@@ -97,7 +97,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::sum(const double * vals
 double
 graphquery::database::analytic::CGraphAlgorithmPageRank::norm_diff(const double val[],
                                                                    const double _val[],
-                                                                   int64_t sparse[],
+                                                                   storage::Id_t sparse[],
                                                                    const uint64_t size) noexcept
 {
     double d   = 0.0F;

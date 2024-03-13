@@ -26,10 +26,9 @@ namespace graphquery::database::storage
      * \param END_INDEX         - last of the linked data blocks
      * \param UNALLOCATED_INDEX - data block that has not been allocated
      ***************************************************************/
-    enum EIndexValue_t : uint32_t
+    enum EIndexValue_t : Id_t
     {
-        MARKED_DELETED = 0xFFFFFFFF,
-        END_INDEX = 0xFFFFFFF0,
+        END_INDEX = std::numeric_limits<Id_t>::max()
     };
 
     /****************************************************************
@@ -45,8 +44,8 @@ namespace graphquery::database::storage
         requires(N > 0)
     struct SDataBlock_t
     {
-        ILPGModel::Id_t idx      = {};
-        ILPGModel::Id_t next     = END_INDEX;
+        Id_t idx      = {};
+        Id_t next     = END_INDEX;
         std::array<T, N> payload = {};
         std::bitset<N> state     = {};
         uint32_t version         = END_INDEX;
@@ -64,8 +63,8 @@ namespace graphquery::database::storage
     template<typename T>
     struct SDataBlock_t<T, 1>
     {
-        ILPGModel::Id_t idx  = END_INDEX;
-        ILPGModel::Id_t next = END_INDEX;
+        Id_t idx  = END_INDEX;
+        Id_t next = END_INDEX;
         uint32_t version     = END_INDEX;
         T payload            = {};
         uint8_t state        = {0};
@@ -91,8 +90,8 @@ namespace graphquery::database::storage
         {
             uint32_t data_blocks_start_addr = {};
             uint32_t data_block_size        = {};
-            ILPGModel::Id_t free_list       = END_INDEX;
-            ILPGModel::Id_t data_block_c    = {};
+            Id_t free_list       = END_INDEX;
+            Id_t data_block_c    = {};
         };
 
         using STypeDataBlock = SDataBlock_t<T, N>;
@@ -114,7 +113,7 @@ namespace graphquery::database::storage
         uint32_t create_entry(uint32_t next_ref = END_INDEX) noexcept;
         void append_free_data_block(uint32_t block_offset) noexcept;
         int64_t foreach_block(const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
-        int64_t foreach_block(uint32_t start_block, const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
+        int64_t foreach_block(Id_t start_block, const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
         [[nodiscard]] SRef_t<SDataBlock_t<T, N>> attain_data_block(uint32_t next_ref = END_INDEX) noexcept;
         [[nodiscard]] std::optional<SRef_t<SDataBlock_t<T, N>>> attain_free_data_block() noexcept;
 
@@ -236,7 +235,7 @@ graphquery::database::storage::CDatablockFile<T, N>::create_entry(uint32_t next_
 template<typename T, uint8_t N>
     requires(N > 0)
 int64_t
-graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const uint32_t start_block, const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> & apply)
+graphquery::database::storage::CDatablockFile<T, N>::foreach_block(const Id_t start_block, const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> & apply)
 {
     int64_t c = 0;
     if (start_block >= read_metadata()->data_block_c)

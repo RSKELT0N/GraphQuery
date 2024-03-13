@@ -10,8 +10,10 @@
 
 #include "db/storage/diskdriver/diskdriver.h"
 #include "db/utils/atomic_intrinsics.h"
+#include "db/storage/graph_model.h"
 
 #include <cstdint>
+
 
 namespace graphquery::database::storage
 {
@@ -31,7 +33,7 @@ namespace graphquery::database::storage
         {
             int64_t index_list_start_addr = {};
             int64_t index_size            = {};
-            ILPGModel::Id_t index_c       = {};
+            Id_t index_c       = {};
         };
 
         /****************************************************************
@@ -44,7 +46,7 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SIndexEntry_t
         {
-            ILPGModel::Id_t offset = END_INDEX;
+            Id_t offset = END_INDEX;
             uint8_t set            = {};
         };
 
@@ -61,7 +63,7 @@ namespace graphquery::database::storage
         inline SRef_t<SIndexMetadata_t> read_metadata() noexcept;
         inline SRef_t<SIndexEntry_t> read_entry(int64_t offset) noexcept;
         void open(std::filesystem::path path, std::string_view file_name, bool create) noexcept;
-        bool store_entry(ILPGModel::Id_t id, int64_t offset) noexcept;
+        bool store_entry(Id_t id, int64_t offset) noexcept;
 
     private:
         CDiskDriver m_file;
@@ -97,7 +99,7 @@ graphquery::database::storage::CIndexFile::read_entry(const int64_t offset) noex
 }
 
 inline bool
-graphquery::database::storage::CIndexFile::store_entry(const ILPGModel::Id_t id, const int64_t offset) noexcept
+graphquery::database::storage::CIndexFile::store_entry(const Id_t id, const int64_t offset) noexcept
 {
     uint8_t expected   = 0;
     uint8_t new_value  = 1;

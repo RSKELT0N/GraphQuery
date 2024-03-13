@@ -28,7 +28,7 @@ namespace graphquery::database::analytic
 
             ~CRelaxPR() override = default;
 
-            void relax(const int64_t src, const int64_t dst) noexcept override
+            void relax(const storage::Id_t src, const storage::Id_t dst) noexcept override
             {
                 double y_dst_old, y_dst_new;
                 const double w = d / outdeg[src];
@@ -51,7 +51,7 @@ namespace graphquery::database::analytic
         [[nodiscard]] double compute(storage::ILPGModel *) const noexcept override;
 
     private:
-        static double sum(const double vals[], int64_t sparse[], uint64_t size) noexcept;
-        static double norm_diff(const double _val[], const double __val[], int64_t sparse[], uint64_t size) noexcept;
+        static double sum(const double vals[], const storage::Id_t sparse[], uint64_t size) noexcept;
+        static double norm_diff(const double _val[], const double __val[], storage::Id_t sparse[], uint64_t size) noexcept;
     };
 } // namespace graphquery::database::analytic

@@ -122,15 +122,16 @@ namespace graphquery::database::storage
         void sync_graph() noexcept override;
         void rm_vertex(Id_t src) override;
         void rm_edge(Id_t src, Id_t dst) override;
-        Id_t out_degree(Id_t id) noexcept override;
-        Id_t in_degree(Id_t id) noexcept override;
+        uint32_t out_degree(Id_t id) noexcept override;
+        uint32_t in_degree(Id_t id) noexcept override;
         void calc_outdegree(uint32_t[]) noexcept override;
         void calc_indegree(uint32_t[]) noexcept override;
-        void calc_vertex_sparse_map(int64_t[]) noexcept override;
-        uint32_t out_degree_by_offset(uint32_t id) noexcept override;
+        void calc_vertex_sparse_map(Id_t []) noexcept override;
+        double get_avg_out_degree() noexcept override;
+        uint32_t out_degree_by_offset(Id_t id) noexcept override;
         void rm_edge(Id_t src, Id_t dst, std::string_view edge_label) override;
         void edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept override;
-        void src_edgemap(int32_t vertex_offset, const std::function<void(int64_t src, int64_t dst)> &) override;
+        void src_edgemap(Id_t vertex_offset, const std::function<void(int64_t src, int64_t dst)> &) override;
         std::unique_ptr<std::vector<std::vector<int64_t>>> make_inverse_graph() noexcept override;
 
         [[nodiscard]] inline int64_t get_num_edges() override;
@@ -140,6 +141,7 @@ namespace graphquery::database::storage
         [[nodiscard]] inline uint16_t get_num_edge_labels() override;
         [[nodiscard]] std::string_view get_name() noexcept override;
         [[nodiscard]] std::optional<SVertex_t> get_vertex(Id_t id) override;
+        [[nodiscard]] std::optional<Id_t> get_vertex_idx(Id_t id) noexcept override;
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_label(std::string_view label) override;
         [[nodiscard]] std::vector<SVertex_t> get_vertices_by_label(std::string_view label) override;
 
@@ -152,17 +154,19 @@ namespace graphquery::database::storage
 
         [[nodiscard]] std::vector<SEdge_t> get_edges(Id_t src, Id_t dst) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(Id_t src, std::string_view edge_label, std::string_view vertex_label) override;
-        [[nodiscard]] std::unordered_set<int64_t> get_edge_dst_vertices(Id_t src, std::string_view edge_label, std::string_view vertex_label) override;
+        [[nodiscard]] std::unordered_set<Id_t> get_edge_dst_vertices(Id_t src, std::string_view edge_label, std::string_view vertex_label) override;
         [[nodiscard]] std::vector<SEdge_t> get_recursive_edges(Id_t src, std::vector<SProperty_t> edge_vertex_label_pairs) override;
 
-        [[nodiscard]] std::optional<SEdge_t> get_edge(int64_t src_vertex_id, std::string_view edge_label, int64_t dst_vertex_id) override;
+        [[nodiscard]] std::optional<SEdge_t> get_edge(Id_t src_vertex_id, std::string_view edge_label, int64_t dst_vertex_id) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(const std::function<bool(const SEdge_t &)> & pred) override;
         [[nodiscard]] std::vector<SVertex_t> get_vertices(const std::function<bool(const SVertex_t &)> & pred) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, Id_t dst) override;
-        [[nodiscard]] std::vector<SEdge_t> get_edges(uint32_t vertex_id, std::string_view edge_label, std::string_view vertex_label) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges_by_offset(Id_t vertex_id, std::string_view edge_label, std::string_view vertex_label) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, const std::function<bool(const SEdge_t &)> & pred) override;
-        [[nodiscard]] std::unordered_set<int64_t> get_edge_dst_vertices(Id_t src, const std::function<bool(const SEdge_t &)> & pred) override;
+        [[nodiscard]] std::unordered_set<Id_t> get_edge_dst_vertices(Id_t src, const std::function<bool(const SEdge_t &)> & pred) override;
         [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, const std::function<bool(const SEdge_t &)> & pred) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label) override;
+        [[nodiscard]] std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, std::string_view dst_vertex_label) override;
 
         void load_graph(std::filesystem::path path, std::string_view graph) noexcept override;
         void create_graph(std::filesystem::path path, std::string_view graph) noexcept override;
