@@ -13,8 +13,8 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "ENABLE_TESTING": "OFF",
-                "CMAKE_C_COMPILER": "gcc",
-                "CMAKE_CXX_COMPILER": "g++"
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
             }
         },
         {

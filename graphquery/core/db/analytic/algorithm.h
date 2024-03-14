@@ -30,7 +30,7 @@ namespace graphquery::database::analytic
         IGraphAlgorithm(IGraphAlgorithm &&)      = default;
 
         [[nodiscard]] virtual std::string_view get_name() const noexcept final { return m_graph_name; }
-        virtual double compute(storage::ILPGModel *) const noexcept = 0;
+        virtual double compute(storage::IModel *) const noexcept = 0;
 
       protected:
         const std::string m_graph_name;

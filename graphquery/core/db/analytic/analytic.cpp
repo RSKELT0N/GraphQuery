@@ -1,5 +1,6 @@
 #include "analytic.h"
 
+#include "lightweight_graph.hpp"
 #include "db/system.h"
 #include "db/utils/lib.h"
 
@@ -68,6 +69,24 @@ graphquery::database::analytic::CAnalyticEngine::process_algorithm(std::string_v
                             {
                                 auto [res, elapsed] = utils::measure<double>(&IGraphAlgorithm::compute, object_ptr, capture0);
                                 _log_system->info(fmt::format("Graph algorithm ({}) executed within {}s", algorithm, elapsed.count()));
+                                return res;
+                            });
+}
+
+void
+graphquery::database::analytic::CAnalyticEngine::process_algorithm(const std::vector<storage::ILPGModel::SEdge_t> & edges, std::string_view algorithm) noexcept
+{
+    auto light_graph = std::make_shared<CLightWeightGraphModel>(edges);
+
+    if (!m_algorithms.contains(algorithm.data()))
+        return;
+
+    const auto lib = m_algorithms.at(algorithm.data());
+    m_results->emplace_back(algorithm,
+                            [object_ptr = *lib.get(), capture0 = light_graph.get(), algorithm]
+                            {
+                                auto [res, elapsed] = utils::measure<double>(&IGraphAlgorithm::compute, object_ptr, capture0);
+                                _log_system->info(fmt::format("(Light Graph) Graph algorithm ({}) executed within {}s", algorithm, elapsed.count()));
                                 return res;
                             });
 }

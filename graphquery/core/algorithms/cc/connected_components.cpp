@@ -8,7 +8,7 @@ CGraphAlgorithmSSSP(std::string name, const std::shared_ptr<logger::CLogSystem> 
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel * graph_model) const noexcept
+graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::IModel * graph_model) const noexcept
 {
     const uint64_t n      = graph_model->get_num_vertices();
     const int64_t total_n = graph_model->get_total_num_vertices();

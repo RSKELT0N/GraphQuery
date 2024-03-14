@@ -17,25 +17,28 @@ namespace
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> res;
 
 #pragma omp declare reduction(merge : std::vector<graphquery::database::storage::ILPGModel::SEdge_t> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end())) initializer(omp_priv = std::vector<graphquery::database::storage::ILPGModel::SEdge_t>())
-#pragma omp parallel sections default(none) shared(graph, _person_id, _friends, message_creators, res)
+#pragma omp parallel default(none) shared(graph, _person_id, _friends, message_creators, res)
         {
-#pragma omp section
+#pragma omp sections
             {
-                //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
-                _friends = graph->get_edge_dst_vertices(_person_id, "knows", "Person");
-            }
+#pragma omp section
+                {
+                    //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
+                    _friends = graph->get_edge_dst_vertices(_person_id, "knows", "Person");
+                }
 
 #pragma omp section
-            {
-                //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
-                message_creators = graph->get_edges("Message", "hasCreator");
+                {
+                    //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
+                    message_creators = graph->get_edges("Message", "hasCreator");
+                }
             }
 
             res.reserve(message_creators.size());
-#pragma omp parallel for default(none) shared(message_creators, _friends) reduction(merge : res)
-            for(size_t i = 0; i < message_creators.size(); i++)
+#pragma omp for reduction(merge : res)
+            for (size_t i = 0; i < message_creators.size(); i++)
             {
-                if(_friends.contains(message_creators[i].dst))
+                if (_friends.contains(message_creators[i].dst))
                     res.emplace_back(message_creators[i]);
             }
         }

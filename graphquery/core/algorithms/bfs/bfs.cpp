@@ -10,9 +10,9 @@ CGraphAlgorithmBFS(std::string name, const std::shared_ptr<logger::CLogSystem> &
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel * graph) const noexcept
+graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::IModel * graph) const noexcept
 {
-    storage::Id_t source            = *graph->get_vertex_idx(4000000);
+    storage::Id_t source            = 0;
     static constexpr int32_t alpha  = 15;
     static constexpr int32_t beta   = 18;
 
@@ -42,7 +42,7 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *
     front.reset();
 
     int64_t edges_to_check = n_e;
-    int64_t scout_count    = graph->out_degree_by_offset(sparse[source]);
+    int64_t scout_count    = graph->out_degree(sparse[source]);
 
     while (!queue.empty())
     {
@@ -88,19 +88,19 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *
 }
 
 std::vector<int64_t>
-graphquery::database::analytic::CGraphAlgorithmBFS::init_parent(storage::ILPGModel * graph, storage::Id_t sparse[], const int64_t n_v, const int64_t n_total_v) noexcept
+graphquery::database::analytic::CGraphAlgorithmBFS::init_parent(storage::IModel * graph, storage::Id_t sparse[], const int64_t n_v, const int64_t n_total_v) noexcept
 {
     std::vector<int64_t> parent(n_total_v);
 
 #pragma omp parallel for default(none) shared(parent, sparse, n_v, graph)
     for (int64_t n        = 0; n < n_v; n++)
-        parent[sparse[n]] = graph->out_degree_by_offset(sparse[n]) != 0 ? -static_cast<int32_t>(graph->out_degree_by_offset(sparse[n])) : -1;
+        parent[sparse[n]] = graph->out_degree(sparse[n]) != 0 ? -static_cast<int32_t>(graph->out_degree(sparse[n])) : -1;
 
     return parent;
 }
 
 void
-graphquery::database::analytic::CGraphAlgorithmBFS::queue_to_bitset(const utils::SlidingQueue<int64_t> & queue, utils::CBitset<uint64_t> & bm) noexcept
+graphquery::database::analytic::CGraphAlgorithmBFS::queue_to_bitset(const utils::SlidingQueue<int64_t> & queue, utils::CBitset<> & bm) noexcept
 {
 #pragma omp parallel for default(none) shared(queue, bm)
     for (auto q_iter = queue.begin(); q_iter < queue.end(); q_iter++)
@@ -108,7 +108,7 @@ graphquery::database::analytic::CGraphAlgorithmBFS::queue_to_bitset(const utils:
 }
 
 void
-graphquery::database::analytic::CGraphAlgorithmBFS::bitset_to_queue(storage::ILPGModel * graph, const utils::CBitset<uint64_t> & bm, utils::SlidingQueue<int64_t> & queue) noexcept
+graphquery::database::analytic::CGraphAlgorithmBFS::bitset_to_queue(storage::IModel * graph, const utils::CBitset<> & bm, utils::SlidingQueue<int64_t> & queue) noexcept
 {
 #pragma omp parallel default(none) shared(graph, queue, bm)
     {
@@ -125,8 +125,8 @@ graphquery::database::analytic::CGraphAlgorithmBFS::bitset_to_queue(storage::ILP
 int64_t
 graphquery::database::analytic::CGraphAlgorithmBFS::bu_step(const std::shared_ptr<std::vector<std::vector<int64_t>>> & inv_graph,
                                                             std::vector<int64_t> & parent,
-                                                            const utils::CBitset<uint64_t> & front,
-                                                            utils::CBitset<uint64_t> & next) noexcept
+                                                            const utils::CBitset<> & front,
+                                                            utils::CBitset<> & next) noexcept
 {
     int64_t awake_count = 0;
     next.reset();
@@ -151,7 +151,7 @@ graphquery::database::analytic::CGraphAlgorithmBFS::bu_step(const std::shared_pt
 }
 
 int64_t
-graphquery::database::analytic::CGraphAlgorithmBFS::td_step(storage::ILPGModel * graph, std::vector<int64_t> & parent, utils::SlidingQueue<int64_t> & queue) noexcept
+graphquery::database::analytic::CGraphAlgorithmBFS::td_step(storage::IModel * graph, std::vector<int64_t> & parent, utils::SlidingQueue<int64_t> & queue) noexcept
 {
     int64_t scout_count = 0;
 #pragma omp parallel default(none) shared(graph, parent, queue, scout_count)

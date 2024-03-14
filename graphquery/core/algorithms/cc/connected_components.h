@@ -16,7 +16,7 @@ namespace graphquery::database::analytic
     class CGraphAlgorithmSSSP final : public IGraphAlgorithm
     {
       public:
-        class CRelaxCC final : public graphquery::database::analytic::IRelax
+        class CRelaxCC final : public IRelax
         {
           public:
             CRelaxCC(storage::Id_t _x[], storage::Id_t _y[])
@@ -45,6 +45,6 @@ namespace graphquery::database::analytic
         explicit CGraphAlgorithmSSSP(std::string, const std::shared_ptr<logger::CLogSystem> &);
         ~CGraphAlgorithmSSSP() override = default;
 
-        [[nodiscard]] double compute(storage::ILPGModel *) const noexcept override;
+        [[nodiscard]] double compute(storage::IModel *) const noexcept override;
     };
 } // namespace graphquery::database::analytic

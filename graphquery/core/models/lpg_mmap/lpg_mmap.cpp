@@ -647,7 +647,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::functio
     SRef_t<SEdgeDataBlock> gbl_edge_ptr = m_edges_file.read_entry(0);
 
 #pragma omp declare reduction(merge : std::vector<SEdge_t> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end())) initializer(omp_priv = std::vector<SEdge_t>())
-#pragma omp parallel for default(none) shared(gbl_edge_ptr, datablock_c) private(pred) schedule(dynamic) reduction(merge : ret)
+#pragma omp parallel for default(none) shared(gbl_edge_ptr, datablock_c, pred) schedule(dynamic) reduction(merge : ret)
     for (Id_t i = 0; i < datablock_c; i++)
     {
         const auto curr_edge_ptr = gbl_edge_ptr + i;
@@ -692,7 +692,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges_by_offset(const Id
     auto gbl_label_ref_ptr     = m_label_ref_file.read_entry(0);
 
     return get_edges_by_offset(vertex_id,
-                               [this, &gbl_v_ptr, &gbl_label_ref_ptr, &edge_label_id, &vertex_label_id](const SEdge_t & edge) -> bool
+                               [&gbl_v_ptr, &gbl_label_ref_ptr, &edge_label_id, &vertex_label_id](const SEdge_t & edge) -> bool
                                {
                                    const auto dst_vertex_ptr = gbl_v_ptr + edge.dst;
                                    auto label_head           = dst_vertex_ptr->payload.metadata.label_id;
@@ -724,7 +724,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::string_
     ret.reserve(label_vertices.size());
 
 #pragma omp declare reduction(merge : std::vector<SEdge_t> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end())) initializer(omp_priv = std::vector<SEdge_t>())
-#pragma omp parallel for default(none) shared(label_vertices) private(pred) schedule(dynamic) reduction(merge : ret)
+#pragma omp parallel for default(none) shared(label_vertices, pred) schedule(dynamic) reduction(merge : ret)
     for (size_t i = 0; i < label_vertices.size(); i++)
     {
         const auto edges = get_edges_by_offset(label_vertices[i], pred);
@@ -1243,7 +1243,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edge_dst_vertices(const 
     auto gbl_label_ref_ptr = m_label_ref_file.read_entry(0);
 
     return get_edge_dst_vertices(src,
-                                 [this, &gbl_label_ref_ptr, &gbl_v_ptr, &vertex_label_id, &edge_label_id](const SEdge_t & edge) -> bool
+                                 [&gbl_label_ref_ptr, &gbl_v_ptr, &vertex_label_id, &edge_label_id](const SEdge_t & edge) -> bool
                                  {
                                      const auto dst_vertex_ptr = gbl_v_ptr + edge.dst;
                                      auto label_head           = dst_vertex_ptr->payload.metadata.label_id;
@@ -1456,20 +1456,21 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_properties_by_property_i
 uint32_t
 graphquery::database::storage::CMemoryModelMMAPLPG::out_degree(const Id_t id) noexcept
 {
-    return get_vertex(id)->outdegree;
+    assert(id < m_vertices_file.read_metadata()->data_block_c);
+    return get_vertex_by_offset(id)->ref->payload.metadata.outdegree;
 }
 
 uint32_t
 graphquery::database::storage::CMemoryModelMMAPLPG::in_degree(const Id_t id) noexcept
 {
-    return get_vertex(id)->indegree;
+    assert(id < m_vertices_file.read_metadata()->data_block_c);
+    return get_vertex_by_offset(id)->ref->payload.metadata.indegree;
 }
 
 uint32_t
-graphquery::database::storage::CMemoryModelMMAPLPG::out_degree_by_offset(const Id_t id) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::out_degree_by_id(const Id_t id) noexcept
 {
-    assert(id < m_vertices_file.read_metadata()->data_block_c);
-    return (*get_vertex_by_offset(id))->payload.metadata.outdegree;
+    return get_vertex(id)->outdegree;
 }
 
 void

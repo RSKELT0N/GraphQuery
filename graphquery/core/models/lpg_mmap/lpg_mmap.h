@@ -118,7 +118,6 @@ namespace graphquery::database::storage
         void close() noexcept override;
         void create_rollback(std::string_view) noexcept override;
         void rollback(uint8_t rollback_entry) noexcept override;
-        std::vector<std::string> fetch_rollback_table() const noexcept override;
         void sync_graph() noexcept override;
         void rm_vertex(Id_t src) override;
         void rm_edge(Id_t src, Id_t dst) override;
@@ -128,11 +127,12 @@ namespace graphquery::database::storage
         void calc_indegree(uint32_t[]) noexcept override;
         void calc_vertex_sparse_map(Id_t []) noexcept override;
         double get_avg_out_degree() noexcept override;
-        uint32_t out_degree_by_offset(Id_t id) noexcept override;
+        uint32_t out_degree_by_id(Id_t id) noexcept override;
         void rm_edge(Id_t src, Id_t dst, std::string_view edge_label) override;
         void edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept override;
-        void src_edgemap(Id_t vertex_offset, const std::function<void(int64_t src, int64_t dst)> &) override;
+        [[nodiscard]] std::vector<std::string> fetch_rollback_table() const noexcept override;
         std::unique_ptr<std::vector<std::vector<int64_t>>> make_inverse_graph() noexcept override;
+        void src_edgemap(Id_t vertex_offset, const std::function<void(int64_t src, int64_t dst)> &) override;
 
         [[nodiscard]] inline int64_t get_num_edges() override;
         [[nodiscard]] inline int64_t get_num_vertices() override;

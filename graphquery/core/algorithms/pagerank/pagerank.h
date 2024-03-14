@@ -48,7 +48,7 @@ namespace graphquery::database::analytic
         explicit CGraphAlgorithmPageRank(std::string, const std::shared_ptr<logger::CLogSystem> &);
         ~CGraphAlgorithmPageRank() override = default;
 
-        [[nodiscard]] double compute(storage::ILPGModel *) const noexcept override;
+        [[nodiscard]] double compute(storage::IModel *) const noexcept override;
 
     private:
         static double sum(const double vals[], const storage::Id_t sparse[], uint64_t size) noexcept;

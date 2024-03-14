@@ -133,8 +133,6 @@ namespace graphquery::database::storage
             }
         };
 
-        [[nodiscard]] virtual int64_t get_num_edges() = 0;
-        [[nodiscard]] virtual int64_t get_num_vertices() = 0;
         [[nodiscard]] virtual uint16_t get_num_vertex_labels() = 0;
         [[nodiscard]] virtual uint16_t get_num_edge_labels() = 0;
         virtual std::optional<SVertex_t> get_vertex(Id_t vertex_id) = 0;

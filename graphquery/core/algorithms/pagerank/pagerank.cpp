@@ -8,7 +8,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::
 CGraphAlgorithmPageRank(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys) {}
 
 double
-graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::ILPGModel * graph_model) const noexcept
+graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::IModel * graph_model) const noexcept
 {
     const uint64_t n = graph_model->get_num_vertices();
     const int64_t n_total = graph_model->get_total_num_vertices();
