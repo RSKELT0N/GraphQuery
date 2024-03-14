@@ -116,8 +116,8 @@ namespace graphquery::database::storage
         void append_free_data_block(uint32_t block_offset) noexcept;
         int64_t foreach_block(const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
         int64_t foreach_block(Id_t start_block, const std::function<void(SRef_t<SDataBlock_t<T, N>> &)> &);
-        [[nodiscard]] SRef_t<SDataBlock_t<T, N>> attain_data_block(uint32_t next_ref = END_INDEX) noexcept;
-        [[nodiscard]] std::optional<SRef_t<SDataBlock_t<T, N>>> attain_free_data_block() noexcept;
+        [[nodiscard]] SRef_t<SDataBlock_t<T, N>, true> attain_data_block(uint32_t next_ref = END_INDEX) noexcept;
+        [[nodiscard]] std::optional<SRef_t<SDataBlock_t<T, N>, true>> attain_free_data_block() noexcept;
 
     private:
         CDiskDriver m_file;
@@ -159,12 +159,12 @@ graphquery::database::storage::CDatablockFile<T, N>::read_entry(int64_t offset) 
 
 template<typename T, uint8_t N>
     requires(N > 0)
-graphquery::database::storage::SRef_t<graphquery::database::storage::SDataBlock_t<T, N>>
+graphquery::database::storage::SRef_t<graphquery::database::storage::SDataBlock_t<T, N>, true>
 graphquery::database::storage::CDatablockFile<T, N>::attain_data_block(const uint32_t next_ref) noexcept
 {
     if (next_ref != END_INDEX)
     {
-        auto data_block_ptr = read_entry(next_ref);
+        auto data_block_ptr = read_entry<true>(next_ref);
 
         if constexpr (N > 1)
             if (!data_block_ptr->state.all())
@@ -176,7 +176,7 @@ graphquery::database::storage::CDatablockFile<T, N>::attain_data_block(const uin
     if (!head_free_block_opt.has_value())
     {
         const auto entry_offset = create_entry(next_ref);
-        return read_entry(entry_offset);
+        return read_entry<true>(entry_offset);
     }
 
     return head_free_block_opt.value();
@@ -184,7 +184,7 @@ graphquery::database::storage::CDatablockFile<T, N>::attain_data_block(const uin
 
 template<typename T, uint8_t N>
     requires(N > 0)
-std::optional<graphquery::database::storage::SRef_t<graphquery::database::storage::SDataBlock_t<T, N>>>
+std::optional<graphquery::database::storage::SRef_t<graphquery::database::storage::SDataBlock_t<T, N>, true>>
 graphquery::database::storage::CDatablockFile<T, N>::attain_free_data_block() noexcept
 {
     auto metadata   = read_metadata();
@@ -193,7 +193,7 @@ graphquery::database::storage::CDatablockFile<T, N>::attain_free_data_block() no
     if (head == END_INDEX)
         return std::nullopt;
 
-    auto data_block_ptr = read_entry(head);
+    auto data_block_ptr = read_entry<true>(head);
 
     utils::atomic_store(&metadata->free_list, data_block_ptr->next);
     utils::atomic_store(&data_block_ptr->next, static_cast<uint32_t>(END_INDEX));

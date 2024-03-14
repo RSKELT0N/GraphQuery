@@ -73,10 +73,18 @@ graphquery::database::storage::CDiskDriver::close_fd() const noexcept
 void
 graphquery::database::storage::CDiskDriver::resize(const int64_t file_size) noexcept
 {
-    std::lock_guard lck(m_resize_lock);
+    m_writer_lock.lock();
     const auto old_size = m_fd_info.st_size;
+
+    if(old_size >= file_size)
+    {
+        m_writer_lock.unlock();
+        return;
+    }
+
     truncate(resize_to_pagesize(file_size));
     remap(old_size);
+    m_writer_lock.unlock();
 }
 
 graphquery::database::storage::CDiskDriver::SRet_t

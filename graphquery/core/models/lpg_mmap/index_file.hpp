@@ -33,7 +33,7 @@ namespace graphquery::database::storage
         {
             int64_t index_list_start_addr = {};
             int64_t index_size            = {};
-            Id_t index_c       = {};
+            Id_t index_c                  = {};
         };
 
         /****************************************************************
@@ -47,7 +47,7 @@ namespace graphquery::database::storage
         struct SIndexEntry_t
         {
             Id_t offset = END_INDEX;
-            uint8_t set            = {};
+            uint8_t set = {};
         };
 
         ~CIndexFile();
@@ -69,7 +69,7 @@ namespace graphquery::database::storage
         template<bool write = false>
         inline SRef_t<SIndexEntry_t, write> read_entry(int64_t offset) noexcept;
 
-      private:
+    private:
         CDiskDriver m_file;
         static constexpr uint32_t METADATA_START_ADDR = 0x00000000;
     };

@@ -16,7 +16,7 @@ namespace graphquery::database::analytic
     class CGraphAlgorithmSSSP final : public IGraphAlgorithm
     {
       public:
-        class CRelaxCC final : public graphquery::database::analytic::IRelax
+        class CRelaxCC final : public IRelax
         {
           public:
             CRelaxCC(storage::Id_t _x[], storage::Id_t _y[])

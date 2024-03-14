@@ -8,6 +8,7 @@
 
 namespace
 {
+    bool _sync;
     void setup_seg_handler()
     {
         signal(SIGINT | SIGTERM,
@@ -30,7 +31,7 @@ namespace
     {
         while (true)
         {
-            if (graphquery::database::_db_storage->get_is_graph_loaded())
+            if (graphquery::database::_db_storage->get_is_graph_loaded() && _sync)
                 (*graphquery::database::_db_graph)->sync_graph();
 
             std::this_thread::sleep_for(graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL);
@@ -58,7 +59,22 @@ namespace graphquery::database
         setup_seg_handler();
         const EStatus status = Initialise_Logging();
 
+        enable_sync();
         std::thread(&heartbeat).detach();
         return status;
+    }
+
+    void
+    enable_sync() noexcept
+    {
+        _sync = true;
+        _log_system->info("Synchronisation has been enabled");
+    }
+
+    void
+    disable_sync() noexcept
+    {
+        _sync = false;
+        _log_system->info("Synchronisation has been disabled");
     }
 } // namespace graphquery::database

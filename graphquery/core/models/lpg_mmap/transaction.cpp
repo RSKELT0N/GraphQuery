@@ -92,11 +92,11 @@ graphquery::database::storage::CTransaction::fetch_rollback_table() noexcept
     return rollback_table;
 }
 
-template<typename T>
-graphquery::database::storage::SRef_t<T>
+template<typename T, bool write>
+graphquery::database::storage::SRef_t<T, write>
 graphquery::database::storage::CTransaction::read_transaction(const uint64_t seek)
 {
-    return m_transaction_file.ref<T>(seek);
+    return m_transaction_file.ref<T, write>(seek);
 }
 
 graphquery::database::storage::SRef_t<graphquery::database::storage::CTransaction::SHeaderBlock>
@@ -121,7 +121,7 @@ graphquery::database::storage::CTransaction::commit_rm_vertex(const Id_t src) no
     //~ Lose reference to transaction_hdr
     transaction_hdr.~SRef_t();
 
-    auto transaction_ptr = read_transaction<SVertexTransaction>(commit_addr);
+    auto transaction_ptr = read_transaction<SVertexTransaction, true>(commit_addr);
 
     transaction_ptr->type               = ETransactionType::vertex;
     transaction_ptr->commit.optional_id = src;
@@ -163,7 +163,7 @@ graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std
     //~ Lose reference to transaction_hdr
     transaction_hdr.~SRef_t();
 
-    SRef_t<SVertexTransaction> transaction_ptr = read_transaction<SVertexTransaction>(commit_addr);
+    SRef_t<SVertexTransaction, true> transaction_ptr = read_transaction<SVertexTransaction, true>(commit_addr);
 
     transaction_ptr->type               = ETransactionType::vertex;
     transaction_ptr->commit.optional_id = optional_id;
@@ -171,7 +171,7 @@ graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std
     transaction_ptr->commit.property_c  = props.size();
     transaction_ptr->commit.label_c     = labels.size();
 
-    transaction_ptr.~SRef_t<SVertexTransaction>(); //~ Remove reference to transaction file.
+    transaction_ptr.~SRef_t(); //~ Remove reference to transaction file.
 
     uint32_t curr_addr = commit_addr + sizeof(SVertexTransaction);
 

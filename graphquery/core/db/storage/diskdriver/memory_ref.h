@@ -10,9 +10,10 @@
 
 #include "db/utils/atomic_intrinsics.h"
 
+#include <mutex>
 #include <cstdint>
 
-#include "fmt/printf.h"
+#include "db/utils/spinlock.h"
 
 namespace graphquery::database::storage
 {
@@ -21,26 +22,32 @@ namespace graphquery::database::storage
     {
         inline SRef_t() = default;
 
-        inline SRef_t(T * _t, uint32_t * readers, uint8_t * writer): ref(_t), r_c(readers), w_c(writer) {}
+        inline SRef_t(T * _t, uint32_t * readers, std::mutex * writer):
+            ref(_t), r_c(readers), writer_lock(writer)
+        {
+        }
 
         inline ~SRef_t()
         {
-            if (r_c != nullptr && w_c != nullptr)
+            if (r_c != nullptr && writer_lock != nullptr)
             {
                 if constexpr (write)
-                    utils::atomic_fetch_dec(*(&w_c));
+                    writer_lock->unlock();
 
                 if constexpr (!write)
-                    utils::atomic_fetch_dec(*(&r_c));
+                    if (utils::atomic_fetch_pre_dec(&(*r_c)) == 0)
+                        writer_lock->unlock();
+
+                r_c         = nullptr;
+                writer_lock = nullptr;
             }
         }
 
         SRef_t(const SRef_t & cpy)
         {
-            ref = cpy.ref;
-            r_c = cpy.r_c;
-            w_c = cpy.w_c;
-            cpy.~SRef_t();
+            ref         = cpy.ref;
+            r_c         = cpy.r_c;
+            writer_lock = cpy.writer_lock;
             enter();
         }
 
@@ -48,49 +55,40 @@ namespace graphquery::database::storage
         {
             if (this != &cpy)
             {
-                ref = cpy.ref;
-                r_c = cpy.r_c;
-                w_c = cpy.w_c;
-                cpy.~SRef_t();
+                ref         = cpy.ref;
+                r_c         = cpy.r_c;
+                writer_lock = cpy.writer_lock;
                 enter();
             }
             return *this;
         }
 
-        SRef_t(SRef_t && cpy) noexcept: ref(cpy.ref), r_c(cpy.r_c), w_c(cpy.w_c)
+        SRef_t(SRef_t && cpy) noexcept:
+            ref(cpy.ref), r_c(cpy.r_c), writer_lock(cpy.writer_lock)
         {
-            cpy.ref = nullptr;
-            cpy.r_c = nullptr;
-            cpy.w_c = nullptr;
+            cpy.ref         = nullptr;
+            cpy.r_c         = nullptr;
+            cpy.writer_lock = nullptr;
         }
 
         SRef_t & operator=(SRef_t && cpy) noexcept
         {
             if (this != &cpy)
             {
-                ref     = cpy.ref;
-                r_c     = cpy.r_c;
-                w_c     = cpy.w_c;
-                cpy.ref = nullptr;
-                cpy.r_c = nullptr;
-                cpy.w_c = nullptr;
+                ref             = cpy.ref;
+                r_c             = cpy.r_c;
+                writer_lock     = cpy.writer_lock;
+                cpy.ref         = nullptr;
+                cpy.r_c         = nullptr;
+                cpy.writer_lock = nullptr;
             }
             return *this;
         }
 
         inline void enter() const noexcept
         {
-            if constexpr (write)
-            {
-                while (utils::atomic_load(&(*r_c)) != 0 || utils::atomic_load(&(*w_c)) != 0) {}
-                utils::atomic_fetch_inc(&(*w_c));
-            }
-
             if constexpr (!write)
-            {
-                while (utils::atomic_load(&(*w_c)) != 0) {}
-                utils::atomic_fetch_inc(&(*r_c));
-            }
+                utils::atomic_fetch_pre_inc(&(*r_c));
         }
 
         T * operator->() { return ref; }
@@ -103,6 +101,6 @@ namespace graphquery::database::storage
 
         T * ref        = nullptr;
         uint32_t * r_c = nullptr;
-        uint8_t * w_c  = nullptr;
+        std::mutex * writer_lock = nullptr;
     };
 }; // namespace graphquery::database::storage

@@ -90,8 +90,8 @@ namespace graphquery::database::storage
         void set_up();
         void store_transaction_header();
 
-        template<typename T>
-        inline SRef_t<T> read_transaction(uint64_t seek);
+        template<typename T, bool write = false>
+        inline SRef_t<T, write> read_transaction(uint64_t seek);
         inline SRef_t<SHeaderBlock> read_transaction_header();
         inline SRef_t<SRollbackEntry> read_rollback_entry(uint8_t) noexcept;
 

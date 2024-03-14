@@ -13,6 +13,7 @@
 #include "memory_ref.h"
 #include "log/logsystem/logsystem.h"
 #include "db/storage/config.h"
+#include "db/utils/spinlock.h"
 
 #include <filesystem>
 #include <functional>
@@ -32,7 +33,7 @@ namespace graphquery::database::storage
 {
     class CDiskDriver
     {
-      public:
+    public:
         enum class SRet_t : uint16_t
         {
             ERROR = 0xFFFF,
@@ -42,7 +43,7 @@ namespace graphquery::database::storage
         explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
         ~CDiskDriver();
 
-        static constexpr auto PAGE_SIZE  = KB(4);
+        static constexpr auto PAGE_SIZE = KB(4);
         CDiskDriver(CDiskDriver &&)      = delete;
         CDiskDriver(const CDiskDriver &) = delete;
 
@@ -50,17 +51,17 @@ namespace graphquery::database::storage
         inline SRef_t<T, write> ref(const int64_t seek = -1)
         {
             auto reference = std::bit_cast<T *>(ref<write>(seek, sizeof(T)));
-            return SRef_t<T, write>(reference, &m_readers, &m_writer);
+            return SRef_t<T, write>(reference, &m_readers, &m_writer_lock);
         }
 
         template<typename T, bool write = false>
         inline SRef_t<T, write> ref_update()
         {
             auto reference = std::bit_cast<T *>(ref_update<write>(sizeof(T)));
-            return SRef_t<T, write>(reference, &m_readers, &m_writer);
+            return SRef_t<T, write>(reference, &m_readers, &m_writer_lock);
         }
 
-      private:
+    private:
         template<bool write>
         void * ref(int64_t seek, const int64_t size) noexcept
         {
@@ -69,19 +70,14 @@ namespace graphquery::database::storage
             if (this->m_initialised)
             {
                 if (m_fd_info.st_size <= seek + size)
-                    resize((seek + size) * 2);
+                    resize((seek + size) * 4);
 
                 if constexpr (write)
-                {
-                    while (utils::atomic_load(&m_readers) != 0 || utils::atomic_load(&m_writer) != 0) {}
-                    utils::atomic_fetch_inc(&m_writer);
-                }
+                    m_writer_lock.lock();
 
                 if constexpr (!write)
-                {
-                    while (utils::atomic_load(&m_writer) != 0) {}
-                    utils::atomic_fetch_inc(&m_readers);
-                }
+                    if (utils::atomic_fetch_pre_inc(&m_readers) == 1)
+                        m_writer_lock.lock();
 
                 ptr = &this->m_memory_mapped_file[seek];
             }
@@ -95,17 +91,15 @@ namespace graphquery::database::storage
             static char * ptr = nullptr;
             if (this->m_initialised)
             {
+                if (m_fd_info.st_size <= m_seek_offset + size)
+                    resize((m_seek_offset + size) * 4);
+
                 if constexpr (write)
-                {
-                    while (utils::atomic_load(&m_readers) != 0 || utils::atomic_load(&m_writer) != 0) {}
-                    utils::atomic_fetch_inc(&m_writer);
-                }
+                    m_writer_lock.lock();
 
                 if constexpr (!write)
-                {
-                    while (utils::atomic_load(&m_writer) != 0) {}
-                    utils::atomic_fetch_inc(&m_readers);
-                }
+                    if (utils::atomic_fetch_pre_inc(&m_readers) == 1)
+                        m_writer_lock.lock();
 
                 ptr = &this->m_memory_mapped_file[m_seek_offset];
                 m_seek_offset += size;
@@ -114,7 +108,7 @@ namespace graphquery::database::storage
             return ptr;
         }
 
-      public:
+    public:
         void clear_contents() noexcept;
         [[nodiscard]] size_t get_filesize() const noexcept;
         [[maybe_unused]] SRet_t close();
@@ -139,7 +133,7 @@ namespace graphquery::database::storage
 
         static constexpr auto DEFAULT_FILE_SIZE = PAGE_SIZE;
 
-      private:
+    private:
         [[nodiscard]] SRet_t unmap() const noexcept;
         [[maybe_unused]] SRet_t open_fd() noexcept;
         [[nodiscard]] SRet_t close_fd() const noexcept;
@@ -151,7 +145,7 @@ namespace graphquery::database::storage
 
         uint8_t m_writer;
         uint32_t m_readers;
-        std::mutex m_resize_lock;
+        std::mutex m_writer_lock;
         static std::shared_ptr<logger::CLogSystem> m_log_system;
 
         int m_file_mode      = {}; //~ Set file mode of the descriptor when opened.
