@@ -29,11 +29,12 @@ target_compile_options(
         -Wshadow
         -Wextra
         -pthread
-        -O3
+        -O0
         -ffast-math
         -ffinite-math-only
         -funroll-loops               # Unroll loops for better performance
         -ftree-vectorize             # Enable vectorization
+        -g
 )
 
 target_link_libraries(${EXECUTABLE_NAME}

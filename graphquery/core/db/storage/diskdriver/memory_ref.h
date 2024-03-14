@@ -12,52 +12,85 @@
 
 #include <cstdint>
 
+#include "fmt/printf.h"
+
 namespace graphquery::database::storage
 {
-    template<typename T>
+    template<typename T, bool write = false>
     struct SRef_t
     {
-        inline SRef_t(): ref(nullptr), counter(nullptr) {};
-        inline SRef_t(T * _t, uint32_t * _counter): ref(_t), counter(_counter) { utils::atomic_fetch_inc(&(*counter)); }
+        inline SRef_t() = default;
+
+        inline SRef_t(T * _t, uint32_t * readers, uint8_t * writer): ref(_t), r_c(readers), w_c(writer) {}
 
         inline ~SRef_t()
         {
-            if (counter != nullptr)
-                *counter -= *counter == 0 ? 0 : 1;
+            if (r_c != nullptr && w_c != nullptr)
+            {
+                if constexpr (write)
+                    utils::atomic_fetch_dec(*(&w_c));
+
+                if constexpr (!write)
+                    utils::atomic_fetch_dec(*(&r_c));
+            }
         }
 
         SRef_t(const SRef_t & cpy)
         {
-            ref     = cpy.ref;
-            counter = cpy.counter;
-            utils::atomic_fetch_inc(&(*counter));
+            ref = cpy.ref;
+            r_c = cpy.r_c;
+            w_c = cpy.w_c;
+            cpy.~SRef_t();
+            enter();
         }
 
         SRef_t & operator=(const SRef_t & cpy)
         {
-            ref     = cpy.ref;
-            counter = cpy.counter;
-            utils::atomic_fetch_inc(&(*counter));
+            if (this != &cpy)
+            {
+                ref = cpy.ref;
+                r_c = cpy.r_c;
+                w_c = cpy.w_c;
+                cpy.~SRef_t();
+                enter();
+            }
             return *this;
         }
 
-        SRef_t(SRef_t && cpy) noexcept
+        SRef_t(SRef_t && cpy) noexcept: ref(cpy.ref), r_c(cpy.r_c), w_c(cpy.w_c)
         {
-            ref         = cpy.ref;
-            counter     = cpy.counter;
-            utils::atomic_fetch_dec(&(*counter));
-            cpy.ref     = nullptr;
-            cpy.counter = nullptr;
-        };
+            cpy.ref = nullptr;
+            cpy.r_c = nullptr;
+            cpy.w_c = nullptr;
+        }
 
         SRef_t & operator=(SRef_t && cpy) noexcept
         {
-            ref         = cpy.ref;
-            counter     = cpy.counter;
-            utils::atomic_fetch_dec(&(*counter));
-            cpy.ref     = nullptr;
-            cpy.counter = nullptr;
+            if (this != &cpy)
+            {
+                ref     = cpy.ref;
+                r_c     = cpy.r_c;
+                w_c     = cpy.w_c;
+                cpy.ref = nullptr;
+                cpy.r_c = nullptr;
+                cpy.w_c = nullptr;
+            }
             return *this;
+        }
+
+        inline void enter() const noexcept
+        {
+            if constexpr (write)
+            {
+                while (utils::atomic_load(&(*r_c)) != 0 || utils::atomic_load(&(*w_c)) != 0) {}
+                utils::atomic_fetch_inc(&(*w_c));
+            }
+
+            if constexpr (!write)
+            {
+                while (utils::atomic_load(&(*w_c)) != 0) {}
+                utils::atomic_fetch_inc(&(*r_c));
+            }
         }
 
         T * operator->() { return ref; }
@@ -68,7 +101,8 @@ namespace graphquery::database::storage
         T * operator++() { return ++ref; }
         T operator*() { return *ref; }
 
-        T * ref            = nullptr;
-        uint32_t * counter = nullptr;
+        T * ref        = nullptr;
+        uint32_t * r_c = nullptr;
+        uint8_t * w_c  = nullptr;
     };
 }; // namespace graphquery::database::storage

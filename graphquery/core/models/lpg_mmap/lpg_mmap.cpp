@@ -170,7 +170,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_graph_metadata() noexc
 bool
 graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const Id_t id, const std::unordered_set<uint16_t> & label_ids, const std::vector<SProperty_t> & props) noexcept
 {
-    SRef_t<SVertexDataBlock> data_block_ptr = m_vertices_file.attain_data_block();
+    auto data_block_ptr                     = m_vertices_file.attain_data_block();
     const uint32_t entry_offset             = data_block_ptr->idx;
 
     if (!store_index_entry(id, label_ids, entry_offset))
@@ -407,6 +407,12 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_labels(const std:
 graphquery::database::storage::CMemoryModelMMAPLPG::EActionState_t
 graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const Id_t id, const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & props) noexcept
 {
+    if (id == 254)
+    {
+        fmt::print("Stop!\n");
+        fmt::print("Stop!\n");
+        std::unordered_set<uint16_t> label_ids = get_vertex_labels(labels, true);
+    }
     std::unordered_set<uint16_t> label_ids = get_vertex_labels(labels, true);
 
     if (get_vertex_by_id(id).has_value())

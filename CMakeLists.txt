@@ -21,6 +21,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   set(EXECUTABLE_NAME graph-query)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+  # Check if debug mode is enabled
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # Add -g flag for debug mode
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+  endif()
   
 # add submodules
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glew)

@@ -27,10 +27,12 @@ target_compile_options(
         -Wextra
         -pthread
         -fPIC
-        -O3
+        -O0
         -ffast-math
         -ffinite-math-only
-        -pthread)
+        -pthread
+        -g
+)
 
 target_link_libraries(
         lpg_mmap

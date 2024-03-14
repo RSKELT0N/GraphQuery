@@ -10,7 +10,7 @@ target_compile_options(
         bfs
         PUBLIC
         -fPIC
-        -O3
+        -O0
         -ffast-math
         -ffinite-math-only
         -pthread)

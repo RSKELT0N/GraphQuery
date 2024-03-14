@@ -22,6 +22,7 @@
 #include <condition_variable>
 #include <unistd.h>
 #include <bit>
+#include <cassert>
 
 #define KB(x) ((size_t) (x * (1 << 10)))
 #define MB(x) ((size_t) (x * (1 << 20)))
@@ -38,27 +39,82 @@ namespace graphquery::database::storage
             VALID = 0X0000
         };
 
-        template<typename T>
-        inline SRef_t<T> ref(const int64_t seek = -1)
-        {
-            auto reference = std::bit_cast<T *>(ref(seek, sizeof(T)));
-            return SRef_t<T>(reference, &m_ref_counter);
-        }
-
-        template<typename T>
-        inline SRef_t<T> ref_update()
-        {
-            auto reference = std::bit_cast<T *>(ref_update(sizeof(T)));
-            return SRef_t<T>(reference, &m_ref_counter);
-        }
-
         explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
         ~CDiskDriver();
 
-        static constexpr auto PAGE_SIZE = KB(4);
+        static constexpr auto PAGE_SIZE  = KB(4);
         CDiskDriver(CDiskDriver &&)      = delete;
         CDiskDriver(const CDiskDriver &) = delete;
 
+        template<typename T, bool write = false>
+        inline SRef_t<T, write> ref(const int64_t seek = -1)
+        {
+            auto reference = std::bit_cast<T *>(ref<write>(seek, sizeof(T)));
+            return SRef_t<T, write>(reference, &m_readers, &m_writer);
+        }
+
+        template<typename T, bool write = false>
+        inline SRef_t<T, write> ref_update()
+        {
+            auto reference = std::bit_cast<T *>(ref_update<write>(sizeof(T)));
+            return SRef_t<T, write>(reference, &m_readers, &m_writer);
+        }
+
+      private:
+        template<bool write>
+        void * ref(int64_t seek, const int64_t size) noexcept
+        {
+            static char * ptr = nullptr;
+            seek              = seek == -1 ? m_seek_offset : seek;
+            if (this->m_initialised)
+            {
+                if (m_fd_info.st_size <= seek + size)
+                    resize((seek + size) * 2);
+
+                if constexpr (write)
+                {
+                    while (utils::atomic_load(&m_readers) != 0 || utils::atomic_load(&m_writer) != 0) {}
+                    utils::atomic_fetch_inc(&m_writer);
+                }
+
+                if constexpr (!write)
+                {
+                    while (utils::atomic_load(&m_writer) != 0) {}
+                    utils::atomic_fetch_inc(&m_readers);
+                }
+
+                ptr = &this->m_memory_mapped_file[seek];
+            }
+
+            return ptr;
+        }
+
+        template<bool write>
+        void * ref_update(const int64_t size) noexcept
+        {
+            static char * ptr = nullptr;
+            if (this->m_initialised)
+            {
+                if constexpr (write)
+                {
+                    while (utils::atomic_load(&m_readers) != 0 || utils::atomic_load(&m_writer) != 0) {}
+                    utils::atomic_fetch_inc(&m_writer);
+                }
+
+                if constexpr (!write)
+                {
+                    while (utils::atomic_load(&m_writer) != 0) {}
+                    utils::atomic_fetch_inc(&m_readers);
+                }
+
+                ptr = &this->m_memory_mapped_file[m_seek_offset];
+                m_seek_offset += size;
+            }
+
+            return ptr;
+        }
+
+      public:
         void clear_contents() noexcept;
         [[nodiscard]] size_t get_filesize() const noexcept;
         [[maybe_unused]] SRet_t close();
@@ -84,8 +140,6 @@ namespace graphquery::database::storage
         static constexpr auto DEFAULT_FILE_SIZE = PAGE_SIZE;
 
       private:
-        [[maybe_unused]] void * ref(int64_t seek, int64_t size) noexcept;
-        [[maybe_unused]] void * ref_update(int64_t size) noexcept;
         [[nodiscard]] SRet_t unmap() const noexcept;
         [[maybe_unused]] SRet_t open_fd() noexcept;
         [[nodiscard]] SRet_t close_fd() const noexcept;
@@ -95,8 +149,8 @@ namespace graphquery::database::storage
 
         inline static int64_t resize_to_pagesize(int64_t size) noexcept;
 
-        uint8_t m_resizing;
-        uint32_t m_ref_counter;
+        uint8_t m_writer;
+        uint32_t m_readers;
         std::mutex m_resize_lock;
         static std::shared_ptr<logger::CLogSystem> m_log_system;
 
