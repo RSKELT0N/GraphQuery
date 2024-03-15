@@ -70,7 +70,7 @@ namespace graphquery::database::storage
             if (this->m_initialised)
             {
                 if (m_fd_info.st_size <= seek + size)
-                    resize((seek + size) * 4);
+                    resize((seek + size) * 2);
 
                 if constexpr (write)
                     m_writer_lock.lock();
@@ -92,7 +92,7 @@ namespace graphquery::database::storage
             if (this->m_initialised)
             {
                 if (m_fd_info.st_size <= m_seek_offset + size)
-                    resize((m_seek_offset + size) * 4);
+                    resize((m_seek_offset + size) * 2);
 
                 if constexpr (write)
                     m_writer_lock.lock();

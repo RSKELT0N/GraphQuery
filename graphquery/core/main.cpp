@@ -17,7 +17,7 @@ main([[maybe_unused]] const int argc, [[maybe_unused]] char * argv[])
         graphquery::database::_db_storage->open_graph(GRAPH_NAME);
     else
         graphquery::database::_db_storage->create_graph(GRAPH_NAME, "lpg_mmap");
-        
+
     graphquery::database::_interface->render();
     return EXIT_SUCCESS;
 }
