@@ -9,7 +9,7 @@
 
 namespace
 {
-    std::vector<std::map<std::string, std::string>>
+    graphquery::database::query::CQueryEngine::ResultType
     _interaction_complex_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id, const int64_t _max_date) noexcept
     {
         std::unordered_set<graphquery::database::storage::Id_t> _friends;
@@ -73,10 +73,10 @@ namespace
             prop_i++;
         }
 
-        return properties_map;
+        return {res, properties_map};
     }
 
-    std::vector<std::map<std::string, std::string>>
+    graphquery::database::query::CQueryEngine::ResultType
     _interaction_complex_8(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id) noexcept
     {
         //~ MATCH (start:Person {id: $personId})<-[:HAS_CREATOR]-(:Message)
@@ -126,7 +126,7 @@ namespace
             prop_i++;
         }
 
-        return properties_map;
+        return {comment_creators, properties_map};
     }
 
     void
@@ -165,7 +165,7 @@ namespace
         graph->rm_edge(_src_person_id, _dst_person_id, "KNOWS");
     }
 
-    std::vector<std::map<std::string, std::string>>
+    graphquery::database::query::CQueryEngine::ResultType
     _interaction_short_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id) noexcept
     {
         constexpr size_t message_limit = 10;
@@ -219,10 +219,10 @@ namespace
             prop_i++;
         }
 
-        return properties_map;
+        return {posts, properties_map};
     }
 
-    std::vector<std::map<std::string, std::string>>
+    graphquery::database::query::CQueryEngine::ResultType
     _interaction_short_7(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _message_id) noexcept
     {
         //~ MATCH (m:Message {id: $messageId })<-[:REPLY_OF]-(c:Comment)
@@ -279,7 +279,7 @@ namespace
             prop_i++;
         }
 
-        return properties_map;
+        return {creator_of_comments, properties_map};
     }
 } // namespace
 

@@ -34,7 +34,13 @@ namespace graphquery::database::query
             InteractionShort7 = 7,
         };
 
-        typedef std::vector<std::map<std::string, std::string>> ResultType;
+        struct SResult_t
+        {
+            std::vector<storage::ILPGModel::SEdge_t> edges;
+            std::vector<std::map<std::string, std::string>> properties;
+        };
+
+        typedef SResult_t ResultType;
         explicit CQueryEngine(std::shared_ptr<storage::ILPGModel *> graph_model);
 
         ~CQueryEngine()                                    = default;

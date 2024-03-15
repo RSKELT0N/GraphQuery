@@ -30,7 +30,7 @@ namespace graphquery::database::analytic
         storage::Id_t n;
         uint32_t num_edges;
         std::vector<uint32_t> indegree;
-        std::unique_ptr<std::vector<std::vector<storage::Id_t>>> m_graph;
+        std::vector<std::vector<storage::Id_t>> m_graph;
     };
 
     inline
@@ -66,13 +66,12 @@ namespace graphquery::database::analytic
     inline void
     CLightWeightGraphModel::build_graph(const std::vector<storage::ILPGModel::SEdge_t> & edges) noexcept
     {
-        m_graph = std::make_unique<std::vector<std::vector<storage::Id_t>>>();
-        m_graph->resize(n);
+        m_graph.resize(n);
         indegree.resize(n);
 
         for(const storage::ILPGModel::SEdge_t & edge : edges)
         {
-            (*m_graph)[edge.src].emplace_back(edge.dst);
+            m_graph[edge.src].emplace_back(edge.dst);
             indegree[edge.dst]++;
         }
 
@@ -94,7 +93,7 @@ namespace graphquery::database::analytic
     inline uint32_t
     CLightWeightGraphModel::out_degree(const storage::Id_t id) noexcept
     {
-        return (*m_graph)[id].size();
+        return m_graph[id].size();
     }
 
     inline uint32_t
@@ -107,7 +106,7 @@ namespace graphquery::database::analytic
     CLightWeightGraphModel::calc_outdegree(uint32_t out[]) noexcept
     {
         for(storage::Id_t i = 0; i < n; i++)
-            out[i] = (*m_graph)[i].size();
+            out[i] = m_graph[i].size();
     }
 
     inline void
@@ -134,14 +133,14 @@ namespace graphquery::database::analytic
     CLightWeightGraphModel::edgemap(const std::unique_ptr<IRelax> & relax)
     {
         for(storage::Id_t src = 0; src < n; src++)
-            for(const auto dst : (*m_graph)[src])
+            for(const auto dst : m_graph[src])
                 relax->relax(src, dst);
     }
 
     inline void
     CLightWeightGraphModel::src_edgemap(const storage::Id_t _src, const std::function<void(int64_t src, int64_t dst)> & func)
     {
-        for(const auto dst : (*m_graph)[_src])
+        for(const auto dst : m_graph[_src])
             func(_src, dst);
     }
 
@@ -152,7 +151,7 @@ namespace graphquery::database::analytic
         inv_graph->resize(n);
 
         for(storage::Id_t src = 0; src < n; src++)
-            for(storage::Id_t dst = 0; dst < (*m_graph)[src].size(); dst++)
+            for(storage::Id_t dst = 0; dst < m_graph[src].size(); dst++)
                 (*inv_graph)[dst].emplace_back(src);
 
         return inv_graph;

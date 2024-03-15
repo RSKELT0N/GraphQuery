@@ -23,7 +23,8 @@ CFrameDBQuery(const bool & is_db_loaded,
               std::shared_ptr<database::storage::ILPGModel *> graph,
               std::shared_ptr<std::vector<database::utils::SResult<database::query::CQueryEngine::ResultType>>> result_table,
               const std::unordered_map<std::string, std::shared_ptr<database::analytic::IGraphAlgorithm *>> & algorithms):
-    m_algorithm_choice(0), m_result_has_changed(false), m_result_select(-1), m_is_excute_query_open(false), m_predefined_choice(0), m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded),
+    m_algorithm_choice(0), m_result_has_changed(false), m_result_select(-1), m_is_excute_query_open(false), m_predefined_choice(0), m_is_db_loaded(is_db_loaded),
+    m_is_graph_loaded(is_graph_loaded),
     m_graph(std::move(graph)), m_results(std::move(result_table)), m_algorithms(algorithms)
 {
 }
@@ -43,6 +44,7 @@ graphquery::interact::CFrameDBQuery::render_frame() noexcept
                 render_result_table();
                 render_footer();
             }
+
             ImGui::EndChild();
             ImGui::SameLine();
             if (ImGui::BeginChild("#db_query_result"))
@@ -247,14 +249,12 @@ void
 graphquery::interact::CFrameDBQuery::render_result_table() noexcept
 {
     ImGui::NewLine();
-    if (ImGui::BeginChild("#query_result_table"))
-    {
         ImGui::SeparatorText("Result table");
         ImGui::NewLine();
         static constexpr uint8_t columns       = 3;
         static constexpr ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable;
 
-        if (ImGui::BeginTable("#result_table", columns, flags, {0, ImGui::GetWindowHeight() / 2}))
+        if (ImGui::BeginTable("#result_table", columns, flags, {0, ImGui::GetWindowHeight() / 3}))
         {
             ImGui::TableSetupColumn("name");
             ImGui::TableSetupColumn("state");
@@ -284,15 +284,12 @@ graphquery::interact::CFrameDBQuery::render_result_table() noexcept
             ImGui::EndTable();
         }
         ImGui::NewLine();
-        render_clear_selection();
-    }
-    ImGui::EndChild();
 }
 
 void
 graphquery::interact::CFrameDBQuery::render_footer() noexcept
 {
-    if (ImGui::BeginChild("##clear_selection"))
+    if (ImGui::BeginChild("##clear_selection", {ImGui::GetWindowWidth() / 2, 0}))
     {
         render_clear_selection();
     }
@@ -323,7 +320,7 @@ graphquery::interact::CFrameDBQuery::render_result() noexcept
 
         const auto result        = m_results->at(m_result_select);
         const auto & result_name = result.get_name();
-        auto result_out          = result.get_resultant();
+        auto result_out          = result.get_resultant().properties;
 
         m_current_result << result_name << "\n";
         m_current_result << fmt::format("Query returned ({}) item(s)\n\n", result_out.size()).c_str();
@@ -357,22 +354,20 @@ graphquery::interact::CFrameDBQuery::render_clear_selection() noexcept
 void
 graphquery::interact::CFrameDBQuery::render_analytic_after_querying() noexcept
 {
-    ImGui::SeparatorText("Analytic Algorithms");
-    ImGui::Dummy(ImVec2(0.0f, 20.0f));
+    if(m_result_select == -1)
+        return;
+
     std::string algorithms = {};
 
-    ImGui::TextUnformatted("Execute: ");
-    ImGui::SameLine();
     std::for_each(m_algorithms.begin(), m_algorithms.end(), [&algorithms](const auto & algorithm) -> void { algorithms += fmt::format("{}{}", algorithm.first, '\0'); });
     algorithms += fmt::format("\0");
 
     ImGui::Combo("##algorithms", &m_algorithm_choice, algorithms.c_str());
 
-    ImGui::Dummy(ImVec2(0.0f, 20.0f));
-
+    ImGui::SameLine();
     if (ImGui::Button("Run"))
     {
         const auto algorithm = std::next(m_algorithms.begin(), m_algorithm_choice);
-        database::_db_analytic->process_algorithm(algorithm->first);
+        database::_db_analytic->process_algorithm(m_results->at(m_result_select).get_resultant().edges, algorithm->first);
     }
 }
