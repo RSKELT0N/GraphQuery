@@ -59,22 +59,29 @@ namespace graphquery::database
         setup_seg_handler();
         const EStatus status = Initialise_Logging();
 
-        enable_sync();
+        _enable_sync_();
         std::thread(&heartbeat).detach();
         return status;
     }
 
     void
-    enable_sync() noexcept
+    _enable_sync_() noexcept
     {
         _sync = true;
         _log_system->info("Synchronisation has been enabled");
     }
 
     void
-    disable_sync() noexcept
+    _disable_sync_() noexcept
     {
         _sync = false;
         _log_system->info("Synchronisation has been disabled");
     }
+
+    const bool &
+    _get_sync_state_() noexcept
+    {
+        return _sync;
+    }
+
 } // namespace graphquery::database

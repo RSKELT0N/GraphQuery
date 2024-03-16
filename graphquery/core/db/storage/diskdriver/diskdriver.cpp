@@ -21,7 +21,6 @@ CDiskDriver(const int file_mode, const int map_mode_prot, const int map_mode_fla
     this->m_file_mode          = file_mode;
     this->m_map_mode_prot      = map_mode_prot;
     this->m_map_mode_flags     = map_mode_flags;
-    this->m_readers            = 0;
     this->m_writer             = 0;
     this->m_memory_mapped_file = nullptr;
 }

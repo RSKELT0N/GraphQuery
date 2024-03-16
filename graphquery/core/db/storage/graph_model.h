@@ -26,8 +26,8 @@ namespace graphquery::database::storage
     class ILPGModel : public IMemoryModel
     {
     public:
-        explicit ILPGModel(const std::shared_ptr<logger::CLogSystem> & log_system):
-            m_log_system(log_system)
+        explicit ILPGModel(const std::shared_ptr<logger::CLogSystem> & log_system, const bool & sync_state_):
+            _sync_state_(sync_state_), m_log_system(log_system)
         {
         }
 
@@ -172,11 +172,12 @@ namespace graphquery::database::storage
         virtual void add_edge(Id_t src, Id_t dst, std::string_view edge_label, const std::vector<SProperty_t> & prop, bool undirected = false) = 0;
 
     protected:
+        const bool & _sync_state_;
         std::shared_ptr<graphquery::logger::CLogSystem> m_log_system;
     };
 } // namespace graphquery::database::storage
 
 extern "C"
 {
-void create_graph_model(graphquery::database::storage::ILPGModel ** graph_model, const std::shared_ptr<graphquery::logger::CLogSystem> & log_system);
+void create_graph_model(graphquery::database::storage::ILPGModel ** graph_model, const std::shared_ptr<graphquery::logger::CLogSystem> & log_system, const bool & _sync_state_);
 }

@@ -112,7 +112,7 @@ namespace graphquery::database::storage
         };
 
       public:
-        explicit CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> &);
+        explicit CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> &, const bool & _sync_state_);
         ~CMemoryModelMMAPLPG() override;
 
         void close() noexcept override;

@@ -2,10 +2,8 @@
 
 #include "lpg_mmap.h"
 
-#include <sys/mman.h>
-
 graphquery::database::storage::CTransaction::
-CTransaction(const std::filesystem::path & local_path, ILPGModel * lpg, const std::shared_ptr<logger::CLogSystem> & logsys): m_lpg(lpg), m_log_system(logsys)
+CTransaction(const std::filesystem::path & local_path, ILPGModel * lpg, const std::shared_ptr<logger::CLogSystem> & logsys, const bool & sync_state): m_lpg(lpg), _sync_state_(sync_state), m_log_system(logsys)
 {
     m_transaction_file.set_path(local_path);
 }
@@ -112,6 +110,13 @@ graphquery::database::storage::CTransaction::read_rollback_entry(const uint8_t i
 }
 
 void
+graphquery::database::storage::CTransaction::storage_persist() const noexcept
+{
+    if(_sync_state_)
+        (void)m_transaction_file.sync();
+}
+
+void
 graphquery::database::storage::CTransaction::commit_rm_vertex(const Id_t src) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
@@ -128,6 +133,7 @@ graphquery::database::storage::CTransaction::commit_rm_vertex(const Id_t src) no
     transaction_ptr->commit.remove      = 1;
     transaction_ptr->commit.property_c  = 0;
     transaction_ptr->commit.label_c     = 0;
+    storage_persist();
 }
 
 void
@@ -148,6 +154,7 @@ graphquery::database::storage::CTransaction::commit_rm_edge(const Id_t src, cons
     transaction_ptr->commit.remove     = 1;
     transaction_ptr->commit.property_c = 0;
     strcpy(&transaction_ptr->commit.edge_label[0], edge_label.data());
+    storage_persist();
 }
 
 void
@@ -189,6 +196,7 @@ graphquery::database::storage::CTransaction::commit_vertex(const std::vector<std
         strcpy(&prop->value[0], value);
         curr_addr += sizeof(ILPGModel::SProperty_t);
     }
+    storage_persist();
 }
 
 void
@@ -226,6 +234,7 @@ graphquery::database::storage::CTransaction::commit_edge(const Id_t src,
         strcpy(&prop->value[0], value);
         curr_addr += sizeof(ILPGModel::SProperty_t);
     }
+    storage_persist();
 }
 
 std::vector<std::string_view>

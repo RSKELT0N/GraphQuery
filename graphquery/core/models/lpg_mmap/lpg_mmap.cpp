@@ -7,8 +7,8 @@
 #include <optional>
 #include <vector>
 
-graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> & log_system):
-    ILPGModel(log_system), m_syncing(0), m_transaction_ref_c(0)
+graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> & log_system, const bool & sync_state_):
+    ILPGModel(log_system, sync_state_), m_syncing(0), m_transaction_ref_c(0)
 {
     m_label_vertex = std::vector<std::vector<Id_t>>();
     m_unq_lock     = std::unique_lock(m_sync_lock);
@@ -140,7 +140,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::setup_files(const std::files
     //~ Set path for master file and initialise transactions
     m_master_file.set_path(path);
     m_master_file.open(MASTER_FILE_NAME);
-    m_transactions = std::make_shared<CTransaction>(path, this, m_log_system);
+    m_transactions = std::make_shared<CTransaction>(path, this, m_log_system, _sync_state_);
 
     //~ Open mapping to model files
     m_index_file.open(path, INDEX_FILE_NAME, initialise);
@@ -1762,9 +1762,9 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_num_edge_labels()
 extern "C"
 {
 LIB_EXPORT void
-create_graph_model(graphquery::database::storage::ILPGModel ** graph_model, const std::shared_ptr<graphquery::logger::CLogSystem> & log_system)
+create_graph_model(graphquery::database::storage::ILPGModel ** graph_model, const std::shared_ptr<graphquery::logger::CLogSystem> & log_system, const bool & _sync_state_)
 {
     assert(log_system != nullptr);
-    *graph_model = new graphquery::database::storage::CMemoryModelMMAPLPG(log_system);
+    *graph_model = new graphquery::database::storage::CMemoryModelMMAPLPG(log_system, _sync_state_);
 }
 }

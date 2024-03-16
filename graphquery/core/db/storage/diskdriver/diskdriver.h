@@ -13,7 +13,6 @@
 #include "memory_ref.h"
 #include "log/logsystem/logsystem.h"
 #include "db/storage/config.h"
-#include "db/utils/spinlock.h"
 
 #include <filesystem>
 #include <functional>
@@ -24,6 +23,7 @@
 #include <unistd.h>
 #include <bit>
 #include <cassert>
+#include <shared_mutex>
 
 #define KB(x) ((size_t) (x * (1 << 10)))
 #define MB(x) ((size_t) (x * (1 << 20)))
@@ -51,14 +51,14 @@ namespace graphquery::database::storage
         inline SRef_t<T, write> ref(const int64_t seek = -1)
         {
             auto reference = std::bit_cast<T *>(ref<write>(seek, sizeof(T)));
-            return SRef_t<T, write>(reference, &m_readers, &m_writer_lock);
+            return SRef_t<T, write>(reference, &m_writer_lock);
         }
 
         template<typename T, bool write = false>
         inline SRef_t<T, write> ref_update()
         {
             auto reference = std::bit_cast<T *>(ref_update<write>(sizeof(T)));
-            return SRef_t<T, write>(reference, &m_readers, &m_writer_lock);
+            return SRef_t<T, write>(reference, &m_writer_lock);
         }
 
     private:
@@ -76,8 +76,7 @@ namespace graphquery::database::storage
                     m_writer_lock.lock();
 
                 if constexpr (!write)
-                    if (utils::atomic_fetch_pre_inc(&m_readers) == 1)
-                        m_writer_lock.lock();
+                    m_writer_lock.lock_shared();
 
                 ptr = &this->m_memory_mapped_file[seek];
             }
@@ -98,8 +97,7 @@ namespace graphquery::database::storage
                     m_writer_lock.lock();
 
                 if constexpr (!write)
-                    if (utils::atomic_fetch_pre_inc(&m_readers) == 1)
-                        m_writer_lock.lock();
+                    m_writer_lock.lock_shared();
 
                 ptr = &this->m_memory_mapped_file[m_seek_offset];
                 m_seek_offset += size;
@@ -144,8 +142,7 @@ namespace graphquery::database::storage
         inline static int64_t resize_to_pagesize(int64_t size) noexcept;
 
         uint8_t m_writer;
-        uint32_t m_readers;
-        std::mutex m_writer_lock;
+        std::shared_mutex m_writer_lock;
         static std::shared_ptr<logger::CLogSystem> m_log_system;
 
         int m_file_mode      = {}; //~ Set file mode of the descriptor when opened.
