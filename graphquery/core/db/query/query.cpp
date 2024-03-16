@@ -33,7 +33,6 @@ namespace
                     message_creators = graph->get_edges("Message", "hasCreator");
                 }
             }
-
             res.reserve(message_creators.size());
 #pragma omp for reduction(merge : res)
             for (size_t i = 0; i < message_creators.size(); i++)
@@ -42,14 +41,26 @@ namespace
                     res.emplace_back(message_creators[i]);
             }
         }
+
         res.shrink_to_fit();
 
         //~ Generating Map of properties
         std::vector<std::map<std::string, std::string>> properties_map;
-        properties_map.reserve(res.size());
+        properties_map
+            .
+            reserve(res
+                .
+                size()
+                );
 
         uint32_t prop_i = 0;
-        for (const graphquery::database::storage::ILPGModel::SEdge_t & edge : res)
+        for
+        (
+
+            const graphquery::database::storage::ILPGModel::SEdge_t & edge :
+            res
+
+        )
         {
             auto message_props   = graph->get_properties_by_id_map(edge.src);
             auto friend_props    = graph->get_properties_by_id_map(edge.dst);

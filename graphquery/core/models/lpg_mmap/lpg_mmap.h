@@ -112,7 +112,7 @@ namespace graphquery::database::storage
         };
 
       public:
-        explicit CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> &);
+        explicit CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> &, const bool & _sync_state_);
         ~CMemoryModelMMAPLPG() override;
 
         void close() noexcept override;
@@ -198,8 +198,9 @@ namespace graphquery::database::storage
         [[nodiscard]] uint32_t store_edge_entry(uint32_t next_ref, Id_t src, Id_t dst, uint16_t edge_label_id, const std::vector<SProperty_t> & props) noexcept;
 
         inline SRef_t<SGraphMetaData_t> read_graph_metadata() noexcept;
-        inline SRef_t<SLabel_t> read_vertex_label_entry(uint32_t offset) noexcept;
-        inline SRef_t<SLabel_t> read_edge_label_entry(uint32_t offset) noexcept;
+
+        template<bool write = false> inline SRef_t<SLabel_t, write> read_vertex_label_entry(uint32_t offset) noexcept;
+        template<bool write = false> inline SRef_t<SLabel_t, write> read_edge_label_entry(uint32_t offset) noexcept;
 
         [[nodiscard]] EActionState_t rm_vertex_entry(Id_t src) noexcept;
         [[nodiscard]] EActionState_t rm_edge_entry(Id_t src, Id_t dst) noexcept;

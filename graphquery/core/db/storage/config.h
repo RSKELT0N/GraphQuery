@@ -24,6 +24,14 @@
 
 namespace graphquery::database::storage
 {
+    /**
+    * Global strict lock ordering
+    *
+    * index
+    *
+    * label_ref
+    * property
+    */
     typedef uint32_t Id_t;
     typedef std::make_signed<Id_t> uId_t;
 

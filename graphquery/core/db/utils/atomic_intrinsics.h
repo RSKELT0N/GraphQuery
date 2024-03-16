@@ -12,7 +12,6 @@
 
 namespace graphquery::database::utils
 {
-
 #if defined(__GNUC__) || defined(__clang__)
 #elif defined(_MSC_VER)
 #include <intrin.h>
@@ -86,6 +85,16 @@ namespace graphquery::database::utils
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_compare_exchange(variable, reinterpret_cast<T *>(&expected), reinterpret_cast<T *>(&new_value), false, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED);
+#elif defined(_MSC_VER)
+        return _InterlockedCompareExchange(reinterpret_cast<volatile LONG *>(variable), new_value, expected);
+#endif
+    }
+
+    template<typename T>
+    inline bool atomic_fetch_weak_cas(volatile T * variable, T & expected, T & new_value)
+    {
+#if defined(__GNUC__) || defined(__clang__)
+        return __atomic_compare_exchange(variable, reinterpret_cast<T *>(&expected), reinterpret_cast<T *>(&new_value), true, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);
 #elif defined(_MSC_VER)
         return _InterlockedCompareExchange(reinterpret_cast<volatile LONG *>(variable), new_value, expected);
 #endif
@@ -210,5 +219,4 @@ namespace graphquery::database::utils
     }
 
 #pragma GCC diagnostic pop
-
 } // namespace graphquery::database::utils

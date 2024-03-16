@@ -74,10 +74,10 @@ namespace graphquery::database::storage
         static const auto initial_static_path  = m_dataset_path / "initial_snapshot" / "static";
         static const auto initial_dynamic_path = m_dataset_path / "initial_snapshot" / "dynamic";
 
-        disable_sync();
+        _disable_sync_();
         load_dataset_segment(initial_static_path);
         load_dataset_segment(initial_dynamic_path);
-        enable_sync();
+        _enable_sync_();
     }
 
     inline void CDatasetLDBC::load_vertex_file([[maybe_unused]] const std::string_view file_name, [[maybe_unused]] csv::CSVReader & fd) const noexcept

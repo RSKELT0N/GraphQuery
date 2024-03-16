@@ -65,7 +65,7 @@ namespace graphquery::database::storage
         };
 
       public:
-        explicit CTransaction(const std::filesystem::path & local_path, ILPGModel * lpg, const std::shared_ptr<logger::CLogSystem> &);
+        explicit CTransaction(const std::filesystem::path & local_path, ILPGModel * lpg, const std::shared_ptr<logger::CLogSystem> &, const bool & sync_state_);
         ~CTransaction() = default;
 
         void close() noexcept;
@@ -90,16 +90,18 @@ namespace graphquery::database::storage
         void set_up();
         void store_transaction_header();
 
-        template<typename T>
-        inline SRef_t<T> read_transaction(uint64_t seek);
+        template<typename T, bool write = false>
+        inline SRef_t<T, write> read_transaction(uint64_t seek);
         inline SRef_t<SHeaderBlock> read_transaction_header();
         inline SRef_t<SRollbackEntry> read_rollback_entry(uint8_t) noexcept;
 
+        inline void storage_persist() const noexcept;
         static inline std::vector<std::string_view> slabel_to_strview_vector(const std::vector<ILPGModel::SLabel> & vec) noexcept;
         void process_edge_transaction(SRef_t<SEdgeTransaction> &, const std::vector<ILPGModel::SProperty_t> & props) const noexcept;
         void process_vertex_transaction(SRef_t<SVertexTransaction> &, const std::vector<ILPGModel::SLabel> & src_labels, const std::vector<ILPGModel::SProperty_t> & props) const noexcept;
 
         ILPGModel * m_lpg;
+        const bool & _sync_state_;
         CDiskDriver m_transaction_file;
         std::shared_ptr<logger::CLogSystem> m_log_system;
         static constexpr const char * TRANSACTION_FILE_NAME    = "transactions";

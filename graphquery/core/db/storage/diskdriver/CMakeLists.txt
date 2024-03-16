@@ -16,7 +16,8 @@ target_compile_options(
         -O3
         -ffast-math
         -ffinite-math-only
-        -pthread)
+        -pthread
+)
 
 target_sources(
         diskdriver
