@@ -22,8 +22,7 @@ CDiskDriver(const int file_mode, const int map_mode_prot, const int map_mode_fla
     this->m_map_mode_prot      = map_mode_prot;
     this->m_map_mode_flags     = map_mode_flags;
     this->m_memory_mapped_file = nullptr;
-    this->write_l = 0;
-    this->read_l = 0;
+    this->reader_c             = 0;
 }
 
 graphquery::database::storage::CDiskDriver::~

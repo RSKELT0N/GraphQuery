@@ -22,7 +22,7 @@ namespace
 
     graphquery::database::EStatus Initialise_Logging() noexcept
     {
-        // graphquery::database::_log_system->add_logger(std::make_shared<graphquery::logger::CLogSTDO>());
+        graphquery::database::_log_system->add_logger(std::make_shared<graphquery::logger::CLogSTDO>());
 
         return graphquery::database::EStatus::valid;
     }

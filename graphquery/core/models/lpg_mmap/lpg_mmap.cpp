@@ -201,6 +201,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_vertex_entry(const Id_
         next_props_ref = store_property_entry(prop, next_props_ref);
 
     data_block_ptr->payload.metadata.property_id = next_props_ref;
+
     return true;
 }
 
@@ -415,9 +416,10 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const Id_t 
     if (!store_vertex_entry(id, label_ids, props))
         return EActionState_t::invalid;
 
+    utils::atomic_fetch_pre_inc(&read_graph_metadata()->vertices_c);
+
     for (const auto label_id : label_ids)
         utils::atomic_fetch_inc(&read_vertex_label_entry(label_id)->item_c);
-    utils::atomic_fetch_inc(&read_graph_metadata()->vertices_c);
 
     return EActionState_t::valid;
 }
@@ -1553,10 +1555,11 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_by_id(const Id_t 
     return v_ptr;
 }
 
-graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SGraphMetaData_t>
+template<bool write>
+graphquery::database::storage::SRef_t<graphquery::database::storage::CMemoryModelMMAPLPG::SGraphMetaData_t, write>
 graphquery::database::storage::CMemoryModelMMAPLPG::read_graph_metadata() noexcept
 {
-    return m_master_file.ref<SGraphMetaData_t>(METADATA_START_ADDR);
+    return m_master_file.ref<SGraphMetaData_t, write>(METADATA_START_ADDR);
 }
 
 void

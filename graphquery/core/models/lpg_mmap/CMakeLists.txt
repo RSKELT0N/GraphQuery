@@ -27,7 +27,7 @@ target_compile_options(
         -Wextra
         -pthread
         -fPIC
-        -O0
+        -O3
         -ffast-math
         -ffinite-math-only
         -pthread

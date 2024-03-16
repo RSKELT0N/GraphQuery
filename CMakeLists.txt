@@ -21,10 +21,6 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   set(EXECUTABLE_NAME graph-query)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
-  endif()
   
 # add submodules
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glew)

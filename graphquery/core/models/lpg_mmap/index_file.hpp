@@ -109,13 +109,12 @@ graphquery::database::storage::CIndexFile::store_entry(const Id_t id, const int6
     uint8_t expected   = 0;
     uint8_t new_value  = 1;
     const auto index_c = utils::atomic_load(&read_metadata()->index_c);
-    auto index_ptr     = read_entry<true>(id);
+    auto index_ptr     = read_entry(id);
 
     if (!utils::atomic_fetch_cas(&index_ptr->set, expected, new_value))
         return false;
 
     utils::atomic_store(&index_ptr->offset, offset);
-    index_ptr.~SRef_t();
 
     if (id >= index_c)
         utils::atomic_fetch_inc(&read_metadata()->index_c);

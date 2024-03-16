@@ -175,7 +175,7 @@ graphquery::database::storage::CDatablockFile<T, N>::attain_data_block(const uin
 
     if (!head_free_block_opt.has_value())
     {
-        const auto entry_offset = create_entry(next_ref);
+        auto entry_offset = create_entry(next_ref);
         return read_entry<true>(entry_offset);
     }
 
