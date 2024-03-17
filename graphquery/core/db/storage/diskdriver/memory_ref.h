@@ -30,8 +30,10 @@ namespace graphquery::database::storage
                     writer_lock->unlock();
 
                 if constexpr (!write)
+                {
                     if (utils::atomic_fetch_pre_dec(&(*reader_c)) == 0)
                         writer_lock->unlock();
+                }
 
                 writer_lock = nullptr;
             }
