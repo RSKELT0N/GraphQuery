@@ -34,7 +34,6 @@ target_compile_options(
         -ffinite-math-only
         -funroll-loops               # Unroll loops for better performance
         -ftree-vectorize             # Enable vectorization
-        -g
 )
 
 target_link_libraries(${EXECUTABLE_NAME}
