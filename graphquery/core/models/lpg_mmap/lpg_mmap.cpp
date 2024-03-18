@@ -41,13 +41,36 @@ graphquery::database::storage::CMemoryModelMMAPLPG::create_rollback(const std::s
 }
 
 void
-graphquery::database::storage::CMemoryModelMMAPLPG::rollback(uint8_t rollback_entry) noexcept
+graphquery::database::storage::CMemoryModelMMAPLPG::rollback(const uint8_t rollback_entry) noexcept
 {
+    m_cv_sync.wait(m_unq_lock, wait_on_transactions);
+    utils::atomic_store(&m_syncing, 1);
     // ~ Reset graph to initial state.
     reset_graph();
-    // ~ Rollback graph based on your entry index.
-    const auto & [elapsed] = utils::measure(&CTransaction::rollback, m_transactions, rollback_entry);
+    // ~ Rollback graph based on the entry index.
+    auto r_ptr              = m_transactions->read_rollback_entry(rollback_entry);
+    const auto rollback_eor = r_ptr->eor_addr;
+
+    m_log_system->info(fmt::format("Starting db rollback ({})", r_ptr->name));
+    const auto & [elapsed] = utils::measure(&CTransaction::rollback, m_transactions, rollback_eor);
     m_log_system->info(fmt::format("Rollback has completed within {}s", elapsed.count()));
+    utils::atomic_store(&m_syncing, 0);
+    m_cv_sync.notify_all();
+}
+
+void
+graphquery::database::storage::CMemoryModelMMAPLPG::rollback() noexcept
+{
+    m_cv_sync.wait(m_unq_lock, wait_on_transactions);
+    utils::atomic_store(&m_syncing, 1);
+    // ~ Reset graph to initial state.
+    reset_graph();
+
+    // ~ Rollback graph based on the end valid address.
+    const auto rollback_eor = m_transactions->get_valid_eor_addr();
+    m_transactions->rollback(rollback_eor);
+    utils::atomic_store(&m_syncing, 0);
+    m_cv_sync.notify_all();
 }
 
 std::vector<std::string>
@@ -117,7 +140,7 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::reset_graph() noexcept
 {
     // ~ Reset master file
-    m_master_file.resize(CDiskDriver::DEFAULT_FILE_SIZE);
+    m_master_file.resize_override(CDiskDriver::DEFAULT_FILE_SIZE);
     m_master_file.clear_contents();
     store_graph_metadata();
 
@@ -486,14 +509,16 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const Id_t src, const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & prop)
 {
     transaction_preamble();
+    uint64_t commit_addr = m_transactions->log_vertex(labels, prop, src);
     if (add_vertex_entry(src, labels, prop) == EActionState_t::invalid)
     {
         transaction_epilogue();
         m_log_system->warning(fmt::format("Issue adding vertex"));
+        rollback();
         return;
     }
-    m_transactions->commit_vertex(labels, prop, src);
     transaction_epilogue();
+    m_transactions->commit_transaction(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 
@@ -501,15 +526,17 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::add_edge(const Id_t src, const Id_t dst, const std::string_view edge_label, const std::vector<SProperty_t> & prop, bool undirected)
 {
     transaction_preamble();
+    uint64_t commit_addr = m_transactions->log_edge(src, dst, edge_label, prop, undirected);
     if (add_edge_entry(src, dst, edge_label, prop, undirected) == EActionState_t::invalid)
     {
         transaction_epilogue();
         m_log_system->warning(fmt::format("Issue adding edge({}) to vertex({})", dst, src));
+        rollback();
         return;
     }
 
-    m_transactions->commit_edge(src, dst, edge_label, prop, undirected);
     transaction_epilogue();
+    m_transactions->commit_transaction(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 
@@ -517,10 +544,11 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & prop)
 {
     transaction_preamble();
+    uint64_t commit_addr = m_transactions->log_vertex(labels, prop);
     (void) add_vertex_entry(labels, prop);
-    m_transactions->commit_vertex(labels, prop);
 
     transaction_epilogue();
+    m_transactions->commit_transaction(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 
@@ -528,15 +556,17 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex(Id_t src)
 {
     transaction_preamble();
+    uint64_t commit_addr = m_transactions->log_rm_vertex(src);
     if (rm_vertex_entry(src) == EActionState_t::invalid)
     {
         transaction_epilogue();
         m_log_system->warning(fmt::format("Issue removing vertex({})", src));
+        rollback();
         return;
     }
 
-    m_transactions->commit_rm_vertex(src);
     transaction_epilogue();
+    m_transactions->commit_transaction(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
     utils::atomic_store(&read_graph_metadata()->prune_needed, true);
 }
@@ -545,15 +575,17 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(Id_t src, Id_t dst)
 {
     transaction_preamble();
+    uint64_t commit_addr = m_transactions->log_rm_edge(src, dst);
     if (rm_edge_entry(src, dst) == EActionState_t::invalid)
     {
         transaction_epilogue();
         m_log_system->warning(fmt::format("Issue remvoing edge({}) to vertex({})", dst, src));
+        rollback();
         return;
     }
 
-    m_transactions->commit_rm_edge(src, dst);
     transaction_epilogue();
+    m_transactions->commit_transaction(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
     utils::atomic_store(&read_graph_metadata()->prune_needed, true);
 }
@@ -562,15 +594,17 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(Id_t src, Id_t dst, const std::string_view edge_label)
 {
     transaction_preamble();
+    uint64_t commit_addr = m_transactions->log_rm_edge(src, dst, edge_label);
     if (rm_edge_entry(src, dst, edge_label) == EActionState_t::invalid)
     {
         transaction_epilogue();
         m_log_system->warning(fmt::format("Issue remvoing edge({}) to vertex({})", dst, src));
+        rollback();
         return;
     }
 
-    m_transactions->commit_rm_edge(src, dst, edge_label);
     transaction_epilogue();
+    m_transactions->commit_transaction(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 

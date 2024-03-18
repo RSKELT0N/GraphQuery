@@ -8,11 +8,11 @@
 
 #pragma once
 
+#include "db/utils/spinlock.h"
 #include "db/utils/atomic_intrinsics.h"
 #include "fmt/format.h"
 
 #include <cstdint>
-#include <shared_mutex>
 
 namespace graphquery::database::storage
 {
@@ -20,7 +20,7 @@ namespace graphquery::database::storage
     struct SRef_t
     {
         inline SRef_t() = default;
-        inline SRef_t(T * _t, std::mutex * writer, std::mutex * reader, uint8_t * read_c): ref(_t), writer_lock(writer), reader_lock(reader), reader_c(read_c) {}
+        inline SRef_t(T * _t, CSpinlock * writer, CSpinlock * reader, uint8_t * read_c): ref(_t), writer_lock(writer), reader_lock(reader), reader_c(read_c) {}
 
         inline ~SRef_t()
         {
@@ -31,12 +31,13 @@ namespace graphquery::database::storage
 
                 if constexpr (!write)
                 {
-                    if (utils::atomic_fetch_pre_dec(&(*reader_c)) == 0)
+                    if (utils::atomic_fetch_pre_dec(reader_c) == 0)
                         writer_lock->unlock();
                 }
-
-                writer_lock = nullptr;
             }
+            reader_c = nullptr;
+            reader_lock = nullptr;
+            writer_lock = nullptr;
         }
 
         SRef_t(const SRef_t & cpy)
@@ -93,7 +94,7 @@ namespace graphquery::database::storage
             if constexpr (!write)
             {
                 reader_lock->lock();
-                if (utils::atomic_fetch_pre_inc(&(*reader_c)) == 1)
+                if (utils::atomic_fetch_pre_inc(reader_c) == 1)
                     writer_lock->lock();
                 reader_lock->unlock();
             }
@@ -108,8 +109,8 @@ namespace graphquery::database::storage
         T operator*() { return *ref; }
 
         T * ref                  = nullptr;
-        std::mutex * writer_lock = nullptr;
-        std::mutex * reader_lock = nullptr;
+        CSpinlock * writer_lock = nullptr;
+        CSpinlock * reader_lock = nullptr;
         uint8_t * reader_c       = nullptr;
     };
 }; // namespace graphquery::database::storage

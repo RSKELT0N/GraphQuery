@@ -147,7 +147,7 @@ graphquery::database::storage::CIndexFile::get_file() noexcept
 inline void
 graphquery::database::storage::CIndexFile::reset() noexcept
 {
-    m_file.resize(CDiskDriver::DEFAULT_FILE_SIZE);
+    m_file.resize_override(CDiskDriver::DEFAULT_FILE_SIZE);
     m_file.clear_contents();
     store_metadata();
     (void) m_file.sync();

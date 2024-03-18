@@ -305,7 +305,7 @@ template<typename T, uint8_t N>
 void
 graphquery::database::storage::CDatablockFile<T, N>::reset() noexcept
 {
-    m_file.resize(CDiskDriver::DEFAULT_FILE_SIZE);
+    m_file.resize_override(CDiskDriver::DEFAULT_FILE_SIZE);
     m_file.clear_contents();
     store_metadata();
     (void) m_file.sync();

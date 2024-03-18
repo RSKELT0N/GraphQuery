@@ -181,6 +181,7 @@ namespace graphquery::database::storage
         using SPropertyDataBlock = SDataBlock_t<SProperty_t, DATABLOCK_PROPERTY_PAYLOAD_C>;
         using SLabelRefDataBlock = SDataBlock_t<uint16_t, DATABLOCK_LABEL_REF_PAYLOAD_C>;
 
+        void rollback() noexcept;
         void inline reset_graph() noexcept;
         void inline setup_files(const std::filesystem::path & path, bool initialise) noexcept;
         void inline transaction_preamble() noexcept;

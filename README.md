@@ -1,6 +1,5 @@
 # GraphQuery #
-*A graph database to represent edges between nodes
-that hold properties and information rendered through a GUI application..*
+*A graph database following the labelled property graph (LPG) model, specifically loading the LDBC SNB dataset. Rendering through a GUI application to query through read/write transactions and analytic workloads..*
 
 ## Build and compile project
 
@@ -20,9 +19,5 @@ rm -rf [build_directory]
 ```
 
 ## TODO
-* Implement individual vertex locking.
-* Implement top roots for edge labels.
-* Implement lock free linked list.
 * Implement basic environment for random alterations to graph.
-* Implement analytic after querying.
 * Testing.

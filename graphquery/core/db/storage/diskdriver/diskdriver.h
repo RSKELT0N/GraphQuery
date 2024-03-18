@@ -127,6 +127,7 @@ namespace graphquery::database::storage
         [[maybe_unused]] SRet_t write(const void * ptr, int64_t size, uint32_t amt, bool update = true);
 
         void resize(int64_t file_size) noexcept;
+        void resize_override(int64_t file_size) noexcept;
         void set_path(std::filesystem::path file_path) noexcept;
         [[nodiscard]] SRet_t sync() const noexcept;
         [[nodiscard]] SRet_t async() const noexcept;
@@ -152,8 +153,8 @@ namespace graphquery::database::storage
         inline static int64_t resize_to_pagesize(int64_t size) noexcept;
 
         uint8_t reader_c;
-        std::mutex m_writer_lock;
-        std::mutex m_reader_lock;
+        CSpinlock m_writer_lock;
+        CSpinlock m_reader_lock;
         static std::shared_ptr<logger::CLogSystem> m_log_system;
 
         int m_file_mode      = {}; //~ Set file mode of the descriptor when opened.

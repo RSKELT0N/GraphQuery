@@ -86,6 +86,21 @@ graphquery::database::storage::CDiskDriver::resize(const int64_t file_size) noex
     m_writer_lock.unlock();
 }
 
+void
+graphquery::database::storage::CDiskDriver::resize_override(const int64_t file_size) noexcept
+{
+    const auto old_size = m_fd_info.st_size;
+
+    if (old_size >= file_size)
+    {
+        m_writer_lock.unlock();
+        return;
+    }
+
+    truncate(resize_to_pagesize(file_size));
+    remap(old_size);
+}
+
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::truncate(const int64_t file_size) noexcept
 {

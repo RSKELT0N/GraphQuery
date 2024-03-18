@@ -105,6 +105,7 @@ namespace graphquery::database::analytic
     inline void
     CLightWeightGraphModel::calc_outdegree(uint32_t out[]) noexcept
     {
+#pragma omp parallel for default(none) shared(out)
         for(storage::Id_t i = 0; i < n; i++)
             out[i] = m_graph[i].size();
     }
@@ -112,6 +113,7 @@ namespace graphquery::database::analytic
     inline void
     CLightWeightGraphModel::calc_indegree(uint32_t in[]) noexcept
     {
+#pragma omp parallel for default(none) shared(in)
         for(storage::Id_t i = 0; i < n; i++)
             in[i] = indegree[i];
     }
@@ -119,8 +121,11 @@ namespace graphquery::database::analytic
     inline void
     CLightWeightGraphModel::calc_vertex_sparse_map(storage::Id_t sparse[]) noexcept
     {
+#pragma omp parallel for default(none) shared(sparse)
         for(storage::Id_t i = 0; i < n; i++)
+        {
             sparse[i] = i;
+        }
     }
 
     inline int64_t
@@ -132,9 +137,12 @@ namespace graphquery::database::analytic
     inline void
     CLightWeightGraphModel::edgemap(const std::unique_ptr<IRelax> & relax)
     {
+#pragma omp parallel for default(none) shared(relax)
         for(storage::Id_t src = 0; src < n; src++)
+        {
             for(const auto dst : m_graph[src])
                 relax->relax(src, dst);
+        }
     }
 
     inline void
