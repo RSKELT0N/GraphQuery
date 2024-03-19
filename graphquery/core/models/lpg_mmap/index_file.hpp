@@ -71,7 +71,7 @@ namespace graphquery::database::storage
 
     private:
         CDiskDriver m_file;
-        static constexpr uint32_t METADATA_START_ADDR = 0x00000000;
+        static constexpr int64_t METADATA_START_ADDR = 0x00000000;
     };
 } // namespace graphquery::database::storage
 

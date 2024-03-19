@@ -59,21 +59,13 @@ namespace graphquery::database::storage
             uint8_t undirected = {0};
         };
 
-        template <typename T = void>
+        template <typename T>
         struct STransaction
         {
             ETransactionType type = ETransactionType::vertex;
             uint16_t size = {0};
             uint8_t committed = {0};
             T commit = {};
-        };
-
-        template <>
-        struct STransaction<void>
-        {
-            ETransactionType type = ETransactionType::vertex;
-            uint16_t size = {0};
-            uint8_t committed = {0};
         };
 
         explicit CTransaction(const std::filesystem::path& local_path, ILPGModel* lpg,
@@ -91,14 +83,16 @@ namespace graphquery::database::storage
 
         [[nodiscard]] uint64_t log_rm_vertex(Id_t src) noexcept;
         [[nodiscard]] uint64_t log_rm_edge(Id_t src, Id_t dst, std::string_view edge_label = "") noexcept;
+
         [[nodiscard]] uint64_t log_vertex(const std::vector<std::string_view>& labels,
                                           const std::vector<ILPGModel::SProperty_t>& props,
                                           Id_t optional_id = std::numeric_limits<Id_t>::max()) noexcept;
+
         [[nodiscard]] uint64_t log_edge(Id_t src, Id_t dst, std::string_view edge_label,
                                         const std::vector<ILPGModel::SProperty_t>& props, bool undirected) noexcept;
 
+        template<typename T>
         void commit_transaction(uint64_t transaction_addr) noexcept;
-
         [[nodiscard]] std::vector<std::string> fetch_rollback_table() noexcept;
 
         using SVertexTransaction = STransaction<SVertexCommit>;
@@ -111,9 +105,9 @@ namespace graphquery::database::storage
 
         template <typename T, bool write = false>
         inline SRef_t<T, write> read_transaction(uint64_t seek);
-        inline SRef_t<SHeaderBlock> read_transaction_header();
+        SRef_t<SHeaderBlock> read_transaction_header();
 
-        inline void storage_persist() const noexcept;
+        void storage_persist() const noexcept;
         static inline std::vector<std::string_view> slabel_to_strview_vector(
             const std::vector<ILPGModel::SLabel>& vec) noexcept;
         void process_edge_transaction(SRef_t<SEdgeTransaction>&,
@@ -132,4 +126,16 @@ namespace graphquery::database::storage
         static constexpr int64_t TRANSACTIONS_START_ADDR = ROLLBACK_ENTRIES_START_ADDR + ROLLBACK_MAX_AMOUNT * sizeof(
             SRollbackEntry);
     };
+
+    template<typename T>
+    void
+    graphquery::database::storage::CTransaction::commit_transaction(const uint64_t transaction_addr) noexcept
+    {
+        auto ref = m_transaction_file.ref<STransaction<T>>(static_cast<int64_t>(transaction_addr));
+        utils::atomic_store(&ref->committed, 1);
+
+        auto header_ptr = read_transaction_header();
+        utils::atomic_store(&header_ptr->valid_eof_addr, std::max(header_ptr->valid_eof_addr, transaction_addr + ref->size));
+        storage_persist();
+    }
 } // namespace graphquery::database::storage

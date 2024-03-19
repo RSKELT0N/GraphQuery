@@ -518,7 +518,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const Id_t src, c
         return;
     }
     transaction_epilogue();
-    m_transactions->commit_transaction(commit_addr);
+    m_transactions->commit_transaction<CTransaction::SVertexCommit>(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 
@@ -536,7 +536,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge(const Id_t src, con
     }
 
     transaction_epilogue();
-    m_transactions->commit_transaction(commit_addr);
+    m_transactions->commit_transaction<CTransaction::SEdgeCommit>(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 
@@ -548,7 +548,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const std::vector
     (void) add_vertex_entry(labels, prop);
 
     transaction_epilogue();
-    m_transactions->commit_transaction(commit_addr);
+    m_transactions->commit_transaction<CTransaction::SVertexCommit>(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 
@@ -566,7 +566,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex(Id_t src)
     }
 
     transaction_epilogue();
-    m_transactions->commit_transaction(commit_addr);
+    m_transactions->commit_transaction<CTransaction::SVertexCommit>(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
     utils::atomic_store(&read_graph_metadata()->prune_needed, true);
 }
@@ -585,7 +585,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(Id_t src, Id_t dst)
     }
 
     transaction_epilogue();
-    m_transactions->commit_transaction(commit_addr);
+    m_transactions->commit_transaction<CTransaction::SEdgeCommit>(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
     utils::atomic_store(&read_graph_metadata()->prune_needed, true);
 }
@@ -604,7 +604,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(Id_t src, Id_t dst, 
     }
 
     transaction_epilogue();
-    m_transactions->commit_transaction(commit_addr);
+    m_transactions->commit_transaction<CTransaction::SEdgeCommit>(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
 }
 

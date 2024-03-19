@@ -257,17 +257,6 @@ graphquery::database::storage::CTransaction::log_edge(const Id_t src,
     return commit_addr;
 }
 
-void
-graphquery::database::storage::CTransaction::commit_transaction(uint64_t transaction_addr) noexcept
-{
-    auto ref = m_transaction_file.ref<STransaction<>>(static_cast<int64_t>(transaction_addr));
-    utils::atomic_store(&ref->committed, 1);
-
-    auto header_ptr = read_transaction_header();
-    utils::atomic_store(&header_ptr->valid_eof_addr, std::max(header_ptr->valid_eof_addr, transaction_addr + ref->size));
-    storage_persist();
-}
-
 uint64_t
 graphquery::database::storage::CTransaction::get_valid_eor_addr() noexcept
 {

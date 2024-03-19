@@ -88,8 +88,8 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SBlockFileMetadata_t
         {
-            uint32_t data_blocks_start_addr = {};
-            uint32_t data_block_size        = {};
+            int64_t data_blocks_start_addr = {};
+            int64_t data_block_size        = {};
             Id_t free_list                  = END_INDEX;
             Id_t data_block_c               = {};
         };
@@ -153,7 +153,7 @@ graphquery::database::storage::CDatablockFile<T, N>::read_entry(int64_t offset) 
 {
     static const auto base_addr      = utils::atomic_load(&read_metadata()->data_blocks_start_addr);
     static const auto datablock_size = utils::atomic_load(&read_metadata()->data_block_size);
-    const auto effective_addr        = base_addr + datablock_size * offset;
+    const int64_t effective_addr        = base_addr + datablock_size * offset;
     return m_file.ref<STypeDataBlock, write>(effective_addr);
 }
 
