@@ -21,8 +21,8 @@ graphquery::interact::CFrameGraphDB::render_frame() noexcept
     if (ImGui::Begin("Graph Database"))
     {
         render_state();
-        ImGui::End();
     }
+    ImGui::End();
 }
 
 void
@@ -30,7 +30,7 @@ graphquery::interact::CFrameGraphDB::render_state() noexcept
 {
     if (m_is_db_loaded)
     {
-        if(ImGui::BeginChild("#db_data"))
+        if (ImGui::BeginChild("##db_data"))
         {
             render_db_info();
             ImGui::NewLine();
@@ -38,8 +38,8 @@ graphquery::interact::CFrameGraphDB::render_state() noexcept
 
             if (m_is_graph_loaded)
                 render_loaded_graph();
-            ImGui::EndChild();
         }
+        ImGui::EndChild();
     }
     else
         ImGui::Text("No current database is loaded.");
@@ -48,18 +48,18 @@ graphquery::interact::CFrameGraphDB::render_state() noexcept
 void
 graphquery::interact::CFrameGraphDB::render_db_info() noexcept
 {
-    if (ImGui::BeginChild("#db_info", {ImGui::GetWindowWidth(), 100}))
+    if (ImGui::BeginChild("##db_info", {ImGui::GetWindowWidth(), 100}))
     {
         ImGui::SeparatorText("Database Info");
         ImGui::Text("%s", database::_db_storage->get_db_info().c_str());
-        ImGui::EndChild();
     }
+    ImGui::EndChild();
 }
 
 void
 graphquery::interact::CFrameGraphDB::render_graph_table() const noexcept
 {
-    if (ImGui::BeginChild("#db_table", {ImGui::GetWindowWidth(), 200}))
+    if (ImGui::BeginChild("##db_table", {ImGui::GetWindowWidth(), 200}))
     {
         static constexpr uint8_t columns       = 2;
         static constexpr uint8_t column_width  = 100;
@@ -83,14 +83,14 @@ graphquery::interact::CFrameGraphDB::render_graph_table() const noexcept
                           });
             ImGui::EndTable();
         }
-        ImGui::EndChild();
     }
+    ImGui::EndChild();
 }
 
 void
 graphquery::interact::CFrameGraphDB::render_loaded_graph() noexcept
 {
-    if (ImGui::BeginChild("#graph_info"))
+    if (ImGui::BeginChild("##graph_info"))
     {
         ImGui::NewLine();
         ImGui::Text("%s", fmt::format("Graph [{}]", (*m_graph)->get_name()).c_str());
@@ -100,6 +100,7 @@ graphquery::interact::CFrameGraphDB::render_loaded_graph() noexcept
         ImGui::Text("%s", fmt::format("Edges: {}", (*m_graph)->get_num_edges()).c_str());
         ImGui::Text("%s", fmt::format("Vertex Labels: {}", (*m_graph)->get_num_vertex_labels()).c_str());
         ImGui::Text("%s", fmt::format("Edge Labels: {}", (*m_graph)->get_num_edge_labels()).c_str());
-        ImGui::EndChild();
+        ImGui::Text("%s", fmt::format("Avg outdegree: {:.4f}", (*m_graph)->get_avg_out_degree()).c_str());
     }
+    ImGui::EndChild();
 }

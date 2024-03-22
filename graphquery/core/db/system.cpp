@@ -8,6 +8,7 @@
 
 namespace
 {
+    bool _sync;
     void setup_seg_handler()
     {
         signal(SIGINT | SIGTERM,
@@ -18,9 +19,10 @@ namespace
                    exit(param);
                });
     }
+
     graphquery::database::EStatus Initialise_Logging() noexcept
     {
-        // graphquery::database::_log_system->add_logger(std::make_shared<graphquery::logger::CLogSTDO>());
+        graphquery::database::_log_system->add_logger(std::make_shared<graphquery::logger::CLogSTDO>());
 
         return graphquery::database::EStatus::valid;
     }
@@ -29,8 +31,8 @@ namespace
     {
         while (true)
         {
-            if (graphquery::database::_db_storage->get_is_graph_loaded())
-                (*graphquery::database::_db_graph)->save_graph();
+            if (graphquery::database::_db_storage->get_is_graph_loaded() && _sync)
+                (*graphquery::database::_db_graph)->sync_graph();
 
             std::this_thread::sleep_for(graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL);
         }
@@ -57,7 +59,28 @@ namespace graphquery::database
         setup_seg_handler();
         const EStatus status = Initialise_Logging();
 
+        _enable_sync_();
         std::thread(&heartbeat).detach();
         return status;
+    }
+
+    void
+    _enable_sync_() noexcept
+    {
+        _sync = true;
+        _log_system->info("Synchronisation has been enabled");
+    }
+
+    void
+    _disable_sync_() noexcept
+    {
+        _sync = false;
+        _log_system->info("Synchronisation has been disabled");
+    }
+
+    const bool &
+    _get_sync_state_() noexcept
+    {
+        return _sync;
     }
 } // namespace graphquery::database

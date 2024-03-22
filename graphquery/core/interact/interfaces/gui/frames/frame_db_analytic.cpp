@@ -10,7 +10,7 @@ CFrameDBAnalytic(const bool & is_db_loaded,
                  const bool & is_graph_loaded,
                  std::shared_ptr<database::storage::ILPGModel *> graph,
                  std::shared_ptr<std::vector<database::utils::SResult<double>>> results,
-                 const std::unordered_map<std::string, std::unique_ptr<database::analytic::IGraphAlgorithm *>> & algorithms):
+                 const std::unordered_map<std::string, std::shared_ptr<database::analytic::IGraphAlgorithm *>> & algorithms):
     m_algorithm_choice(0), m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph(std::move(graph)), m_results(std::move(results)), m_algorithms(algorithms)
 {
 }
@@ -22,34 +22,39 @@ graphquery::interact::CFrameDBAnalytic::render_frame() noexcept
     {
         if (ImGui::Begin("Analytic"))
         {
-            render_analytic_opt();
-            render_analytic_control();
+            if (ImGui::BeginChild("#choose_algorithm", {0, ImGui::GetWindowHeight() - 100}))
+            {
+                render_analytic_opt();
+                render_results_table();
+            }
+            ImGui::EndChild();
+            if (ImGui::BeginChild("#run_and_refresh"))
+            {
+                render_analytic_control();
+            }
+            ImGui::EndChild();
         }
+        ImGui::End();
     }
 }
 
 void
 graphquery::interact::CFrameDBAnalytic::render_analytic_opt() noexcept
 {
-    if (ImGui::BeginChild("#choose_algorithm", {0, ImGui::GetWindowHeight() - 100}))
-    {
-        ImGui::SeparatorText("Choose an Algorithm");
-        ImGui::Dummy(ImVec2(0.0f, 20.0f));
-        std::string algorithms = {};
+    ImGui::SeparatorText("Choose an Algorithm");
+    ImGui::Dummy(ImVec2(0.0f, 20.0f));
+    std::string algorithms = {};
 
-        ImGui::TextUnformatted("Execute: ");
-        ImGui::SameLine();
-        std::for_each(m_algorithms.begin(), m_algorithms.end(), [&algorithms](const auto & algorithm) -> void { algorithms += fmt::format("{}{}", algorithm.first, '\0'); });
-        algorithms += fmt::format("\0");
+    ImGui::TextUnformatted("Execute: ");
+    ImGui::SameLine();
+    std::for_each(m_algorithms.begin(), m_algorithms.end(), [&algorithms](const auto & algorithm) -> void { algorithms += fmt::format("{}{}", algorithm.first, '\0'); });
+    algorithms += fmt::format("\0");
 
-        ImGui::Combo("##", &m_algorithm_choice, algorithms.c_str());
+    ImGui::Combo("##", &m_algorithm_choice, algorithms.c_str());
 
-        ImGui::Dummy(ImVec2(0.0f, 20.0f));
-        ImGui::SeparatorText("Results");
-        ImGui::Dummy(ImVec2(0.0f, 20.0f));
-        render_results_table();
-        ImGui::EndChild();
-    }
+    ImGui::Dummy(ImVec2(0.0f, 20.0f));
+    ImGui::SeparatorText("Results");
+    ImGui::Dummy(ImVec2(0.0f, 20.0f));
 }
 
 void
@@ -84,18 +89,13 @@ graphquery::interact::CFrameDBAnalytic::render_results_table() noexcept
 void
 graphquery::interact::CFrameDBAnalytic::render_analytic_control() noexcept
 {
-    if (ImGui::BeginChild("#run_and_refresh"))
+    if (ImGui::Button("Run Algorithm"))
     {
-        if (ImGui::Button("Run Algorithm"))
-        {
-            const auto algorithm = std::next(m_algorithms.begin(), m_algorithm_choice);
-            database::_db_analytic->process_algorithm(algorithm->first);
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Refresh Libraries"))
-        {
-            database::_db_analytic->load_libraries();
-        }
-        ImGui::EndChild();
+        const auto algorithm = std::next(m_algorithms.begin(), m_algorithm_choice);
+        database::_db_analytic->process_algorithm(algorithm->first);
     }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Refresh Libraries"))
+        database::_db_analytic->load_libraries();
 }

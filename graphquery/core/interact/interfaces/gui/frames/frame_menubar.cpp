@@ -8,11 +8,9 @@
 
 graphquery::interact::CFrameMenuBar::~CFrameMenuBar() = default;
 
-graphquery::interact::CFrameMenuBar::CFrameMenuBar(const bool & is_db_loaded,
-                                                   const bool & is_graph_loaded,
-                                                   const std::unordered_map<std::string, database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
-    m_is_db_loaded(is_db_loaded),
-    m_is_graph_loaded(is_graph_loaded), m_graph_table(graph_table)
+graphquery::interact::CFrameMenuBar::
+CFrameMenuBar(const bool & is_db_loaded, const bool & is_graph_loaded, const std::unordered_map<std::string, database::storage::CDBStorage::SGraph_Entry_t> & graph_table):
+    m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded), m_graph_table(graph_table)
 {
     setup_db_master_file_explorer();
     setup_db_folder_location_file_explorer();
@@ -57,9 +55,11 @@ graphquery::interact::CFrameMenuBar::render_frame() noexcept
 
     render_create_db();
     render_create_graph();
+    render_create_rollback();
     render_open_db();
     render_open_graph();
     render_load_dataset();
+    render_load_rollback();
 }
 
 void
@@ -88,6 +88,9 @@ graphquery::interact::CFrameMenuBar::render_create_menu() noexcept
 
         if (m_is_db_loaded && ImGui::MenuItem("Graph"))
             set_create_graph_state(true);
+
+        if (m_is_graph_loaded && ImGui::MenuItem("Rollback"))
+            set_create_db_rollback_state(true);
 
         ImGui::EndMenu();
     }
@@ -131,6 +134,9 @@ graphquery::interact::CFrameMenuBar::render_load_menu() noexcept
         if (ImGui::MenuItem("Dataset"))
             this->m_dataset_folder_location_explorer.Open();
 
+        if (ImGui::MenuItem("Rollback"))
+            set_load_db_rollback_state(true);
+
         ImGui::EndMenu();
     }
 }
@@ -146,6 +152,64 @@ graphquery::interact::CFrameMenuBar::render_load_dataset() noexcept
 
         std::thread(&database::storage::CDBStorage::load_dataset, database::_db_storage.get(), dataset_folder_path).detach();
         m_dataset_folder_location_explorer.ClearSelected();
+    }
+}
+
+void
+graphquery::interact::CFrameMenuBar::set_create_db_rollback_state(const bool state) noexcept
+{
+    this->m_is_create_db_rollback_opened = state;
+}
+
+void
+graphquery::interact::CFrameMenuBar::render_create_rollback() noexcept
+{
+    if (this->m_is_create_db_rollback_opened)
+        ImGui::OpenPopup("Create Rollback");
+
+    ImGui::SetNextWindowSize(ImVec2 {CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
+    if (ImGui::BeginPopupModal("Create Rollback", &this->m_is_create_db_rollback_opened, ImGuiWindowFlags_NoResize))
+    {
+        if (ImGui::BeginChild("Create Rollback info"))
+        {
+            ImGui::Text("Complete all fields:");
+            ImGui::Separator();
+
+            render_create_rollback_entry_data();
+            render_create_rollback_button();
+            ImGui::EndChild();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void
+graphquery::interact::CFrameMenuBar::render_create_rollback_entry_data() noexcept
+{
+    ImGui::Text("Name: ");
+    ImGui::InputText("##_rollbackName", &this->m_created_db_rollback_name, ImGuiInputTextFlags_CharsNoBlank);
+    ImGui::Dummy(ImVec2(0.0f, 20.0f));
+}
+
+void
+graphquery::interact::CFrameMenuBar::render_create_rollback_button() noexcept
+{
+    if (ImGui::Button("Create Rollback"))
+    {
+        if (m_created_db_rollback_name.empty() || m_created_db_rollback_name.length() > database::storage::CFG_GRAPH_ROLLBACK_NAME_LENGTH / 2)
+        {
+            database::_log_system->warning(fmt::format("Name cannot be empty or larger than "
+                                                       "configured "
+                                                       "size () to create a rollback entry",
+                                                       database::storage::CFG_GRAPH_ROLLBACK_NAME_LENGTH / 2));
+            return;
+        }
+        ImGui::CloseCurrentPopup();
+        set_create_db_rollback_state(false);
+
+        std::thread(&database::storage::ILPGModel::create_rollback, *database::_db_graph.get(), this->m_created_db_rollback_name).detach();
+
+        m_created_db_rollback_name = "";
     }
 }
 
@@ -347,6 +411,67 @@ graphquery::interact::CFrameMenuBar::render_open_graph_button() noexcept
 
         set_open_graph_state(false);
         database::_db_storage->open_graph(std::next(m_graph_table.begin(), m_open_graph_choice)->second.graph_name);
+    }
+}
+
+void
+graphquery::interact::CFrameMenuBar::set_load_db_rollback_state(const bool state) noexcept
+{
+    this->m_is_load_db_rollback_opened = state;
+}
+
+void
+graphquery::interact::CFrameMenuBar::render_load_rollback() noexcept
+{
+    if (this->m_is_load_db_rollback_opened)
+        ImGui::OpenPopup("Load Rollback");
+
+    ImGui::SetNextWindowSize(ImVec2 {CREATE_WINDOW_WIDTH, CREATE_WINDOW_HEIGHT});
+    if (ImGui::BeginPopupModal("Load Rollback", &this->m_is_load_db_rollback_opened, ImGuiWindowFlags_NoResize))
+    {
+        if (ImGui::BeginChild("Load Rollback info"))
+        {
+            ImGui::Text("Select a rollback to load:");
+            ImGui::Separator();
+
+            render_load_rollback_entry_data();
+            ImGui::EndChild();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void
+graphquery::interact::CFrameMenuBar::render_load_rollback_entry_data() noexcept
+{
+    std::vector<std::string> rollback_table = (*database::_db_graph)->fetch_rollback_table();
+
+    if (rollback_table.empty())
+    {
+        ImGui::Text("No rollback entries");
+        return;
+    }
+
+    std::string rollback_entries = {};
+
+    std::for_each(rollback_table.begin(), rollback_table.end(), [&rollback_entries](const std::string & entry_name) -> void { rollback_entries += fmt::format("{}{}", entry_name, '\0'); });
+    rollback_entries += fmt::format("\0");
+
+    ImGui::Combo("##", &m_load_rollback_choice, rollback_entries.c_str());
+
+    ImGui::Dummy(ImVec2(0.0f, 20.0f));
+    render_load_rollback_button();
+}
+
+void
+graphquery::interact::CFrameMenuBar::render_load_rollback_button() noexcept
+{
+    if (ImGui::Button("Load Rollback"))
+    {
+        ImGui::CloseCurrentPopup();
+        set_load_db_rollback_state(false);
+
+        std::thread(&database::storage::ILPGModel::rollback, *database::_db_graph.get(), m_load_rollback_choice).detach();
     }
 }
 

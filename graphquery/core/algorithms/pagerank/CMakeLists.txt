@@ -17,7 +17,8 @@ target_compile_options(
         -fPIC
         -O3
         -ffast-math
-        -ffinite-math-only)
+        -ffinite-math-only
+        -pthread)
 
 target_sources(
         pr
@@ -30,6 +31,11 @@ target_link_libraries(
         PUBLIC
         logsystem
         fmt)
+
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(pr PUBLIC OpenMP::OpenMP_CXX)
+    target_compile_options(pr PUBLIC ${OpenMP_CXX_FLAGS})
+endif()
 
 # Copy the shared library into the output/peripherals directory
 set(output_directory ${PROJECT_SOURCE_DIR}/lib/algorithms)

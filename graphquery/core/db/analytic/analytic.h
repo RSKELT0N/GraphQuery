@@ -27,16 +27,17 @@ namespace graphquery::database::analytic
 
         void load_libraries(bool refresh = true) noexcept;
         void process_algorithm(std::string_view algorithm) noexcept;
+        void process_algorithm(const std::vector<storage::ILPGModel::SEdge_t> & edges, std::string_view algorithm) noexcept;
         [[nodiscard]] std::shared_ptr<std::vector<utils::SResult<double>>> get_result_table() const noexcept;
-        [[nodiscard]] const std::unordered_map<std::string, std::unique_ptr<IGraphAlgorithm *>> & get_algorithm_table() const noexcept;
+        [[nodiscard]] const std::unordered_map<std::string, std::shared_ptr<IGraphAlgorithm *>> & get_algorithm_table() const noexcept;
 
       private:
         void insert_lib(std::string_view lib_path);
 
         std::shared_ptr<storage::ILPGModel *> m_graph;
         std::shared_ptr<std::vector<utils::SResult<double>>> m_results;
-        std::unordered_map<std::string, std::unique_ptr<IGraphAlgorithm *>> m_algorithms;
-        std::unordered_map<std::string, std::unique_ptr<dylib>> m_libs;
+        std::unordered_map<std::string, std::shared_ptr<IGraphAlgorithm *>> m_algorithms;
+        std::unordered_map<std::string, std::shared_ptr<dylib>> m_libs;
 
         static constexpr const char * LIB_FOLDER_PATH = "lib/algorithms";
     };

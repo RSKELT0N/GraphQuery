@@ -36,6 +36,9 @@ namespace graphquery::database
     ** @return EStatus status code for init.
     ***********************************************/
     [[nodiscard]] EStatus initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept;
+    void _enable_sync_() noexcept;
+    void _disable_sync_() noexcept;
+    const bool & _get_sync_state_() noexcept;
 
     //~ Log system instance for rendering output.
     extern std::shared_ptr<logger::CLogSystem> _log_system;
