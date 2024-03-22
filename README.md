@@ -19,5 +19,7 @@ rm -rf [build_directory]
 ```
 
 ## TODO
+* Ensure atomicity for adding edges.
+* Have a look at rollbacks (undo changes of a single transactions).
 * Implement basic environment for random alterations to graph.
 * Testing.
