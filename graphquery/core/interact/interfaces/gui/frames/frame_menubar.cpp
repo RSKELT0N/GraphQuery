@@ -89,7 +89,7 @@ graphquery::interact::CFrameMenuBar::render_create_menu() noexcept
         if (m_is_db_loaded && ImGui::MenuItem("Graph"))
             set_create_graph_state(true);
 
-        if (m_is_db_loaded && ImGui::MenuItem("Rollback"))
+        if (m_is_graph_loaded && ImGui::MenuItem("Rollback"))
             set_create_db_rollback_state(true);
 
         ImGui::EndMenu();

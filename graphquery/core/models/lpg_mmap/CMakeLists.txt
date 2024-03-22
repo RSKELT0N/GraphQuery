@@ -31,6 +31,7 @@ target_compile_options(
         -ffast-math
         -ffinite-math-only
         -pthread
+        -g
 )
 
 target_link_libraries(
