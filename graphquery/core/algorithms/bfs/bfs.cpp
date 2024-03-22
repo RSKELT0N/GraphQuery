@@ -20,6 +20,7 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::IModel * gr
     const auto n_e                  = graph->get_num_edges();
     const auto sparse               = new storage::Id_t[n_v];
     const std::shared_ptr inv_graph = graph->make_inverse_graph();
+
     const auto n_total_v            = graph->get_total_num_vertices();
 
     graph->calc_vertex_sparse_map(sparse);
@@ -91,10 +92,12 @@ std::vector<int64_t>
 graphquery::database::analytic::CGraphAlgorithmBFS::init_parent(storage::IModel * graph, storage::Id_t sparse[], const int64_t n_v, const int64_t n_total_v) noexcept
 {
     std::vector<int64_t> parent(n_total_v);
+    const auto outdeg = new uint32_t[n_total_v];
+    graph->calc_outdegree(outdeg);
 
-#pragma omp parallel for default(none) shared(parent, sparse, n_v, graph)
+#pragma omp parallel for default(none) shared(parent, sparse, n_v, graph, outdeg)
     for (int64_t n        = 0; n < n_v; n++)
-        parent[sparse[n]] = graph->out_degree(sparse[n]) != 0 ? -static_cast<int32_t>(graph->out_degree(sparse[n])) : -1;
+        parent[sparse[n]] = outdeg[sparse[n]] != 0 ? -static_cast<int32_t>(outdeg[sparse[n]]) : -1;
 
     return parent;
 }

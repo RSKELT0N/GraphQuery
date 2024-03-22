@@ -107,7 +107,7 @@ graphquery::database::storage::CTransaction::read_transaction_header()
 graphquery::database::storage::SRef_t<graphquery::database::storage::CTransaction::SRollbackEntry>
 graphquery::database::storage::CTransaction::read_rollback_entry(const uint8_t i) noexcept
 {
-    return m_transaction_file.ref<SRollbackEntry>(ROLLBACK_ENTRIES_START_ADDR + static_cast<int8_t>(i) * sizeof(SRollbackEntry));
+    return m_transaction_file.ref<SRollbackEntry>(ROLLBACK_ENTRIES_START_ADDR + static_cast<int64_t>(i) * sizeof(SRollbackEntry));
 }
 
 void
@@ -120,9 +120,9 @@ graphquery::database::storage::CTransaction::storage_persist() const noexcept
 uint64_t
 graphquery::database::storage::CTransaction::log_rm_vertex(const Id_t src) noexcept
 {
-    auto transaction_hdr   = read_transaction_header();
-    const auto size        = static_cast<uint64_t>(sizeof(SVertexTransaction));
-    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
+    auto transaction_hdr       = read_transaction_header();
+    static constexpr auto size = sizeof(SVertexTransaction);
+    const auto commit_addr     = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     //~ Lose reference to transaction_hdr
@@ -131,7 +131,7 @@ graphquery::database::storage::CTransaction::log_rm_vertex(const Id_t src) noexc
 
     auto transaction_ptr = read_transaction<SVertexTransaction, true>(commit_addr);
 
-    transaction_ptr->size              = size;
+    transaction_ptr->size               = size;
     transaction_ptr->committed          = 0;
     transaction_ptr->type               = ETransactionType::vertex;
     transaction_ptr->commit.optional_id = src;
@@ -145,9 +145,9 @@ graphquery::database::storage::CTransaction::log_rm_vertex(const Id_t src) noexc
 uint64_t
 graphquery::database::storage::CTransaction::log_rm_edge(const Id_t src, const Id_t dst, const std::string_view edge_label) noexcept
 {
-    auto transaction_hdr   = read_transaction_header();
-    const auto size        = static_cast<uint64_t>(sizeof(SEdgeTransaction));
-    const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
+    auto transaction_hdr       = read_transaction_header();
+    static constexpr auto size = sizeof(SEdgeTransaction);
+    const auto commit_addr     = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     //~ Lose reference to transaction_hdr
@@ -172,7 +172,7 @@ uint64_t
 graphquery::database::storage::CTransaction::log_vertex(const std::vector<std::string_view> & labels, const std::vector<ILPGModel::SProperty_t> & props, const Id_t optional_id) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
-    const auto size        = static_cast<uint64_t>(sizeof(SVertexTransaction) + props.size() * sizeof(ILPGModel::SProperty_t) + CFG_LPG_LABEL_LENGTH * labels.size());
+    const auto size        = sizeof(SVertexTransaction) + props.size() * sizeof(ILPGModel::SProperty_t) + CFG_LPG_LABEL_LENGTH * labels.size();
     const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
@@ -182,7 +182,7 @@ graphquery::database::storage::CTransaction::log_vertex(const std::vector<std::s
 
     SRef_t<SVertexTransaction, true> transaction_ptr = read_transaction<SVertexTransaction, true>(commit_addr);
 
-    transaction_ptr->size              = size;
+    transaction_ptr->size               = size;
     transaction_ptr->committed          = 0;
     transaction_ptr->type               = ETransactionType::vertex;
     transaction_ptr->commit.optional_id = optional_id;
@@ -193,18 +193,18 @@ graphquery::database::storage::CTransaction::log_vertex(const std::vector<std::s
     transaction_ptr.~SRef_t(); //~ Remove reference to transaction file.
     transaction_ptr = {};
 
-    uint32_t curr_addr = commit_addr + sizeof(SVertexTransaction);
+    auto curr_addr = commit_addr + sizeof(SVertexTransaction);
 
     for (const auto & label : labels)
     {
-        auto label_ptr = m_transaction_file.ref<ILPGModel::SLabel>(curr_addr);
+        auto label_ptr = m_transaction_file.ref<ILPGModel::SLabel>(static_cast<int64_t>(curr_addr));
         strcpy(&label_ptr->label[0], label.data());
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 
     for (const auto & [key, value] : props)
     {
-        auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(curr_addr);
+        auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(static_cast<int64_t>(curr_addr));
         strcpy(&prop->key[0], key);
         strcpy(&prop->value[0], value);
         curr_addr += sizeof(ILPGModel::SProperty_t);
@@ -221,7 +221,7 @@ graphquery::database::storage::CTransaction::log_edge(const Id_t src,
                                                       const bool undirected) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
-    const auto size        = static_cast<uint64_t>(sizeof(SEdgeTransaction) + props.size() * sizeof(ILPGModel::SProperty_t));
+    const auto size        = sizeof(SEdgeTransaction) + props.size() * sizeof(ILPGModel::SProperty_t);
     const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
@@ -244,11 +244,11 @@ graphquery::database::storage::CTransaction::log_edge(const Id_t src,
     transaction_ptr.~SRef_t<SEdgeTransaction>(); //~ Remove reference to transaction file.
     transaction_ptr = {};
 
-    uint32_t curr_addr = commit_addr + sizeof(SEdgeTransaction);
+    auto curr_addr = commit_addr + sizeof(SEdgeTransaction);
 
     for (const auto & [key, value] : props)
     {
-        auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(curr_addr);
+        auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(static_cast<int64_t>(curr_addr));
         strcpy(&prop->key[0], key);
         strcpy(&prop->value[0], value);
         curr_addr += sizeof(ILPGModel::SProperty_t);
@@ -260,7 +260,7 @@ graphquery::database::storage::CTransaction::log_edge(const Id_t src,
 uint64_t
 graphquery::database::storage::CTransaction::get_valid_eor_addr() noexcept
 {
-  return read_transaction_header()->valid_eof_addr;
+    return read_transaction_header()->valid_eof_addr;
 }
 
 std::vector<std::string_view>
@@ -269,7 +269,7 @@ graphquery::database::storage::CTransaction::slabel_to_strview_vector(const std:
     std::vector<std::string_view> res(vec.size());
 
     for (size_t i = 0; i < vec.size(); i++)
-        res[i]    = vec[i].label;
+        res[i] = vec[i].label;
 
     return res;
 }

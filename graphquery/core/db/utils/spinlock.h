@@ -3,7 +3,7 @@
 #include <atomic>
 
 struct CSpinlock {
-    std::atomic<bool> lock_ = {0};
+    std::atomic<bool> lock_ = {false};
 
     void lock() noexcept {
         for (;;) {

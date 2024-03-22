@@ -777,7 +777,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::string_
     else
         label_id = exists.value();
 
-    std::vector<int64_t> label_vertices = get_vertices_offset_by_label(vertex_label);
+    const std::vector<int64_t> label_vertices = get_vertices_offset_by_label(vertex_label);
 
     std::vector<SEdge_t> ret;
     ret.reserve(label_vertices.size());
@@ -1549,7 +1549,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::calc_vertex_sparse_map(Id_t 
 
     for (int64_t i = 0; i < block_c; i++)
     {
-        const auto local_ptr = gbl_vertex_ptr + i;
+        auto local_ptr = gbl_vertex_ptr + i;
         if (local_ptr->state & 1 << VERTEX_VALID_STATE_BIT)
             arr[vertex_i++] = i;
     }
