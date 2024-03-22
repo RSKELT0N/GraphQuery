@@ -1,5 +1,5 @@
 /************************************************************
- * \author Ryan Skelton
+* \author Ryan Skelton
  * \date 18/09/2023
  * \file pagerank.h
  * \brief PageRank is a analytic algorithm for measuring the
@@ -14,10 +14,10 @@ namespace graphquery::database::analytic
 {
     class CGraphAlgorithmPageRank final : public IGraphAlgorithm
     {
-      public:
+    public:
         class CRelaxPR final : public IRelax
         {
-          public:
+        public:
             CRelaxPR(const double _d, uint32_t _outdeg[], double _x[], double _y[])
             {
                 this->d      = _d;
@@ -28,15 +28,14 @@ namespace graphquery::database::analytic
 
             ~CRelaxPR() override = default;
 
-            void relax(const int64_t src, const int64_t dst) noexcept override
+            void relax(const storage::Id_t src, const storage::Id_t dst) noexcept override
             {
-                double x_src, y_dst_old, y_dst_new;
+                double y_dst_old, y_dst_new;
                 const double w = d / outdeg[src];
                 do
                 {
-                    x_src     = utils::atomic_load(&x[src]);
-                    y_dst_old = utils::atomic_load(&y[dst]);
-                    y_dst_new = y_dst_old + w * x_src;
+                    y_dst_old = y[dst];
+                    y_dst_new = y_dst_old + w * x[src];
                 } while (!utils::atomic_fetch_cas(&y[dst], y_dst_old, y_dst_new));
             }
 
@@ -49,10 +48,10 @@ namespace graphquery::database::analytic
         explicit CGraphAlgorithmPageRank(std::string, const std::shared_ptr<logger::CLogSystem> &);
         ~CGraphAlgorithmPageRank() override = default;
 
-        [[nodiscard]] double compute(storage::ILPGModel *) const noexcept override;
+        [[nodiscard]] double compute(storage::IModel *) const noexcept override;
 
-      private:
-        static double sum(const double vals[], uint64_t size) noexcept;
-        static double norm_diff(const double _val[], const double __val[], uint64_t size) noexcept;
+    private:
+        static double sum(const double vals[], const storage::Id_t sparse[], uint64_t size) noexcept;
+        static double norm_diff(const double _val[], const double __val[], storage::Id_t sparse[], uint64_t size) noexcept;
     };
 } // namespace graphquery::database::analytic

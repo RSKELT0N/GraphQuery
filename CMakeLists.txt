@@ -32,16 +32,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external)                     # imgui/imnodes/imfile_browser
 
 # source
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core/db/storage/diskdriver)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core/log/logsystem)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core/models)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core/algorithms)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/core)
-
-  if(OpenMP_CXX_FOUND)
-    target_link_libraries(${EXECUTABLE_NAME} PUBLIC OpenMP::OpenMP_CXX)
-    target_compile_options(${EXECUTABLE_NAME} PUBLIC ${OpenMP_CXX_FLAGS})
-  endif()
 
   if(CMAKE_TESTING_ENABLED)
     enable_testing()

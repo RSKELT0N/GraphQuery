@@ -9,51 +9,86 @@
 
 namespace
 {
-    std::vector<std::map<std::string, std::string>> _interaction_complex_2(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id, const uint32_t _max_date) noexcept
+    graphquery::database::query::CQueryEngine::ResultType
+    _interaction_complex_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id, const int64_t _max_date) noexcept
     {
-        //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
-        std::unordered_set<int64_t> _friends = graph->get_edge_dst_vertices(_person_id, "knows", "Person");
+        std::unordered_set<graphquery::database::storage::Id_t> _friends;
+        std::vector<graphquery::database::storage::ILPGModel::SEdge_t> message_creators;
+        std::vector<graphquery::database::storage::ILPGModel::SEdge_t> res;
 
-        //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
-        std::vector<graphquery::database::storage::ILPGModel::SEdge_t> message_creators =
-            graph->get_edges("Message", "hasCreator", [&_friends](const graphquery::database::storage::ILPGModel::SEdge_t & edge) -> bool { return _friends.contains(edge.dst); });
+#pragma omp declare reduction(merge : std::vector<graphquery::database::storage::ILPGModel::SEdge_t> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end())) initializer(omp_priv = std::vector<graphquery::database::storage::ILPGModel::SEdge_t>())
+#pragma omp parallel default(none) shared(graph, _person_id, _friends, message_creators, res)
+        {
+#pragma omp sections
+            {
+#pragma omp section
+                {
+                    //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
+                    _friends = graph->get_edge_dst_vertices(_person_id, "knows", "Person");
+                }
+
+#pragma omp section
+                {
+                    //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
+                    message_creators = graph->get_edges("Message", "hasCreator");
+                }
+            }
+            res.reserve(message_creators.size());
+#pragma omp for reduction(merge : res)
+            for (size_t i = 0; i < message_creators.size(); i++)
+            {
+                if (_friends.contains(message_creators[i].dst))
+                    res.emplace_back(message_creators[i]);
+            }
+        }
+
+        res.shrink_to_fit();
 
         //~ Generating Map of properties
         std::vector<std::map<std::string, std::string>> properties_map;
-        properties_map.reserve(message_creators.size());
+        properties_map
+            .
+            reserve(res
+                .
+                size()
+                );
 
         uint32_t prop_i = 0;
-        for (const graphquery::database::storage::ILPGModel::SEdge_t & edge : message_creators)
+        for
+        (
+
+            const graphquery::database::storage::ILPGModel::SEdge_t & edge :
+            res
+
+        )
         {
-            auto message_props = graph->get_properties_by_id_map(edge.src);
+            auto message_props   = graph->get_properties_by_id_map(edge.src);
+            auto friend_props    = graph->get_properties_by_id_map(edge.dst);
+            auto w_message_props = std::unordered_map<std::string, std::string>();
+            auto w_friend_props  = std::unordered_map<std::string, std::string>();
 
             //~ WHERE message.creationDate < $maxDate
-            if (static_cast<int64_t>(std::stol(message_props.at("creationDate"))) >= _max_date)
+            if (std::stol(message_props.at("creationDate")) >= _max_date)
                 continue;
 
-            message_props["postOrCommendId"]           = std::to_string(edge.src);
-            message_props["postOrCommentCreationDate"] = message_props.at("creationDate");
+            w_message_props["postOrCommendId"]           = std::to_string(edge.src);
+            w_message_props["postOrCommentCreationDate"] = message_props.at("creationDate");
 
-            message_props.erase("creationDate");
-
-            auto friend_props               = graph->get_properties_by_id_map(edge.dst);
-            friend_props["personId"]        = std::to_string(edge.dst);
-            friend_props["personFirstName"] = friend_props.at("firstName");
-            friend_props["personLastName"]  = friend_props.at("lastName");
-
-            friend_props.erase("firstName");
-            friend_props.erase("lastName");
+            w_friend_props["personId"]        = std::to_string(edge.dst);
+            w_friend_props["personFirstName"] = friend_props.at("firstName");
+            w_friend_props["personLastName"]  = friend_props.at("lastName");
 
             properties_map.emplace_back();
-            properties_map[prop_i].insert(friend_props.begin(), friend_props.end());
-            properties_map[prop_i].insert(message_props.begin(), message_props.end());
+            properties_map[prop_i].insert(w_friend_props.begin(), w_friend_props.end());
+            properties_map[prop_i].insert(w_message_props.begin(), w_message_props.end());
             prop_i++;
         }
 
-        return properties_map;
+        return {res, properties_map};
     }
 
-    std::vector<std::map<std::string, std::string>> _interaction_complex_8(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id) noexcept
+    graphquery::database::query::CQueryEngine::ResultType
+    _interaction_complex_8(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id) noexcept
     {
         //~ MATCH (start:Person {id: $personId})<-[:HAS_CREATOR]-(:Message)
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> person_comments = graph->get_edges("Message", "hasCreator", _person_id);
@@ -83,33 +118,30 @@ namespace
         uint32_t prop_i = 0;
         for (const graphquery::database::storage::ILPGModel::SEdge_t & edge : comment_creators)
         {
-            auto comment_props = graph->get_properties_by_id_map(edge.src);
+            auto comment_props   = graph->get_properties_by_id_map(edge.src);
+            auto friend_props    = graph->get_properties_by_id_map(edge.dst);
+            auto w_comment_props = std::unordered_map<std::string, std::string>();
+            auto w_friend_props  = std::unordered_map<std::string, std::string>();
 
-            comment_props["postOrCommendId"]           = std::to_string(edge.src);
-            comment_props["postOrCommentCreationDate"] = comment_props.at("creationDate");
-            comment_props["commentContent"]            = comment_props.at("content");
+            w_comment_props["postOrCommendId"]           = std::to_string(edge.src);
+            w_comment_props["postOrCommentCreationDate"] = comment_props.at("creationDate");
+            w_comment_props["commentContent"]            = comment_props.at("content");
 
-            comment_props.erase("creationDate");
-            comment_props.erase("content");
-
-            auto friend_props               = graph->get_properties_by_id_map(edge.dst);
-            friend_props["personId"]        = std::to_string(edge.dst);
-            friend_props["personFirstName"] = friend_props.at("firstName");
-            friend_props["personLastName"]  = friend_props.at("lastName");
-
-            friend_props.erase("firstName");
-            friend_props.erase("lastName");
+            w_friend_props["personId"]        = std::to_string(edge.dst);
+            w_friend_props["personFirstName"] = friend_props.at("firstName");
+            w_friend_props["personLastName"]  = friend_props.at("lastName");
 
             properties_map.emplace_back();
-            properties_map[prop_i].insert(friend_props.begin(), friend_props.end());
-            properties_map[prop_i].insert(comment_props.begin(), comment_props.end());
+            properties_map[prop_i].insert(w_comment_props.begin(), w_comment_props.end());
+            properties_map[prop_i].insert(w_friend_props.begin(), w_friend_props.end());
             prop_i++;
         }
 
-        return properties_map;
+        return {comment_creators, properties_map};
     }
 
-    void _interaction_update_2(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id, const int64_t _post_id) noexcept
+    void
+    _interaction_update_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id, const graphquery::database::storage::Id_t _post_id) noexcept
     {
         static auto time = std::time(nullptr);
         static std::stringstream date;
@@ -118,7 +150,10 @@ namespace
         graph->add_edge(_person_id, _post_id, "likes", {{"creationDate", date.str()}});
     }
 
-    void _interaction_update_8(graphquery::database::storage::ILPGModel * graph, const int64_t _src_person_id, const int64_t _dst_person_id) noexcept
+    void
+    _interaction_update_8(graphquery::database::storage::ILPGModel * graph,
+                          const graphquery::database::storage::Id_t _src_person_id,
+                          const graphquery::database::storage::Id_t _dst_person_id) noexcept
     {
         static auto time = std::time(nullptr);
         static std::stringstream date;
@@ -127,17 +162,22 @@ namespace
         graph->add_edge(_src_person_id, _dst_person_id, "knows", {{"creationDate", date.str()}});
     }
 
-    void _interaction_delete_2(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id, const int64_t _post_id) noexcept
+    void
+    _interaction_delete_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id, const graphquery::database::storage::Id_t _post_id) noexcept
     {
         graph->rm_edge(_person_id, _post_id, "LIKES");
     }
 
-    void _interaction_delete_8(graphquery::database::storage::ILPGModel * graph, const int64_t _src_person_id, const int64_t _dst_person_id) noexcept
+    void
+    _interaction_delete_8(graphquery::database::storage::ILPGModel * graph,
+                          const graphquery::database::storage::Id_t _src_person_id,
+                          const graphquery::database::storage::Id_t _dst_person_id) noexcept
     {
         graph->rm_edge(_src_person_id, _dst_person_id, "KNOWS");
     }
 
-    std::vector<std::map<std::string, std::string>> _interaction_short_2(graphquery::database::storage::ILPGModel * graph, const int64_t _person_id) noexcept
+    graphquery::database::query::CQueryEngine::ResultType
+    _interaction_short_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id) noexcept
     {
         constexpr size_t message_limit = 10;
 
@@ -167,35 +207,34 @@ namespace
         uint32_t prop_i = 0;
         for (const graphquery::database::storage::ILPGModel::SEdge_t & edge : posts)
         {
-            auto message_props = graph->get_properties_by_id_map(edge.src);
-
-            message_props["messageId"]           = std::to_string(edge.src);
-            message_props["messageCreationDate"] = message_props.at("creationDate");
-
-            message_props.erase("creationDate");
-
+            auto message_props   = graph->get_properties_by_id_map(edge.src);
             auto post_props      = graph->get_properties_by_id_map(edge.dst);
+            auto person_props    = graph->get_properties_by_id_map(creator_of_posts[prop_i].dst);
+            auto w_message_props = std::unordered_map<std::string, std::string>();
+            auto w_post_props    = std::unordered_map<std::string, std::string>();
+            auto w_person_props  = std::unordered_map<std::string, std::string>();
+
+            w_message_props["messageId"]           = std::to_string(edge.src);
+            w_message_props["messageCreationDate"] = message_props.at("creationDate");
+
             post_props["postId"] = std::to_string(edge.dst);
 
-            auto person_props               = graph->get_properties_by_id_map(creator_of_posts[prop_i].dst);
-            person_props["personId"]        = std::to_string(creator_of_posts[prop_i].dst);
-            person_props["personFirstName"] = person_props.at("firstName");
-            person_props["personLastName"]  = person_props.at("lastName");
-
-            person_props.erase("firstName");
-            person_props.erase("lastName");
+            w_person_props["personId"]        = std::to_string(creator_of_posts[prop_i].dst);
+            w_person_props["personFirstName"] = person_props.at("firstName");
+            w_person_props["personLastName"]  = person_props.at("lastName");
 
             properties_map.emplace_back();
-            properties_map[prop_i].insert(message_props.begin(), message_props.end());
-            properties_map[prop_i].insert(post_props.begin(), post_props.end());
-            properties_map[prop_i].insert(person_props.begin(), person_props.end());
+            properties_map[prop_i].insert(w_message_props.begin(), w_message_props.end());
+            properties_map[prop_i].insert(w_post_props.begin(), w_post_props.end());
+            properties_map[prop_i].insert(w_person_props.begin(), w_person_props.end());
             prop_i++;
         }
 
-        return properties_map;
+        return {posts, properties_map};
     }
 
-    std::vector<std::map<std::string, std::string>> _interaction_short_7(graphquery::database::storage::ILPGModel * graph, const int64_t _message_id) noexcept
+    graphquery::database::query::CQueryEngine::ResultType
+    _interaction_short_7(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _message_id) noexcept
     {
         //~ MATCH (m:Message {id: $messageId })<-[:REPLY_OF]-(c:Comment)
         const auto message_comments = graph->get_edges("Comment", "replyOf", _message_id);
@@ -251,12 +290,13 @@ namespace
             prop_i++;
         }
 
-        return properties_map;
+        return {creator_of_comments, properties_map};
     }
 } // namespace
 
 graphquery::database::query::CQueryEngine::
-CQueryEngine(std::shared_ptr<storage::ILPGModel *> graph_model): m_graph(std::move(graph_model))
+CQueryEngine(std::shared_ptr<storage::ILPGModel *> graph_model):
+    m_graph(std::move(graph_model))
 {
     this->m_results = std::make_shared<std::vector<utils::SResult<ResultType>>>();
 }
@@ -274,7 +314,7 @@ graphquery::database::query::CQueryEngine::get_graph() const noexcept
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_complex_2(int64_t _person_id, uint32_t _max_date) const noexcept
+graphquery::database::query::CQueryEngine::interaction_complex_2(storage::Id_t _person_id, int64_t _max_date) const noexcept
 {
     m_results->emplace_back("IC2",
                             [capture0 = *m_graph, _person_id, _max_date]
@@ -286,65 +326,65 @@ graphquery::database::query::CQueryEngine::interaction_complex_2(int64_t _person
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_complex_8(int64_t _person_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_complex_8(storage::Id_t _person_id) const noexcept
 {
     m_results->emplace_back("IC8",
-                        [capture0 = *m_graph, _person_id]
-                        {
-                            auto [res, elapsed] = utils::measure<ResultType>(&_interaction_complex_8, capture0, _person_id);
-                            _log_system->info(fmt::format("Query ({}) executed within {}s", "IC8", elapsed.count()));
-                            return res;
-                        });
+                            [capture0 = *m_graph, _person_id]
+                            {
+                                auto [res, elapsed] = utils::measure<ResultType>(&_interaction_complex_8, capture0, _person_id);
+                                _log_system->info(fmt::format("Query ({}) executed within {}s", "IC8", elapsed.count()));
+                                return res;
+                            });
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_update_2(int64_t _person_id, int64_t _post_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_update_2(storage::Id_t _person_id, storage::Id_t _post_id) const noexcept
 {
     auto [elapsed] = utils::measure(&_interaction_update_2, *m_graph, _person_id, _post_id);
     _log_system->info(fmt::format("Query ({}) executed within {}s", "IU2", elapsed.count()));
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_update_8(int64_t _src_person_id, int64_t _dst_person_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_update_8(storage::Id_t _src_person_id, storage::Id_t _dst_person_id) const noexcept
 {
     auto [elapsed] = utils::measure(&_interaction_update_8, *m_graph, _src_person_id, _dst_person_id);
     _log_system->info(fmt::format("Query ({}) executed within {}s", "IU8", elapsed.count()));
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_delete_2(int64_t _person_id, int64_t _post_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_delete_2(storage::Id_t _person_id, storage::Id_t _post_id) const noexcept
 {
     auto [elapsed] = utils::measure(&_interaction_delete_2, *m_graph, _person_id, _post_id);
     _log_system->info(fmt::format("Query ({}) executed within {}s", "ID2", elapsed.count()));
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_delete_8(int64_t _src_person_id, int64_t _dst_person_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_delete_8(storage::Id_t _src_person_id, storage::Id_t _dst_person_id) const noexcept
 {
     auto [elapsed] = utils::measure(&_interaction_delete_8, *m_graph, _src_person_id, _dst_person_id);
     _log_system->info(fmt::format("Query ({}) executed within {}s", "ID8", elapsed.count()));
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_short_2(int64_t _person_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_short_2(storage::Id_t _person_id) const noexcept
 {
     m_results->emplace_back("IS2",
-                    [capture0 = *m_graph, _person_id]
-                    {
-                        auto [res, elapsed] = utils::measure<ResultType>(&_interaction_short_2, capture0, _person_id);
-                        _log_system->info(fmt::format("Query ({}) executed within {}s", "IS2", elapsed.count()));
-                        return res;
-                    });
+                            [capture0 = *m_graph, _person_id]
+                            {
+                                auto [res, elapsed] = utils::measure<ResultType>(&_interaction_short_2, capture0, _person_id);
+                                _log_system->info(fmt::format("Query ({}) executed within {}s", "IS2", elapsed.count()));
+                                return res;
+                            });
 }
 
 void
-graphquery::database::query::CQueryEngine::interaction_short_7(int64_t _message_id) const noexcept
+graphquery::database::query::CQueryEngine::interaction_short_7(storage::Id_t _message_id) const noexcept
 {
     m_results->emplace_back("IS7",
-                    [capture0 = *m_graph, _message_id]
-                    {
-                        auto [res, elapsed] = utils::measure<ResultType>(&_interaction_short_7, capture0, _message_id);
-                        _log_system->info(fmt::format("Query ({}) executed within {}s", "IS7", elapsed.count()));
-                        return res;
-                    });
+                            [capture0 = *m_graph, _message_id]
+                            {
+                                auto [res, elapsed] = utils::measure<ResultType>(&_interaction_short_7, capture0, _message_id);
+                                _log_system->info(fmt::format("Query ({}) executed within {}s", "IS7", elapsed.count()));
+                                return res;
+                            });
 }

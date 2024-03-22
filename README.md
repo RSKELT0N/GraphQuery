@@ -1,6 +1,5 @@
 # GraphQuery #
-*A graph database to represent edges between nodes
-that hold properties and information rendered through a GUI application..*
+*A graph database following the labelled property graph (LPG) model, specifically loading the LDBC SNB dataset. Rendering through a GUI application to query through read/write transactions and analytic workloads..*
 
 ## Build and compile project
 
@@ -20,10 +19,7 @@ rm -rf [build_directory]
 ```
 
 ## TODO
-* Implement BFS Direction Optimising.
-* Complete implementation for thread pooling to support generic parallelism (basic openmp for mac support).
-* Implement individual vertex locking.
-* Implement trees for appending edges.
-* Implement running track of out degrees for vertices.
+* Ensure atomicity for adding edges.
+* Have a look at rollbacks (undo changes of a single transactions).
 * Implement basic environment for random alterations to graph.
 * Testing.

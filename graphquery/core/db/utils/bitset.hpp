@@ -15,7 +15,7 @@
 
 namespace graphquery::database::utils
 {
-    template<typename T>
+    template<typename T = uint64_t>
         requires std::is_integral_v<T>
     class CBitset final
     {

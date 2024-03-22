@@ -24,6 +24,11 @@ namespace graphquery::interact
         void render_load_menu() noexcept;
         void render_load_dataset() noexcept;
 
+        void set_create_db_rollback_state(bool) noexcept;
+        void render_create_rollback() noexcept;
+        void render_create_rollback_entry_data() noexcept;
+        void render_create_rollback_button() noexcept;
+
         void set_create_graph_state(bool) noexcept;
         void render_create_graph() noexcept;
         void render_create_graph_info() noexcept;
@@ -43,6 +48,11 @@ namespace graphquery::interact
         void render_open_graph_list() noexcept;
         void render_open_graph_button() noexcept;
 
+        void set_load_db_rollback_state(bool) noexcept;
+        void render_load_rollback() noexcept;
+        void render_load_rollback_entry_data() noexcept;
+        void render_load_rollback_button() noexcept;
+
         void setup_db_master_file_explorer() noexcept;
         void setup_db_folder_location_file_explorer() noexcept;
         void setup_dataset_folder_location_explorer() noexcept;
@@ -56,10 +66,14 @@ namespace graphquery::interact
         ImGui::FileBrowser m_dataset_folder_location_explorer;
 
         int m_open_graph_choice                 = {};
+        int m_load_rollback_choice              = {};
         std::filesystem::path m_created_db_path = {};
+        std::string m_created_db_rollback_name  = {};
         std::string m_created_db_name           = {};
         std::string m_created_graph_name        = {};
         std::string m_created_graph_type        = {};
+        bool m_is_load_db_rollback_opened       = false;
+        bool m_is_create_db_rollback_opened     = false;
         bool m_is_create_db_opened              = false;
         bool m_is_create_graph_opened           = false;
         bool m_is_open_graph_opened             = false;
@@ -68,5 +82,5 @@ namespace graphquery::interact
         static constexpr size_t DB_PATH_SIZE         = 100;
         static constexpr size_t CREATE_WINDOW_WIDTH  = 400;
         static constexpr size_t CREATE_WINDOW_HEIGHT = 200;
-    };
+    }; // namespace graphquery::interact
 } // namespace graphquery::interact

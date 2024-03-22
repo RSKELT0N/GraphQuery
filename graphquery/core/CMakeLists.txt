@@ -31,7 +31,10 @@ target_compile_options(
         -pthread
         -O3
         -ffast-math
-        -ffinite-math-only)
+        -ffinite-math-only
+        -funroll-loops               # Unroll loops for better performance
+        -ftree-vectorize             # Enable vectorization
+)
 
 target_link_libraries(${EXECUTABLE_NAME}
         PUBLIC
@@ -40,6 +43,11 @@ target_link_libraries(${EXECUTABLE_NAME}
         dylib
         logsystem
         csv "--coverage")
+
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(${EXECUTABLE_NAME} PUBLIC OpenMP::OpenMP_CXX)
+    target_compile_options(${EXECUTABLE_NAME} PUBLIC ${OpenMP_CXX_FLAGS})
+endif()
 
 # Add program include directories
 target_include_directories(${EXECUTABLE_NAME}

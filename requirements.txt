@@ -1,0 +1,45 @@
+# Project Name: GraphQuery
+# Description: Graph database support the labelled property graph model, along with transactional and analytic workloads.
+
+# C++ Compiler
+# ------------
+gcc >= 9.3.0               # GNU Compiler Collection
+clang >= 10.0.0             # LLVM Compiler Infrastructure
+
+# Build System
+# ------------
+CMake >= 3.9               # Cross-platform build system
+
+# Libraries/Frameworks
+# --------------------
+
+# Primary Libraries/Frameworks
+dylib			   # Cross platform dynamic linking linrary
+fmt		           # modern C++ formatting library for stdou.
+glew			   # Cross platform loading libraries, determines OpenGL extensions available on target platform
+glfw			   # lightweight utility library for use with OpenGL.
+googletest		   # testing framework in c++
+imgui			   # graphical user infrace library
+imgui-filebrowser	   # extension for navigating the target filesystem for use with imgui
+imnodes			   # extension for rendering nodes for use with imgui
+csv-parser		   # library for parsing csv files
+
+
+# Optional Libraries
+OpenCV >= 4.5.4              # Computer vision library
+Qt >= 5.15.2                 # Cross-platform GUI toolkit
+SFML >= 2.5.1                # Simple and Fast Multimedia Library
+
+# Development Tools
+# -----------------
+Doxygen >= 1.9.3             # Documentation generator
+Cpplint >= 1.5.5             # C++ style checker
+clang-format
+clang-tidy
+
+# Additional Notes
+# ----------------
+Tested operating systems
+ - MacOs
+ - WSL (Ubuntu)
+ - Arch Linux

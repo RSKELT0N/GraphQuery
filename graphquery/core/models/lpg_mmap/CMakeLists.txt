@@ -29,7 +29,10 @@ target_compile_options(
         -fPIC
         -O3
         -ffast-math
-        -ffinite-math-only)
+        -ffinite-math-only
+        -pthread
+        -g
+)
 
 target_link_libraries(
         lpg_mmap
@@ -37,6 +40,11 @@ target_link_libraries(
         diskdriver
         logsystem
         fmt)
+
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(lpg_mmap PUBLIC OpenMP::OpenMP_CXX)
+    target_compile_options(lpg_mmap PUBLIC ${OpenMP_CXX_FLAGS})
+endif()
 
 # Copy the shared library into the output/peripherals directory
 set(output_directory ${PROJECT_SOURCE_DIR}/lib/models)

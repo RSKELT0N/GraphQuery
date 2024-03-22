@@ -13,7 +13,7 @@ namespace graphquery::interact
                          const bool & is_graph_loaded,
                          std::shared_ptr<database::storage::ILPGModel *> graph,
                          std::shared_ptr<std::vector<database::utils::SResult<double>>>,
-                         const std::unordered_map<std::string, std::unique_ptr<database::analytic::IGraphAlgorithm *>> &);
+                         const std::unordered_map<std::string, std::shared_ptr<database::analytic::IGraphAlgorithm *>> &);
         ~CFrameDBAnalytic() override = default;
 
         void render_frame() noexcept override;
@@ -28,6 +28,6 @@ namespace graphquery::interact
         const bool & m_is_graph_loaded;
         std::shared_ptr<database::storage::ILPGModel *> m_graph;
         std::shared_ptr<std::vector<database::utils::SResult<double>>> m_results;
-        const std::unordered_map<std::string, std::unique_ptr<database::analytic::IGraphAlgorithm *>> & m_algorithms;
+        const std::unordered_map<std::string, std::shared_ptr<database::analytic::IGraphAlgorithm *>> & m_algorithms;
     };
 } // namespace graphquery::interact

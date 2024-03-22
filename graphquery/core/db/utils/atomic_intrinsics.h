@@ -12,7 +12,6 @@
 
 namespace graphquery::database::utils
 {
-
 #if defined(__GNUC__) || defined(__clang__)
 #elif defined(_MSC_VER)
 #include <intrin.h>
@@ -92,15 +91,37 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
+    inline bool atomic_fetch_weak_cas(volatile T * variable, T & expected, T & new_value)
+    {
+#if defined(__GNUC__) || defined(__clang__)
+        return __atomic_compare_exchange(variable, reinterpret_cast<T *>(&expected), reinterpret_cast<T *>(&new_value), true, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);
+#elif defined(_MSC_VER)
+        return _InterlockedCompareExchange(reinterpret_cast<volatile LONG *>(variable), new_value, expected);
+#endif
+    }
+
+    template<typename T>
     inline T atomic_fetch_inc(volatile T * variable)
     {
         return atomic_fetch_add(variable, static_cast<T>(1));
     }
 
     template<typename T>
+    inline T atomic_fetch_pre_inc(volatile T * variable)
+    {
+        return atomic_fetch_add(variable, static_cast<T>(1)) + 1;
+    }
+
+    template<typename T>
     inline T atomic_fetch_dec(volatile T * variable)
     {
         return atomic_fetch_sub(variable, static_cast<T>(1));
+    }
+
+    template<typename T>
+    inline T atomic_fetch_pre_dec(volatile T * variable)
+    {
+        return atomic_fetch_sub(variable, static_cast<T>(1)) - 1;
     }
 
     template<typename T>
@@ -198,5 +219,4 @@ namespace graphquery::database::utils
     }
 
 #pragma GCC diagnostic pop
-
 } // namespace graphquery::database::utils

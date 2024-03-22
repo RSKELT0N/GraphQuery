@@ -1,5 +1,6 @@
 #include "analytic.h"
 
+#include "lightweight_graph.hpp"
 #include "db/system.h"
 #include "db/utils/lib.h"
 
@@ -8,8 +9,8 @@ CAnalyticEngine(std::shared_ptr<storage::ILPGModel *> graph)
 {
     this->m_graph      = std::move(graph);
     this->m_results    = std::make_shared<std::vector<utils::SResult<double>>>();
-    this->m_algorithms = std::unordered_map<std::string, std::unique_ptr<IGraphAlgorithm *>>();
-    this->m_libs       = std::unordered_map<std::string, std::unique_ptr<dylib>>();
+    this->m_algorithms = std::unordered_map<std::string, std::shared_ptr<IGraphAlgorithm *>>();
+    this->m_libs       = std::unordered_map<std::string, std::shared_ptr<dylib>>();
     load_libraries(false);
 }
 
@@ -50,7 +51,7 @@ graphquery::database::analytic::CAnalyticEngine::get_result_table() const noexce
     return this->m_results;
 }
 
-const std::unordered_map<std::string, std::unique_ptr<graphquery::database::analytic::IGraphAlgorithm *>> &
+const std::unordered_map<std::string, std::shared_ptr<graphquery::database::analytic::IGraphAlgorithm *>> &
 graphquery::database::analytic::CAnalyticEngine::get_algorithm_table() const noexcept
 {
     return this->m_algorithms;
@@ -62,12 +63,31 @@ graphquery::database::analytic::CAnalyticEngine::process_algorithm(std::string_v
     if (!m_algorithms.contains(algorithm.data()))
         return;
 
-    const auto & lib = m_algorithms.at(algorithm.data());
+    const auto lib = m_algorithms.at(algorithm.data());
     m_results->emplace_back(algorithm,
                             [object_ptr = *lib.get(), capture0 = *m_graph, algorithm]
                             {
                                 auto [res, elapsed] = utils::measure<double>(&IGraphAlgorithm::compute, object_ptr, capture0);
                                 _log_system->info(fmt::format("Graph algorithm ({}) executed within {}s", algorithm, elapsed.count()));
+                                return res;
+                            });
+}
+
+void
+graphquery::database::analytic::CAnalyticEngine::process_algorithm(const std::vector<storage::ILPGModel::SEdge_t> & edges, std::string_view algorithm) noexcept
+{
+     auto light_graph = new CLightWeightGraphModel(edges);
+
+    if (!m_algorithms.contains(algorithm.data()))
+        return;
+
+    const auto lib = m_algorithms.at(algorithm.data());
+    m_results->emplace_back(algorithm,
+                            [object_ptr = *lib.get(), capture0 = light_graph, algorithm]
+                            {
+                                auto [res, elapsed] = utils::measure<double>(&IGraphAlgorithm::compute, object_ptr, capture0);
+                                _log_system->info(fmt::format("(Light Graph) Graph algorithm ({}) executed within {}s", algorithm, elapsed.count()));
+                                delete capture0;
                                 return res;
                             });
 }
