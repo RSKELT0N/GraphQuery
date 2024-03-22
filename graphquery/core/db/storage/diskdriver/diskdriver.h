@@ -33,7 +33,7 @@ namespace graphquery::database::storage
 {
     class CDiskDriver
     {
-    public:
+      public:
         enum class SRet_t : uint16_t
         {
             ERROR = 0xFFFF,
@@ -43,7 +43,7 @@ namespace graphquery::database::storage
         explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
         ~CDiskDriver();
 
-        static constexpr auto PAGE_SIZE = KB(4);
+        static constexpr auto PAGE_SIZE  = KB(4);
         CDiskDriver(CDiskDriver &&)      = delete;
         CDiskDriver(const CDiskDriver &) = delete;
 
@@ -61,62 +61,14 @@ namespace graphquery::database::storage
             return SRef_t<T, write>(reference, &m_writer_lock, &m_reader_lock, &reader_c);
         }
 
-    private:
+      private:
         template<bool write>
-        void * ref(int64_t seek, const int64_t size) noexcept
-        {
-            static char * ptr = nullptr;
-            seek              = seek == -1 ? m_seek_offset : seek;
-            if (this->m_initialised)
-            {
-                if (m_fd_info.st_size <= seek + size)
-                    resize((seek + size) * 2);
-
-                if constexpr (write)
-                    m_writer_lock.lock();
-
-                if constexpr (!write)
-                {
-                    m_reader_lock.lock();
-                    if (utils::atomic_fetch_pre_inc(&reader_c) == 1)
-                        m_writer_lock.lock();
-                    m_reader_lock.unlock();
-                }
-
-                ptr = &this->m_memory_mapped_file[seek];
-            }
-
-            return ptr;
-        }
+        void * ref(int64_t seek, int64_t size) noexcept;
 
         template<bool write>
-        void * ref_update(const int64_t size) noexcept
-        {
-            static char * ptr = nullptr;
-            if (this->m_initialised)
-            {
-                if (m_fd_info.st_size <= m_seek_offset + size)
-                    resize((m_seek_offset + size) * 2);
+        void * ref_update(int64_t size) noexcept;
 
-                if constexpr (write)
-                    m_writer_lock.lock();
-
-                if constexpr (!write)
-                {
-                    m_reader_lock.lock();
-                    if (utils::atomic_fetch_pre_inc(&reader_c) == 1)
-                        m_writer_lock.lock();
-                    m_reader_lock.unlock();
-                }
-
-                ptr = &this->m_memory_mapped_file[m_seek_offset];
-                m_seek_offset += size;
-            }
-
-            return ptr;
-        }
-
-    public:
+      public:
         void clear_contents() noexcept;
         [[nodiscard]] size_t get_filesize() const noexcept;
         [[maybe_unused]] SRet_t close();
@@ -142,7 +94,7 @@ namespace graphquery::database::storage
 
         static constexpr auto DEFAULT_FILE_SIZE = PAGE_SIZE;
 
-    private:
+      private:
         [[nodiscard]] SRet_t unmap() const noexcept;
         [[maybe_unused]] SRet_t open_fd() noexcept;
         [[nodiscard]] SRet_t close_fd() const noexcept;
@@ -168,4 +120,58 @@ namespace graphquery::database::storage
         char * m_memory_mapped_file  = {}; //~ buffer address of the memory mapped file.
         std::filesystem::path m_path = {}; //~ Set path of the current context.
     };
+
+    template<bool write>
+    void * CDiskDriver::ref(int64_t seek, const int64_t size) noexcept
+    {
+        static char * ptr = nullptr;
+        seek              = seek == -1 ? m_seek_offset : seek;
+        if (this->m_initialised)
+        {
+            if (m_fd_info.st_size <= seek + size)
+                resize((seek + size) * 2);
+
+            if constexpr (write)
+                m_writer_lock.lock();
+
+            if constexpr (!write)
+            {
+                m_reader_lock.lock();
+                if (utils::atomic_fetch_pre_inc(&reader_c) == 1)
+                    m_writer_lock.lock();
+                m_reader_lock.unlock();
+            }
+
+            ptr = &this->m_memory_mapped_file[seek];
+        }
+
+        return ptr;
+    }
+
+    template<bool write>
+    void * CDiskDriver::ref_update(const int64_t size) noexcept
+    {
+        static char * ptr = nullptr;
+        if (this->m_initialised)
+        {
+            if (m_fd_info.st_size <= m_seek_offset + size)
+                resize((m_seek_offset + size) * 2);
+
+            if constexpr (write)
+                m_writer_lock.lock();
+
+            if constexpr (!write)
+            {
+                m_reader_lock.lock();
+                if (utils::atomic_fetch_pre_inc(&reader_c) == 1)
+                    m_writer_lock.lock();
+                m_reader_lock.unlock();
+            }
+
+            ptr = &this->m_memory_mapped_file[m_seek_offset];
+            m_seek_offset += size;
+        }
+
+        return ptr;
+    }
 } // namespace graphquery::database::storage
