@@ -16,7 +16,10 @@ target_compile_options(
         -O3
         -ffast-math
         -ffinite-math-only
-        -pthread)
+        -funroll-loops               # Unroll loops for better performance
+        -ftree-vectorize             # Enable vectorization
+        -pthread
+)
 
 target_sources(
         diskdriver

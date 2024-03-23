@@ -100,6 +100,7 @@ graphquery::interact::CFrameGraphDB::render_loaded_graph() noexcept
         ImGui::Text("%s", fmt::format("Edges: {}", (*m_graph)->get_num_edges()).c_str());
         ImGui::Text("%s", fmt::format("Vertex Labels: {}", (*m_graph)->get_num_vertex_labels()).c_str());
         ImGui::Text("%s", fmt::format("Edge Labels: {}", (*m_graph)->get_num_edge_labels()).c_str());
+        ImGui::Text("%s", fmt::format("Avg outdegree: {:.4f}", (*m_graph)->get_avg_out_degree()).c_str());
     }
     ImGui::EndChild();
 }

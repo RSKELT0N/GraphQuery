@@ -24,6 +24,19 @@
 
 namespace graphquery::database::storage
 {
+    /**
+     * Global strict lock ordering
+     *
+     * index
+     * vertices
+     * edges
+     * label_ref
+     * property
+     * master
+     */
+    typedef uint32_t Id_t;
+    typedef std::make_signed<Id_t> uId_t;
+
     //~ Current configuration of database and graph entry.
     static constexpr uint8_t CFG_LPG_LABEL_LENGTH          = 20; //~ Length for a graph entry name
     static constexpr uint8_t CFG_LPG_PROPERTY_KEY_LENGTH   = 15; //~ Length for a graph entry name

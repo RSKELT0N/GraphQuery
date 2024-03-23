@@ -8,15 +8,15 @@ CGraphAlgorithmSSSP(std::string name, const std::shared_ptr<logger::CLogSystem> 
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::ILPGModel * graph_model) const noexcept
+graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::IModel * graph_model) const noexcept
 {
     const uint64_t n      = graph_model->get_num_vertices();
     const int64_t total_n = graph_model->get_total_num_vertices();
 
-    auto x      = new int[total_n];
-    auto y      = new int[total_n];
+    auto x      = new storage::Id_t[total_n];
+    auto y      = new storage::Id_t[total_n];
     auto degree = new uint32_t[total_n];
-    auto sparse = new int64_t[n];
+    auto sparse = new storage::Id_t[n];
 
     graph_model->calc_vertex_sparse_map(sparse);
 

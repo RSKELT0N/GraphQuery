@@ -10,6 +10,7 @@
 
 #include "db/storage/diskdriver/diskdriver.h"
 #include "db/utils/atomic_intrinsics.h"
+#include "db/storage/graph_model.h"
 
 #include <cstdint>
 
@@ -30,8 +31,8 @@ namespace graphquery::database::storage
         struct SIndexMetadata_t
         {
             int64_t index_list_start_addr = {};
-            int64_t index_c               = {};
             int64_t index_size            = {};
+            Id_t index_c                  = {};
         };
 
         /****************************************************************
@@ -44,8 +45,8 @@ namespace graphquery::database::storage
          ***************************************************************/
         struct SIndexEntry_t
         {
-            uint32_t offset = END_INDEX;
-            uint8_t set     = {};
+            Id_t offset = END_INDEX;
+            uint8_t set = {};
         };
 
         ~CIndexFile();
@@ -58,21 +59,24 @@ namespace graphquery::database::storage
         void reset() noexcept;
         CDiskDriver & get_file() noexcept;
         inline void store_metadata() noexcept;
-        inline SRef_t<SIndexMetadata_t> read_metadata() noexcept;
-        inline SRef_t<SIndexEntry_t> read_entry(int64_t offset) noexcept;
         void open(std::filesystem::path path, std::string_view file_name, bool create) noexcept;
-        bool store_entry(ILPGModel::SNodeID id, int64_t offset) noexcept;
+        bool store_entry(Id_t id, int64_t offset) noexcept;
+
+        template<bool write = false>
+        inline SRef_t<SIndexMetadata_t, write> read_metadata() noexcept;
+
+        template<bool write = false>
+        inline SRef_t<SIndexEntry_t, write> read_entry(int64_t offset) noexcept;
 
       private:
         CDiskDriver m_file;
-        static constexpr uint32_t METADATA_START_ADDR = 0x00000000;
+        static constexpr int64_t METADATA_START_ADDR = 0x00000000;
     };
 } // namespace graphquery::database::storage
 
 inline graphquery::database::storage::CIndexFile::CIndexFile() = default;
 
-inline graphquery::database::storage::CIndexFile::~
-CIndexFile()
+inline graphquery::database::storage::CIndexFile::~CIndexFile()
 {
     (void) m_file.close();
 }
@@ -86,36 +90,39 @@ graphquery::database::storage::CIndexFile::store_metadata() noexcept
     metadata->index_list_start_addr = sizeof(SIndexMetadata_t);
 }
 
-inline graphquery::database::storage::SRef_t<graphquery::database::storage::CIndexFile::SIndexEntry_t>
+template<bool write>
+inline graphquery::database::storage::SRef_t<graphquery::database::storage::CIndexFile::SIndexEntry_t, write>
 graphquery::database::storage::CIndexFile::read_entry(const int64_t offset) noexcept
 {
     static const auto base_addr  = utils::atomic_load(&read_metadata()->index_list_start_addr);
     static const auto index_size = utils::atomic_load(&read_metadata()->index_size);
     const auto effective_addr    = base_addr + index_size * offset;
-    return m_file.ref<SIndexEntry_t>(effective_addr);
+    return m_file.ref<SIndexEntry_t, write>(effective_addr);
 }
 
 inline bool
-graphquery::database::storage::CIndexFile::store_entry(const ILPGModel::SNodeID id, const int64_t offset) noexcept
+graphquery::database::storage::CIndexFile::store_entry(const Id_t id, const int64_t offset) noexcept
 {
-    uint8_t expected = 0;
-    uint8_t new_value = 1;
-    auto index_ptr     = read_entry(id);
+    uint8_t expected   = 0;
+    uint8_t new_value  = 1;
     const auto index_c = utils::atomic_load(&read_metadata()->index_c);
+    auto index_ptr     = read_entry(id);
 
-    if(!utils::atomic_fetch_cas(&index_ptr->set, expected, new_value))
+    if (!utils::atomic_fetch_cas(&index_ptr->set, expected, new_value))
         return false;
 
     utils::atomic_store(&index_ptr->offset, offset);
+
     if (id >= index_c)
         utils::atomic_fetch_inc(&read_metadata()->index_c);
     return true;
 }
 
-inline graphquery::database::storage::SRef_t<graphquery::database::storage::CIndexFile::SIndexMetadata_t>
+template<bool write>
+inline graphquery::database::storage::SRef_t<graphquery::database::storage::CIndexFile::SIndexMetadata_t, write>
 graphquery::database::storage::CIndexFile::read_metadata() noexcept
 {
-    return m_file.ref<SIndexMetadata_t>(METADATA_START_ADDR);
+    return m_file.ref<SIndexMetadata_t, write>(METADATA_START_ADDR);
 }
 
 inline void
@@ -137,7 +144,7 @@ graphquery::database::storage::CIndexFile::get_file() noexcept
 inline void
 graphquery::database::storage::CIndexFile::reset() noexcept
 {
-    m_file.resize(CDiskDriver::DEFAULT_FILE_SIZE);
+    m_file.resize_override(CDiskDriver::DEFAULT_FILE_SIZE);
     m_file.clear_contents();
     store_metadata();
     (void) m_file.sync();

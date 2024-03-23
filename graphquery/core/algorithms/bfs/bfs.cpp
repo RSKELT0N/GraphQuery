@@ -3,24 +3,25 @@
 #include "db/utils/bitset.hpp"
 #include "db/utils/sliding_queue.hpp"
 
-graphquery::database::analytic::CGraphAlgorithmBFS::
-CGraphAlgorithmBFS(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys)
+graphquery::database::analytic::CGraphAlgorithmBFS::CGraphAlgorithmBFS(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys)
 {
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel * graph) const noexcept
+graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::IModel * graph) const noexcept
 {
-    int64_t source                  = 7955;
+    storage::Id_t source            = 0;
     static constexpr int32_t alpha  = 15;
     static constexpr int32_t beta   = 18;
+
     const auto n_v                  = graph->get_num_vertices();
     const auto n_e                  = graph->get_num_edges();
-    const auto n_total_v            = graph->get_total_num_vertices();
+    const auto sparse               = new storage::Id_t[n_v];
     const std::shared_ptr inv_graph = graph->make_inverse_graph();
-    const auto sparse               = new int64_t[n_v];
-    graph->calc_vertex_sparse_map(sparse);
 
+    const auto n_total_v = graph->get_total_num_vertices();
+
+    graph->calc_vertex_sparse_map(sparse);
     m_log_system->debug(fmt::format("Source: {}", source));
 
     if (source >= n_total_v)
@@ -33,23 +34,23 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *
     queue.push_back(sparse[source]);
     queue.slide_window();
 
-    utils::CBitset<uint64_t> curr(n_total_v);
+    utils::CBitset curr(n_total_v);
     curr.reset();
 
-    utils::CBitset<uint64_t> front(n_total_v);
+    utils::CBitset front(n_total_v);
     front.reset();
 
     int64_t edges_to_check = n_e;
-    int64_t scout_count    = graph->out_degree_by_offset(sparse[source]);
+    int64_t scout_count    = graph->out_degree(sparse[source]);
 
     while (!queue.empty())
     {
         if (scout_count > edges_to_check / alpha)
         {
-            int64_t old_awake_count;
+            size_t old_awake_count;
             queue_to_bitset(queue, front);
 
-            int64_t awake_count = queue.size();
+            size_t awake_count = queue.size();
             queue.slide_window();
             do
             {
@@ -68,17 +69,17 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *
         }
     }
 
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(parent, sparse, n_v)
     for (int64_t n = 0; n < n_v; n++)
         if (parent[sparse[n]] < -1)
             parent[sparse[n]] = -1;
 
     double is_reachable_c = 0;
 
-#pragma omp parallel for
-    for(int64_t i = 0; i < n_v; i++)
+#pragma omp parallel for default(none) shared(parent, sparse, n_v, is_reachable_c)
+    for (int64_t i = 0; i < n_v; i++)
     {
-        if(parent[sparse[i]] != -1)
+        if (parent[sparse[i]] != -1)
             is_reachable_c++;
     }
 
@@ -86,34 +87,33 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::ILPGModel *
 }
 
 std::vector<int64_t>
-graphquery::database::analytic::CGraphAlgorithmBFS::init_parent(storage::ILPGModel * graph, int64_t sparse[], const int64_t n_v, const int64_t n_total_v) noexcept
+graphquery::database::analytic::CGraphAlgorithmBFS::init_parent(storage::IModel * graph, storage::Id_t sparse[], const int64_t n_v, const int64_t n_total_v) noexcept
 {
     std::vector<int64_t> parent(n_total_v);
+    const auto outdeg = new uint32_t[n_total_v];
+    graph->calc_outdegree(outdeg);
 
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(parent, sparse, n_v, graph, outdeg)
     for (int64_t n = 0; n < n_v; n++)
-        parent[sparse[n]] = graph->out_degree_by_offset(sparse[n]) != 0 ? -static_cast<int32_t>(graph->out_degree_by_offset(sparse[n])) : -1;
+        parent[sparse[n]] = outdeg[sparse[n]] != 0 ? -static_cast<int32_t>(outdeg[sparse[n]]) : -1;
 
     return parent;
 }
 
 void
-graphquery::database::analytic::CGraphAlgorithmBFS::queue_to_bitset(const utils::SlidingQueue<int64_t> & queue, utils::CBitset<uint64_t> & bm) noexcept
+graphquery::database::analytic::CGraphAlgorithmBFS::queue_to_bitset(const utils::SlidingQueue<int64_t> & queue, utils::CBitset<> & bm) noexcept
 {
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(queue, bm)
     for (auto q_iter = queue.begin(); q_iter < queue.end(); q_iter++)
-    {
-        int64_t u = *q_iter;
-        bm.set(u);
-    }
+        bm.set(*q_iter);
 }
 
 void
-graphquery::database::analytic::CGraphAlgorithmBFS::bitset_to_queue(storage::ILPGModel * graph, const utils::CBitset<uint64_t> & bm, utils::SlidingQueue<int64_t> & queue) noexcept
+graphquery::database::analytic::CGraphAlgorithmBFS::bitset_to_queue(storage::IModel * graph, const utils::CBitset<> & bm, utils::SlidingQueue<int64_t> & queue) noexcept
 {
-#pragma omp parallel
+#pragma omp parallel default(none) shared(graph, queue, bm)
     {
-        utils::QueueBuffer<int64_t> lqueue(queue);
+        utils::QueueBuffer lqueue(queue);
 #pragma omp for nowait
         for (int64_t n = 0; n < graph->get_num_vertices(); n++)
             if (bm.get(n))
@@ -126,17 +126,17 @@ graphquery::database::analytic::CGraphAlgorithmBFS::bitset_to_queue(storage::ILP
 int64_t
 graphquery::database::analytic::CGraphAlgorithmBFS::bu_step(const std::shared_ptr<std::vector<std::vector<int64_t>>> & inv_graph,
                                                             std::vector<int64_t> & parent,
-                                                            const utils::CBitset<uint64_t> & front,
-                                                            utils::CBitset<uint64_t> & next) noexcept
+                                                            const utils::CBitset<> & front,
+                                                            utils::CBitset<> & next) noexcept
 {
     int64_t awake_count = 0;
     next.reset();
-#pragma omp parallel for reduction(+ : awake_count) schedule(dynamic, 1024)
+#pragma omp parallel for reduction(+ : awake_count) schedule(dynamic, 1024) default(none) shared(inv_graph, parent, front, next)
     for (int64_t dst = 0; dst < inv_graph->size(); dst++)
     {
         if (parent[dst] < 0)
         {
-            for (int64_t src : (*inv_graph)[dst])
+            for (const int64_t src : (*inv_graph)[dst])
             {
                 if (front.get(src))
                 {
@@ -152,10 +152,10 @@ graphquery::database::analytic::CGraphAlgorithmBFS::bu_step(const std::shared_pt
 }
 
 int64_t
-graphquery::database::analytic::CGraphAlgorithmBFS::td_step(storage::ILPGModel * graph, std::vector<int64_t> & parent, utils::SlidingQueue<int64_t> & queue) noexcept
+graphquery::database::analytic::CGraphAlgorithmBFS::td_step(storage::IModel * graph, std::vector<int64_t> & parent, utils::SlidingQueue<int64_t> & queue) noexcept
 {
     int64_t scout_count = 0;
-#pragma omp parallel
+#pragma omp parallel default(none) shared(graph, parent, queue, scout_count)
     {
         utils::QueueBuffer lqueue(queue);
 
@@ -174,10 +174,8 @@ graphquery::database::analytic::CGraphAlgorithmBFS::td_step(storage::ILPGModel *
 
 #pragma omp for reduction(+ : scout_count) nowait
         for (auto q_iter = queue.begin(); q_iter < queue.end(); q_iter++)
-        {
-            int64_t u = *q_iter;
-            graph->src_edgemap(u, relax);
-        }
+            graph->src_edgemap(*q_iter, relax);
+
         lqueue.flush();
     }
     return scout_count;

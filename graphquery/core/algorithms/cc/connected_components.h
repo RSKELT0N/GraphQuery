@@ -16,10 +16,10 @@ namespace graphquery::database::analytic
     class CGraphAlgorithmSSSP final : public IGraphAlgorithm
     {
       public:
-        class CRelaxCC final : public graphquery::database::analytic::IRelax
+        class CRelaxCC final : public IRelax
         {
           public:
-            CRelaxCC(int _x[], int _y[])
+            CRelaxCC(storage::Id_t _x[], storage::Id_t _y[])
             {
                 this->x = _x;
                 this->y = _y;
@@ -27,9 +27,9 @@ namespace graphquery::database::analytic
 
             ~CRelaxCC() override = default;
 
-            void relax(const int64_t src, const int64_t dst) noexcept override
+            void relax(const storage::Id_t src, const storage::Id_t dst) noexcept override
             {
-                int y_dst, y_src, y_dst_n;
+                storage::Id_t y_dst, y_src, y_dst_n;
                 do
                 {
                     y_dst = y[dst];
@@ -38,13 +38,13 @@ namespace graphquery::database::analytic
                 } while(!utils::atomic_fetch_cas(&y[dst], y_dst, y_dst_n));
             }
 
-            int * x;
-            int * y;
+            storage::Id_t * x;
+            storage::Id_t * y;
         };
 
         explicit CGraphAlgorithmSSSP(std::string, const std::shared_ptr<logger::CLogSystem> &);
         ~CGraphAlgorithmSSSP() override = default;
 
-        [[nodiscard]] double compute(storage::ILPGModel *) const noexcept override;
+        [[nodiscard]] double compute(storage::IModel *) const noexcept override;
     };
 } // namespace graphquery::database::analytic
