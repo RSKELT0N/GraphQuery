@@ -14,12 +14,11 @@
 
 #include <cstdint>
 
-
 namespace graphquery::database::storage
 {
     class CIndexFile
     {
-    public:
+      public:
         /****************************************************************
          * \struct SIndexMetadata_t
          * \brief Describes the metadata for the index table, holding neccessary
@@ -69,7 +68,7 @@ namespace graphquery::database::storage
         template<bool write = false>
         inline SRef_t<SIndexEntry_t, write> read_entry(int64_t offset) noexcept;
 
-    private:
+      private:
         CDiskDriver m_file;
         static constexpr int64_t METADATA_START_ADDR = 0x00000000;
     };
@@ -77,9 +76,7 @@ namespace graphquery::database::storage
 
 inline graphquery::database::storage::CIndexFile::CIndexFile() = default;
 
-inline
-graphquery::database::storage::CIndexFile::~
-CIndexFile()
+inline graphquery::database::storage::CIndexFile::~CIndexFile()
 {
     (void) m_file.close();
 }

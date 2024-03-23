@@ -95,10 +95,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::sum(const double * vals
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmPageRank::norm_diff(const double val[],
-                                                                   const double _val[],
-                                                                   storage::Id_t sparse[],
-                                                                   const uint64_t size) noexcept
+graphquery::database::analytic::CGraphAlgorithmPageRank::norm_diff(const double val[], const double _val[], storage::Id_t sparse[], const uint64_t size) noexcept
 {
     double d   = 0.0F;
     double err = 0.0F;

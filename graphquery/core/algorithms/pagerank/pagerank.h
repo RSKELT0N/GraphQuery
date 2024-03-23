@@ -50,7 +50,7 @@ namespace graphquery::database::analytic
 
         [[nodiscard]] double compute(storage::IModel *) const noexcept override;
 
-    private:
+      private:
         static double sum(const double vals[], const storage::Id_t sparse[], uint64_t size) noexcept;
         static double norm_diff(const double _val[], const double __val[], storage::Id_t sparse[], uint64_t size) noexcept;
     };

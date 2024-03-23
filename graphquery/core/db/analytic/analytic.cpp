@@ -76,7 +76,7 @@ graphquery::database::analytic::CAnalyticEngine::process_algorithm(std::string_v
 void
 graphquery::database::analytic::CAnalyticEngine::process_algorithm(const std::vector<storage::ILPGModel::SEdge_t> & edges, std::string_view algorithm) noexcept
 {
-     auto light_graph = new CLightWeightGraphModel(edges);
+    auto light_graph = new CLightWeightGraphModel(edges);
 
     if (!m_algorithms.contains(algorithm.data()))
         return;

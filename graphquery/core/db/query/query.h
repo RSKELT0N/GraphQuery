@@ -21,17 +21,17 @@ namespace graphquery::database::query
 {
     class CQueryEngine
     {
-    public:
+      public:
         enum class EPredefinedQuery : uint8_t
         {
             InteractionComplex2 = 0,
             InteractionComplex8 = 1,
-            InteractionUpdate2 = 2,
-            InteractionUpdate8 = 3,
-            InteractionDelete2 = 4,
-            InteractionDelete8 = 5,
-            InteractionShort2 = 6,
-            InteractionShort7 = 7,
+            InteractionUpdate2  = 2,
+            InteractionUpdate8  = 3,
+            InteractionDelete2  = 4,
+            InteractionDelete8  = 5,
+            InteractionShort2   = 6,
+            InteractionShort7   = 7,
         };
 
         struct SResult_t
@@ -130,7 +130,7 @@ s        ***************************************************************/
 
         [[nodiscard]] std::shared_ptr<std::vector<utils::SResult<ResultType>>> get_result_table() const noexcept;
 
-    private:
+      private:
         std::shared_ptr<std::vector<utils::SResult<ResultType>>> m_results;
         [[nodiscard]] storage::ILPGModel * get_graph() const noexcept;
         std::shared_ptr<storage::ILPGModel *> m_graph;

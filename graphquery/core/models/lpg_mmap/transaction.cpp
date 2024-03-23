@@ -120,9 +120,9 @@ graphquery::database::storage::CTransaction::storage_persist() const noexcept
 uint64_t
 graphquery::database::storage::CTransaction::log_rm_vertex(const Id_t src) noexcept
 {
-    auto transaction_hdr       = read_transaction_header();
-    static constexpr auto size = sizeof(SVertexTransaction);
-    const auto commit_addr     = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
+    auto transaction_hdr           = read_transaction_header();
+    static constexpr uint64_t size = sizeof(SVertexTransaction);
+    const auto commit_addr         = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     //~ Lose reference to transaction_hdr
@@ -145,9 +145,9 @@ graphquery::database::storage::CTransaction::log_rm_vertex(const Id_t src) noexc
 uint64_t
 graphquery::database::storage::CTransaction::log_rm_edge(const Id_t src, const Id_t dst, const std::string_view edge_label) noexcept
 {
-    auto transaction_hdr       = read_transaction_header();
-    static constexpr auto size = sizeof(SEdgeTransaction);
-    const auto commit_addr     = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
+    auto transaction_hdr           = read_transaction_header();
+    static constexpr uint64_t size = sizeof(SEdgeTransaction);
+    const auto commit_addr         = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     //~ Lose reference to transaction_hdr
@@ -172,7 +172,7 @@ uint64_t
 graphquery::database::storage::CTransaction::log_vertex(const std::vector<std::string_view> & labels, const std::vector<ILPGModel::SProperty_t> & props, const Id_t optional_id) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
-    const auto size        = sizeof(SVertexTransaction) + props.size() * sizeof(ILPGModel::SProperty_t) + CFG_LPG_LABEL_LENGTH * labels.size();
+    const uint64_t size    = sizeof(SVertexTransaction) + props.size() * sizeof(ILPGModel::SProperty_t) + CFG_LPG_LABEL_LENGTH * labels.size();
     const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
@@ -221,7 +221,7 @@ graphquery::database::storage::CTransaction::log_edge(const Id_t src,
                                                       const bool undirected) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
-    const auto size        = sizeof(SEdgeTransaction) + props.size() * sizeof(ILPGModel::SProperty_t);
+    const uint64_t size    = sizeof(SEdgeTransaction) + props.size() * sizeof(ILPGModel::SProperty_t);
     const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 

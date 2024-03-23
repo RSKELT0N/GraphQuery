@@ -16,7 +16,8 @@ namespace
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> message_creators;
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> res;
 
-#pragma omp declare reduction(merge : std::vector<graphquery::database::storage::ILPGModel::SEdge_t> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end())) initializer(omp_priv = std::vector<graphquery::database::storage::ILPGModel::SEdge_t>())
+#pragma omp declare reduction(merge : std::vector<graphquery::database::storage::ILPGModel::SEdge_t> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end())) \
+    initializer(omp_priv = std::vector<graphquery::database::storage::ILPGModel::SEdge_t>())
 #pragma omp parallel default(none) shared(graph, _person_id, _friends, message_creators, res)
         {
 #pragma omp sections
@@ -46,19 +47,12 @@ namespace
 
         //~ Generating Map of properties
         std::vector<std::map<std::string, std::string>> properties_map;
-        properties_map
-            .
-            reserve(res
-                .
-                size()
-                );
+        properties_map.reserve(res.size());
 
         uint32_t prop_i = 0;
-        for
-        (
+        for (
 
-            const graphquery::database::storage::ILPGModel::SEdge_t & edge :
-            res
+            const graphquery::database::storage::ILPGModel::SEdge_t & edge : res
 
         )
         {
@@ -87,8 +81,7 @@ namespace
         return {res, properties_map};
     }
 
-    graphquery::database::query::CQueryEngine::ResultType
-    _interaction_complex_8(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id) noexcept
+    graphquery::database::query::CQueryEngine::ResultType _interaction_complex_8(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id) noexcept
     {
         //~ MATCH (start:Person {id: $personId})<-[:HAS_CREATOR]-(:Message)
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> person_comments = graph->get_edges("Message", "hasCreator", _person_id);
@@ -140,8 +133,7 @@ namespace
         return {comment_creators, properties_map};
     }
 
-    void
-    _interaction_update_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id, const graphquery::database::storage::Id_t _post_id) noexcept
+    void _interaction_update_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id, const graphquery::database::storage::Id_t _post_id) noexcept
     {
         static auto time = std::time(nullptr);
         static std::stringstream date;
@@ -150,10 +142,9 @@ namespace
         graph->add_edge(_person_id, _post_id, "likes", {{"creationDate", date.str()}});
     }
 
-    void
-    _interaction_update_8(graphquery::database::storage::ILPGModel * graph,
-                          const graphquery::database::storage::Id_t _src_person_id,
-                          const graphquery::database::storage::Id_t _dst_person_id) noexcept
+    void _interaction_update_8(graphquery::database::storage::ILPGModel * graph,
+                               const graphquery::database::storage::Id_t _src_person_id,
+                               const graphquery::database::storage::Id_t _dst_person_id) noexcept
     {
         static auto time = std::time(nullptr);
         static std::stringstream date;
@@ -162,22 +153,19 @@ namespace
         graph->add_edge(_src_person_id, _dst_person_id, "knows", {{"creationDate", date.str()}});
     }
 
-    void
-    _interaction_delete_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id, const graphquery::database::storage::Id_t _post_id) noexcept
+    void _interaction_delete_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id, const graphquery::database::storage::Id_t _post_id) noexcept
     {
         graph->rm_edge(_person_id, _post_id, "LIKES");
     }
 
-    void
-    _interaction_delete_8(graphquery::database::storage::ILPGModel * graph,
-                          const graphquery::database::storage::Id_t _src_person_id,
-                          const graphquery::database::storage::Id_t _dst_person_id) noexcept
+    void _interaction_delete_8(graphquery::database::storage::ILPGModel * graph,
+                               const graphquery::database::storage::Id_t _src_person_id,
+                               const graphquery::database::storage::Id_t _dst_person_id) noexcept
     {
         graph->rm_edge(_src_person_id, _dst_person_id, "KNOWS");
     }
 
-    graphquery::database::query::CQueryEngine::ResultType
-    _interaction_short_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id) noexcept
+    graphquery::database::query::CQueryEngine::ResultType _interaction_short_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id) noexcept
     {
         constexpr size_t message_limit = 10;
 
@@ -233,8 +221,7 @@ namespace
         return {posts, properties_map};
     }
 
-    graphquery::database::query::CQueryEngine::ResultType
-    _interaction_short_7(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _message_id) noexcept
+    graphquery::database::query::CQueryEngine::ResultType _interaction_short_7(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _message_id) noexcept
     {
         //~ MATCH (m:Message {id: $messageId })<-[:REPLY_OF]-(c:Comment)
         const auto message_comments = graph->get_edges("Comment", "replyOf", _message_id);
@@ -294,9 +281,7 @@ namespace
     }
 } // namespace
 
-graphquery::database::query::CQueryEngine::
-CQueryEngine(std::shared_ptr<storage::ILPGModel *> graph_model):
-    m_graph(std::move(graph_model))
+graphquery::database::query::CQueryEngine::CQueryEngine(std::shared_ptr<storage::ILPGModel *> graph_model): m_graph(std::move(graph_model))
 {
     this->m_results = std::make_shared<std::vector<utils::SResult<ResultType>>>();
 }

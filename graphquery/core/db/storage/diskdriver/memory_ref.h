@@ -35,7 +35,7 @@ namespace graphquery::database::storage
                         writer_lock->unlock();
                 }
             }
-            reader_c = nullptr;
+            reader_c    = nullptr;
             reader_lock = nullptr;
             writer_lock = nullptr;
         }
@@ -108,9 +108,9 @@ namespace graphquery::database::storage
         T * operator++() { return ++ref; }
         T operator*() { return *ref; }
 
-        T * ref                  = nullptr;
+        T * ref                 = nullptr;
         CSpinlock * writer_lock = nullptr;
         CSpinlock * reader_lock = nullptr;
-        uint8_t * reader_c       = nullptr;
+        uint8_t * reader_c      = nullptr;
     };
 }; // namespace graphquery::database::storage
