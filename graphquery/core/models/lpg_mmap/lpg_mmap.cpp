@@ -494,7 +494,6 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(const Id_t sr
     {
         utils::atomic_fetch_inc(&m_vertices_file.read_entry(src)->payload.metadata.indegree);
         store_edge_entry(dst_idx, src_idx, edge_label_id, props);
-        utils::atomic_fetch_inc(&read_graph_metadata()->edges_c);
     }
 
     return EActionState_t::valid;
