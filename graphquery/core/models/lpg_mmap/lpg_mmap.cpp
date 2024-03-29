@@ -316,7 +316,9 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_property_entry(const S
 
     data_block_ptr->state[payload_offset] = true;
     strncpy(&data_block_ptr->payload[payload_offset].key[0], prop.key, CFG_LPG_PROPERTY_KEY_LENGTH);
+    data_block_ptr->payload[payload_offset].key[CFG_LPG_PROPERTY_KEY_LENGTH - 1] = '\0';
     strncpy(&data_block_ptr->payload[payload_offset].value[0], prop.value, CFG_LPG_PROPERTY_VALUE_LENGTH);
+    data_block_ptr->payload[payload_offset].value[CFG_LPG_PROPERTY_VALUE_LENGTH - 1] = '\0';
 
     return entry_offset;
 }

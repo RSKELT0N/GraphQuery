@@ -249,8 +249,10 @@ graphquery::database::storage::CTransaction::log_edge(const Id_t src,
     for (const auto & [key, value] : props)
     {
         auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(static_cast<int64_t>(curr_addr));
-        strcpy(&prop->key[0], key);
-        strcpy(&prop->value[0], value);
+        strncpy(&prop->key[0], key, CFG_LPG_PROPERTY_KEY_LENGTH - 1);
+	prop->key[CFG_LPG_PROPERTY_KEY_LENGTH - 1] = '\0';
+        strncpy(&prop->value[0], value, CFG_LPG_PROPERTY_VALUE_LENGTH - 1);
+	prop->value[CFG_LPG_PROPERTY_VALUE_LENGTH - 1] = '\0';
         curr_addr += sizeof(ILPGModel::SProperty_t);
     }
 
