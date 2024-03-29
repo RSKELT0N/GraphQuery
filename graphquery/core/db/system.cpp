@@ -9,6 +9,17 @@
 namespace
 {
     bool _sync;
+
+    void init_env_variables()
+    {
+        setenv("OMP_PROC_BIND", "true", true);
+        setenv("OMP_PLACES", "{0}:64:1", true);
+        setenv("OMP_NUM_THREADS", "16", true);
+        setenv("OMP_WAIT_POLICY", "active", true);
+        setenv("OMP_DISPLAY_ENV", "FALSE", true);
+        setenv("OMP_DYNAMIC", "false", true);
+    }
+
     void setup_seg_handler()
     {
         signal(SIGINT | SIGTERM,
@@ -56,6 +67,7 @@ namespace graphquery::database
 
     EStatus initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept
     {
+        init_env_variables();
         setup_seg_handler();
         const EStatus status = Initialise_Logging();
 

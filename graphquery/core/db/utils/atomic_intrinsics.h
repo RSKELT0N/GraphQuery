@@ -81,20 +81,10 @@ namespace graphquery::database::utils
     }
 
     template<typename T>
-    inline bool atomic_fetch_cas(volatile T * variable, T & expected, T & new_value)
+    inline bool atomic_fetch_cas(volatile T * variable, T & expected, T & new_value, bool weak)
     {
 #if defined(__GNUC__) || defined(__clang__)
-        return __atomic_compare_exchange(variable, reinterpret_cast<T *>(&expected), reinterpret_cast<T *>(&new_value), false, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED);
-#elif defined(_MSC_VER)
-        return _InterlockedCompareExchange(reinterpret_cast<volatile LONG *>(variable), new_value, expected);
-#endif
-    }
-
-    template<typename T>
-    inline bool atomic_fetch_weak_cas(volatile T * variable, T & expected, T & new_value)
-    {
-#if defined(__GNUC__) || defined(__clang__)
-        return __atomic_compare_exchange(variable, reinterpret_cast<T *>(&expected), reinterpret_cast<T *>(&new_value), true, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED);
+        return __atomic_compare_exchange(variable, reinterpret_cast<T *>(&expected), reinterpret_cast<T *>(&new_value), weak, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED);
 #elif defined(_MSC_VER)
         return _InterlockedCompareExchange(reinterpret_cast<volatile LONG *>(variable), new_value, expected);
 #endif
@@ -163,13 +153,13 @@ namespace graphquery::database::utils
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 
     template<>
-    inline bool atomic_fetch_cas(volatile double * variable, double & expected, double & new_value)
+    inline bool atomic_fetch_cas(volatile double * variable, double & expected, double & new_value, bool weak)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_compare_exchange(reinterpret_cast<volatile uint64_t *>(variable),
                                          reinterpret_cast<uint64_t *>(&expected),
                                          reinterpret_cast<uint64_t *>(&new_value),
-                                         false,
+                                         weak,
                                          __ATOMIC_ACQ_REL,
                                          __ATOMIC_RELAXED);
 #elif defined(_MSC_VER)
@@ -179,13 +169,13 @@ namespace graphquery::database::utils
     }
 
     template<>
-    inline bool atomic_fetch_cas(volatile float * variable, float & expected, float & new_value)
+    inline bool atomic_fetch_cas(volatile float * variable, float & expected, float & new_value, bool weak)
     {
 #if defined(__GNUC__) || defined(__clang__)
         return __atomic_compare_exchange(reinterpret_cast<volatile uint32_t *>(variable),
                                          reinterpret_cast<uint32_t *>(&expected),
                                          reinterpret_cast<uint32_t *>(&new_value),
-                                         false,
+                                         weak,
                                          __ATOMIC_ACQ_REL,
                                          __ATOMIC_RELAXED);
 #elif defined(_MSC_VER)
@@ -215,6 +205,17 @@ namespace graphquery::database::utils
 #elif defined(_MSC_VER)
         _ReadBarrier();
         return *variable;
+#endif
+    }
+
+    inline double atomic_fetch_add(double * ptr, double value)
+    {
+#ifdef _MSC_VER // Microsoft Visual Studio
+        return _InterlockedExchangeAdd64(reinterpret_cast<long long *>(ptr), *reinterpret_cast<long long *>(&value)) + value;
+#elif defined(__GNUC__) // GCC, Clang, and compatible compilers
+        return __atomic_fetch_add(reinterpret_cast<long long *>(ptr), *reinterpret_cast<long long *>(&value), __ATOMIC_SEQ_CST);
+#else
+#error "Unsupported compiler"
 #endif
     }
 

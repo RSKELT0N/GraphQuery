@@ -21,7 +21,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
   set(EXECUTABLE_NAME graph-query)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-  
+
 # add submodules
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/glew)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT}/external/googletest)
