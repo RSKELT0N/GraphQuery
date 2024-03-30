@@ -36,7 +36,7 @@ namespace graphquery::database::storage
         struct SLabel
         {
             char label[CFG_LPG_LABEL_LENGTH] = {""};
-        } __attribute__((packed));
+        };
 
         /****************************************************************
          * \struct SLabel_t
@@ -119,19 +119,25 @@ namespace graphquery::database::storage
             }
         };
 
-        struct SProperty_t
-        {
-            char key[CFG_LPG_PROPERTY_KEY_LENGTH]     = {""};
-            char value[CFG_LPG_PROPERTY_VALUE_LENGTH] = {""};
+	struct SProperty_t
+	{
+    	    char key[CFG_LPG_PROPERTY_KEY_LENGTH]     = {0};
+    	    char value[CFG_LPG_PROPERTY_VALUE_LENGTH] = {0};
 
-            SProperty_t() = default;
+    	    SProperty_t() = default;
 
-            SProperty_t(const std::string_view & k, const std::string_view & v)
-            {
-                strncpy(key, k.data(), CFG_LPG_PROPERTY_KEY_LENGTH - 1);
-                strncpy(value, v.data(), CFG_LPG_PROPERTY_VALUE_LENGTH - 1);
-            }
-        };
+    	    SProperty_t(const std::string_view &k, const std::string_view &v)
+    	    {
+        	size_t keyLength = std::min(k.length(), static_cast<size_t>(CFG_LPG_PROPERTY_KEY_LENGTH - 1));
+        	size_t valueLength = std::min(v.length(), static_cast<size_t>(CFG_LPG_PROPERTY_VALUE_LENGTH - 1));
+
+        	std::copy_n(k.data(), keyLength, key);
+        	key[keyLength] = '\0';
+
+        	std::copy_n(v.data(), valueLength, value);
+       		value[valueLength] = '\0';
+    	    }
+	};
 
         [[nodiscard]] virtual uint16_t get_num_vertex_labels() = 0;
         [[nodiscard]] virtual uint16_t get_num_edge_labels() = 0;

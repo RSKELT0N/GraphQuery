@@ -316,7 +316,9 @@ graphquery::database::storage::CMemoryModelMMAPLPG::store_property_entry(const S
 
     data_block_ptr->state[payload_offset] = true;
     strncpy(&data_block_ptr->payload[payload_offset].key[0], prop.key, CFG_LPG_PROPERTY_KEY_LENGTH);
+    data_block_ptr->payload[payload_offset].key[CFG_LPG_PROPERTY_KEY_LENGTH - 1] = '\0';
     strncpy(&data_block_ptr->payload[payload_offset].value[0], prop.value, CFG_LPG_PROPERTY_VALUE_LENGTH);
+    data_block_ptr->payload[payload_offset].value[CFG_LPG_PROPERTY_VALUE_LENGTH - 1] = '\0';
 
     return entry_offset;
 }
@@ -494,7 +496,6 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(const Id_t sr
     {
         utils::atomic_fetch_inc(&m_vertices_file.read_entry(src)->payload.metadata.indegree);
         store_edge_entry(dst_idx, src_idx, edge_label_id, props);
-        utils::atomic_fetch_inc(&read_graph_metadata()->edges_c);
     }
 
     return EActionState_t::valid;
@@ -1040,20 +1041,23 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::edgemap(const std::unique_ptr<analytic::IRelax> & relax) noexcept
 {
     const auto datablock_c = utils::atomic_load(&m_edges_file.read_metadata()->data_block_c);
-    auto gbl_curr_edge_ptr = m_edges_file.read_entry(0);
+    auto gbl_curr_edge_ptr = m_edges_file.read_entry(0).ref;
 
-#pragma omp parallel for default(none) shared(gbl_curr_edge_ptr, relax, datablock_c) num_threads(128)
+#pragma omp parallel for default(none) firstprivate(gbl_curr_edge_ptr, datablock_c) shared(relax) schedule(auto)
     for (Id_t i = 0; i < datablock_c; i++)
     {
         const auto curr_edge_ptr = gbl_curr_edge_ptr + i;
 
-        if (curr_edge_ptr->state == 0)
+        if (unlikely(curr_edge_ptr->state == 0))
             continue;
 
-        for (size_t j = 0; j < curr_edge_ptr->state.size(); j++)
+        for (uint8_t j = 0; j != curr_edge_ptr->payload_amt;)
         {
             if (likely(curr_edge_ptr->state.test(j)))
+            {
                 relax->relax(curr_edge_ptr->payload[j].metadata.src, curr_edge_ptr->payload[j].metadata.dst);
+                j++;
+            }
         }
     }
 }
@@ -1068,10 +1072,11 @@ graphquery::database::storage::CMemoryModelMMAPLPG::src_edgemap(const Id_t verte
 
     auto v_ptr = std::move(*v_ptr_opt);
 
+    auto gbl_edge_ptr = m_edges_file.read_entry(0).ref;
     auto edge_head = v_ptr->payload.edge_idx;
     while (edge_head != END_INDEX)
     {
-        auto e_ptr = m_edges_file.read_entry(edge_head);
+        auto e_ptr = gbl_edge_ptr + edge_head;
 
         for (size_t i = 0; i < e_ptr->state.size(); i++)
         {
