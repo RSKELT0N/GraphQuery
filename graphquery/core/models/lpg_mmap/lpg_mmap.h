@@ -196,7 +196,7 @@ namespace graphquery::database::storage
         [[nodiscard]] Id_t store_property_entry(const SProperty_t & prop, Id_t next_ref) noexcept;
         [[nodiscard]] bool store_index_entry(Id_t id, const std::unordered_set<uint16_t> & label_ids, uint32_t vertex_offset) noexcept;
         [[nodiscard]] bool store_vertex_entry(Id_t id, const std::unordered_set<uint16_t> & label_id, const std::vector<SProperty_t> & props) noexcept;
-        void store_edge_entry(Id_t src, Id_t dst, uint16_t edge_label_id, const std::vector<SProperty_t> & props) noexcept;
+        void store_edge_entry(Id_t src, Id_t dst, uint16_t edge_label_id, const std::vector<SProperty_t> & props, bool undirected) noexcept;
 
         template<bool write = false>
         inline SRef_t<SGraphMetaData_t, write> read_graph_metadata() noexcept;

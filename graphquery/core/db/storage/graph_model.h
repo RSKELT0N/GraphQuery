@@ -59,7 +59,7 @@ namespace graphquery::database::storage
             Id_t dst               = {};
             Id_t property_id       = {};
             uint16_t edge_label_id = {};
-            uint16_t property_c    = {};
+            uint8_t property_c    = {};
 
             SEdge_t() = default;
 

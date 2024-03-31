@@ -12,9 +12,9 @@ namespace
 
     void init_env_variables()
     {
-        setenv("OMP_PROC_BIND", "true", true);
+        setenv("OMP_PROC_BIND", "close", true);
         setenv("OMP_PLACES", "{0}:64:1", true);
-        setenv("OMP_NUM_THREADS", "16", true);
+        setenv("OMP_NUM_THREADS", "64", true);
         setenv("OMP_WAIT_POLICY", "active", true);
         setenv("OMP_DISPLAY_ENV", "FALSE", true);
         setenv("OMP_DYNAMIC", "false", true);
