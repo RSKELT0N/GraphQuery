@@ -43,7 +43,8 @@ target_link_libraries(
 
 if(OpenMP_CXX_FOUND)
     target_link_libraries(lpg_mmap PUBLIC OpenMP::OpenMP_CXX)
-    target_compile_options(lpg_mmap PUBLIC ${OpenMP_CXX_FLAGS})
+    target_compile_options(${EXECUTABLE_NAME} PUBLIC ${OpenMP_CXX_FLAGS} -fopenmp-simd)
+
 endif()
 
 # Copy the shared library into the output/peripherals directory

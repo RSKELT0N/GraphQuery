@@ -1,8 +1,8 @@
 /************************************************************
  * \author Ryan Skelton
  * \date 18/09/2023
- * \file connected_components.h
- * \brief Connected components is a analytic algorithm to calculate
+ * \file wcc.h
+ * \brief Weak Connected components is a analytic algorithm to calculate
  *        the distinct number of isolated vertices. Also known as
  *        disjoint set, to determine the subset count of the vertices.
  ************************************************************/

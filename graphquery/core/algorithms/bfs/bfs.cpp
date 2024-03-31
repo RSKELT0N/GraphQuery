@@ -1,6 +1,5 @@
 #include "bfs.h"
 
-#include "db/utils/bitset.hpp"
 #include "db/utils/sliding_queue.hpp"
 
 graphquery::database::analytic::CGraphAlgorithmBFS::

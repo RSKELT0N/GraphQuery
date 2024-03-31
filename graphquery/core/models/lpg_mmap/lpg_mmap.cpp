@@ -1043,7 +1043,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::edgemap(const std::unique_pt
     const auto datablock_c = utils::atomic_load(&m_edges_file.read_metadata()->data_block_c);
     auto gbl_curr_edge_ptr = m_edges_file.read_entry(0).ref;
 
-#pragma omp parallel for default(none) firstprivate(gbl_curr_edge_ptr, datablock_c) shared(relax) schedule(auto)
+#pragma omp parallel for default(none) firstprivate(gbl_curr_edge_ptr, datablock_c) shared(relax) schedule(static)
     for (Id_t i = 0; i < datablock_c; i++)
     {
         const auto curr_edge_ptr = gbl_curr_edge_ptr + i;
@@ -1065,12 +1065,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::edgemap(const std::unique_pt
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::src_edgemap(const Id_t vertex_offset, const std::function<void(int64_t src, int64_t dst)> & relax)
 {
-    std::optional<SRef_t<SVertexDataBlock>> v_ptr_opt = get_vertex_by_offset(vertex_offset);
-
-    if (!v_ptr_opt.has_value())
-        return;
-
-    auto v_ptr = std::move(*v_ptr_opt);
+    const auto v_ptr = m_vertices_file.read_entry(vertex_offset).ref;
 
     auto gbl_edge_ptr = m_edges_file.read_entry(0).ref;
     auto edge_head = v_ptr->payload.edge_idx;
@@ -1078,12 +1073,13 @@ graphquery::database::storage::CMemoryModelMMAPLPG::src_edgemap(const Id_t verte
     {
         auto e_ptr = gbl_edge_ptr + edge_head;
 
-        for (size_t i = 0; i < e_ptr->state.size(); i++)
+        for (uint8_t j = 0; j != e_ptr->payload_amt;)
         {
-            if (!e_ptr->state.test(i))
+            if (!e_ptr->state.test(j))
                 continue;
 
-            relax(vertex_offset, e_ptr->payload[i].metadata.dst);
+            relax(e_ptr->payload[j].metadata.src, e_ptr->payload[j].metadata.dst);
+            j++;
         }
         edge_head = e_ptr->next;
     }
