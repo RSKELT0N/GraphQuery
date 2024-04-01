@@ -75,7 +75,7 @@ graphquery::database::storage::CDiskDriver::resize(const int64_t file_size) noex
     m_writer_lock.lock();
     const auto old_size = m_fd_info.st_size;
 
-    if(old_size >= file_size)
+    if (old_size >= file_size)
     {
         m_writer_lock.unlock();
         return;

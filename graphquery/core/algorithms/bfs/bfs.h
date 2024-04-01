@@ -28,7 +28,7 @@ namespace graphquery::database::analytic
                                std::vector<int64_t> & parent,
                                const utils::CBitset<uint64_t> & front,
                                utils::CBitset<uint64_t> & next) noexcept;
-        
+
         static int64_t td_step(storage::IModel * graph, std::vector<int64_t> & parent, utils::SlidingQueue<int64_t> & queue) noexcept;
         static std::vector<int64_t> init_parent(storage::IModel * graph, storage::Id_t sparse[], int64_t n_v, int64_t n_total_v) noexcept;
         static void queue_to_bitset(const utils::SlidingQueue<int64_t> & queue, utils::CBitset<uint64_t> & bm) noexcept;

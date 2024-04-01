@@ -76,22 +76,19 @@ namespace graphquery::database
         return status;
     }
 
-    void
-    _enable_sync_() noexcept
+    void _enable_sync_() noexcept
     {
         _sync = true;
         _log_system->info("Synchronisation has been enabled");
     }
 
-    void
-    _disable_sync_() noexcept
+    void _disable_sync_() noexcept
     {
         _sync = false;
         _log_system->info("Synchronisation has been disabled");
     }
 
-    const bool &
-    _get_sync_state_() noexcept
+    const bool & _get_sync_state_() noexcept
     {
         return _sync;
     }

@@ -2,9 +2,7 @@
 
 #include "db/utils/sliding_queue.hpp"
 
-graphquery::database::analytic::CGraphAlgorithmBFS::
-CGraphAlgorithmBFS(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys):
-    IGraphAlgorithm(std::move(name), logsys)
+graphquery::database::analytic::CGraphAlgorithmBFS::CGraphAlgorithmBFS(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys)
 {
 }
 
@@ -20,7 +18,7 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::IModel * gr
     const auto sparse               = new storage::Id_t[n_v];
     const std::shared_ptr inv_graph = graph->make_inverse_graph();
 
-    const auto n_total_v            = graph->get_total_num_vertices();
+    const auto n_total_v = graph->get_total_num_vertices();
 
     graph->calc_vertex_sparse_map(sparse);
     m_log_system->debug(fmt::format("Source: {}", source));
@@ -95,7 +93,7 @@ graphquery::database::analytic::CGraphAlgorithmBFS::init_parent(storage::IModel 
     graph->calc_outdegree(outdeg);
 
 #pragma omp parallel for default(none) shared(parent, sparse, n_v, graph, outdeg)
-    for (int64_t n        = 0; n < n_v; n++)
+    for (int64_t n = 0; n < n_v; n++)
         parent[sparse[n]] = outdeg[sparse[n]] != 0 ? -static_cast<int32_t>(outdeg[sparse[n]]) : -1;
 
     return parent;
@@ -184,9 +182,8 @@ graphquery::database::analytic::CGraphAlgorithmBFS::td_step(storage::IModel * gr
 
 extern "C"
 {
-LIB_EXPORT void
-create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm, const std::shared_ptr<graphquery::logger::CLogSystem> & logsys)
-{
-    *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmBFS("BFS", logsys);
-}
+    LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm, const std::shared_ptr<graphquery::logger::CLogSystem> & logsys)
+    {
+        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmBFS("BFS", logsys);
+    }
 }

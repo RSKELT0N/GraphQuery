@@ -8,23 +8,22 @@
 namespace
 {
     const char * predefined_queries = {"Interaction Complex 2\0"
-        "Interaction Complex 8\0"
-        "Interaction Update 2\0"
-        "Interaction Update 8\0"
-        "Interaction Delete 2\0"
-        "Interaction Delete 8\0"
-        "Interaction Short 2\0"
-        "Interaction Short 8\0\0"};
+                                       "Interaction Complex 8\0"
+                                       "Interaction Update 2\0"
+                                       "Interaction Update 8\0"
+                                       "Interaction Delete 2\0"
+                                       "Interaction Delete 8\0"
+                                       "Interaction Short 2\0"
+                                       "Interaction Short 8\0\0"};
 }
 
-graphquery::interact::CFrameDBQuery::
-CFrameDBQuery(const bool & is_db_loaded,
-              const bool & is_graph_loaded,
-              std::shared_ptr<database::storage::ILPGModel *> graph,
-              std::shared_ptr<std::vector<database::utils::SResult<database::query::CQueryEngine::ResultType>>> result_table,
-              const std::unordered_map<std::string, std::shared_ptr<database::analytic::IGraphAlgorithm *>> & algorithms):
-    m_algorithm_choice(0), m_result_has_changed(false), m_result_select(-1), m_is_excute_query_open(false), m_predefined_choice(0), m_is_db_loaded(is_db_loaded),
-    m_is_graph_loaded(is_graph_loaded),
+graphquery::interact::CFrameDBQuery::CFrameDBQuery(const bool & is_db_loaded,
+                                                   const bool & is_graph_loaded,
+                                                   std::shared_ptr<database::storage::ILPGModel *> graph,
+                                                   std::shared_ptr<std::vector<database::utils::SResult<database::query::CQueryEngine::ResultType>>> result_table,
+                                                   const std::unordered_map<std::string, std::shared_ptr<database::analytic::IGraphAlgorithm *>> & algorithms):
+    m_algorithm_choice(0),
+    m_result_has_changed(false), m_result_select(-1), m_is_excute_query_open(false), m_predefined_choice(0), m_is_db_loaded(is_db_loaded), m_is_graph_loaded(is_graph_loaded),
     m_graph(std::move(graph)), m_results(std::move(result_table)), m_algorithms(algorithms)
 {
 }
@@ -249,39 +248,39 @@ void
 graphquery::interact::CFrameDBQuery::render_result_table() noexcept
 {
     ImGui::NewLine();
-        ImGui::SeparatorText("Result table");
-        ImGui::NewLine();
-        static constexpr uint8_t columns       = 3;
-        static constexpr ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable;
+    ImGui::SeparatorText("Result table");
+    ImGui::NewLine();
+    static constexpr uint8_t columns       = 3;
+    static constexpr ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable;
 
-        if (ImGui::BeginTable("#result_table", columns, flags, {0, ImGui::GetWindowHeight() / 3}))
+    if (ImGui::BeginTable("#result_table", columns, flags, {0, ImGui::GetWindowHeight() / 3}))
+    {
+        ImGui::TableSetupColumn("name");
+        ImGui::TableSetupColumn("state");
+        ImGui::TableSetupColumn("selected");
+        ImGui::TableHeadersRow();
+
+        for (size_t i = 0; i < m_results->size(); i++)
         {
-            ImGui::TableSetupColumn("name");
-            ImGui::TableSetupColumn("state");
-            ImGui::TableSetupColumn("selected");
-            ImGui::TableHeadersRow();
+            auto res = m_results->at(i);
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::TextUnformatted(res.get_name().c_str());
+            ImGui::TableSetColumnIndex(1);
 
-            for (size_t i = 0; i < m_results->size(); i++)
+            if (res.processed())
+                ImGui::Text("Processed");
+            else
+                ImGui::Text("Processing..");
+
+            ImGui::TableSetColumnIndex(2);
+            if (res.processed() && ImGui::RadioButton(fmt::format("##option: {}", i).c_str(), &m_result_select, i))
             {
-                auto res = m_results->at(i);
-                ImGui::TableNextRow();
-                ImGui::TableSetColumnIndex(0);
-                ImGui::TextUnformatted(res.get_name().c_str());
-                ImGui::TableSetColumnIndex(1);
-
-                if (res.processed())
-                    ImGui::Text("Processed");
-                else
-                    ImGui::Text("Processing..");
-
-                ImGui::TableSetColumnIndex(2);
-                if (res.processed() && ImGui::RadioButton(fmt::format("##option: {}", i).c_str(), &m_result_select, i))
-                {
-                    m_result_select      = static_cast<int32_t>(i);
-                    m_result_has_changed = true;
-                }
+                m_result_select      = static_cast<int32_t>(i);
+                m_result_has_changed = true;
             }
-            ImGui::EndTable();
+        }
+        ImGui::EndTable();
         }
         ImGui::NewLine();
 }
@@ -354,7 +353,7 @@ graphquery::interact::CFrameDBQuery::render_clear_selection() noexcept
 void
 graphquery::interact::CFrameDBQuery::render_analytic_after_querying() noexcept
 {
-    if(m_result_select == -1)
+    if (m_result_select == -1)
         return;
 
     std::string algorithms = {};

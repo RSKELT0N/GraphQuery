@@ -33,7 +33,7 @@ namespace graphquery::database::storage
 {
     class CDiskDriver
     {
-    public:
+      public:
         enum class SRet_t : uint16_t
         {
             ERROR = 0xFFFF,
@@ -43,7 +43,7 @@ namespace graphquery::database::storage
         explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
         ~CDiskDriver();
 
-        static constexpr auto PAGE_SIZE = KB(4);
+        static constexpr auto PAGE_SIZE  = KB(4);
         CDiskDriver(CDiskDriver &&)      = delete;
         CDiskDriver(const CDiskDriver &) = delete;
 
@@ -61,7 +61,7 @@ namespace graphquery::database::storage
             return SRef_t<T, write>(reference, &m_writer_lock, &m_reader_lock, &reader_c);
         }
 
-    private:
+      private:
         template<bool write>
         void * ref(int64_t seek, const int64_t size) noexcept
         {
@@ -116,7 +116,7 @@ namespace graphquery::database::storage
             return ptr;
         }
 
-    public:
+      public:
         void clear_contents() noexcept;
         [[nodiscard]] size_t get_filesize() const noexcept;
         [[maybe_unused]] SRet_t close();
@@ -142,7 +142,7 @@ namespace graphquery::database::storage
 
         static constexpr auto DEFAULT_FILE_SIZE = PAGE_SIZE;
 
-    private:
+      private:
         [[nodiscard]] SRet_t unmap() const noexcept;
         [[maybe_unused]] SRet_t open_fd() noexcept;
         [[nodiscard]] SRet_t close_fd() const noexcept;

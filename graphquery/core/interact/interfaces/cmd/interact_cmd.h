@@ -6,13 +6,13 @@ namespace graphquery::interact
 {
     class CInteractCMD final : public IInteract
     {
-    public:
+      public:
         explicit CInteractCMD();
         ~CInteractCMD() override = default;
 
         void clean_up() noexcept override;
 
-    private:
+      private:
         void render() noexcept override;
     };
 } // namespace graphquery::interact
