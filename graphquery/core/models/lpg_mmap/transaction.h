@@ -46,26 +46,26 @@ namespace graphquery::database::storage
             Id_t optional_id    = {0};
             uint16_t label_c    = {0};
             uint16_t property_c = {0};
-            uint8_t remove      = {0};
-        } __attribute__((packed));
+            uint8_t remove = {0};
+        };
 
         struct SEdgeCommit
         {
+            Id_t src = {0};
+            Id_t dst = {0};
             char edge_label[CFG_LPG_LABEL_LENGTH] = {""};
-            Id_t src                              = {0};
-            Id_t dst                              = {0};
-            uint16_t property_c                   = {0};
-            uint8_t remove                        = {0};
-            uint8_t undirected                    = {0};
+            uint16_t property_c = {0};
+            uint8_t remove = {0};
+            uint8_t undirected = {0};
         };
 
         template<typename T>
         struct STransaction
         {
-            ETransactionType type = ETransactionType::vertex;
-            uint16_t size         = {0};
-            uint8_t committed     = {0};
-            T commit              = {};
+            T commit = {};
+	          ETransactionType type = ETransactionType::vertex;
+    	      uint16_t size = {0};
+            uint8_t committed = {0};
         };
 
         explicit CTransaction(const std::filesystem::path & local_path, ILPGModel * lpg, const std::shared_ptr<logger::CLogSystem> &, const bool & sync_state_);
@@ -116,8 +116,9 @@ namespace graphquery::database::storage
         static constexpr const char * TRANSACTION_FILE_NAME    = "transactions";
         static constexpr uint8_t ROLLBACK_MAX_AMOUNT           = 5;
         static constexpr int32_t TRANSACTION_HEADER_START_ADDR = 0x00000000;
-        static constexpr int64_t ROLLBACK_ENTRIES_START_ADDR   = TRANSACTION_HEADER_START_ADDR + sizeof(SHeaderBlock);
-        static constexpr int64_t TRANSACTIONS_START_ADDR       = ROLLBACK_ENTRIES_START_ADDR + ROLLBACK_MAX_AMOUNT * sizeof(SRollbackEntry);
+        static constexpr int64_t ROLLBACK_ENTRIES_START_ADDR = TRANSACTION_HEADER_START_ADDR + sizeof(SHeaderBlock);
+        static constexpr int64_t TRANSACTIONS_START_ADDR = _align_(ROLLBACK_ENTRIES_START_ADDR + ROLLBACK_MAX_AMOUNT * sizeof(
+            SRollbackEntry));
     };
 
     template<typename T>

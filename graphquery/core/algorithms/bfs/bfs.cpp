@@ -1,6 +1,5 @@
 #include "bfs.h"
 
-#include "db/utils/bitset.hpp"
 #include "db/utils/sliding_queue.hpp"
 
 graphquery::database::analytic::CGraphAlgorithmBFS::CGraphAlgorithmBFS(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys)
@@ -43,11 +42,11 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::IModel * gr
     int64_t edges_to_check = n_e;
     int64_t scout_count    = graph->out_degree(sparse[source]);
 
+    size_t old_awake_count;
     while (!queue.empty())
     {
         if (scout_count > edges_to_check / alpha)
         {
-            size_t old_awake_count;
             queue_to_bitset(queue, front);
 
             size_t awake_count = queue.size();
@@ -74,16 +73,16 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::IModel * gr
         if (parent[sparse[n]] < -1)
             parent[sparse[n]] = -1;
 
-    double is_reachable_c = 0;
+    uint64_t is_reachable_c = 0;
 
 #pragma omp parallel for default(none) shared(parent, sparse, n_v, is_reachable_c)
     for (int64_t i = 0; i < n_v; i++)
     {
         if (parent[sparse[i]] != -1)
-            is_reachable_c++;
+            utils::atomic_fetch_inc(&is_reachable_c);
     }
 
-    return is_reachable_c;
+    return static_cast<double>(is_reachable_c);
 }
 
 std::vector<int64_t>
@@ -164,7 +163,7 @@ graphquery::database::analytic::CGraphAlgorithmBFS::td_step(storage::IModel * gr
             int64_t curr_val = parent[dst];
             if (curr_val < 0)
             {
-                if (utils::atomic_fetch_cas(&parent[dst], curr_val, src))
+                if (utils::atomic_fetch_cas(&parent[dst], curr_val, src, true))
                 {
                     lqueue.push_back(dst);
                     scout_count += -curr_val;

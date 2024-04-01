@@ -100,13 +100,13 @@ namespace graphquery::database::storage
             }
         }
 
-        T * operator->() { return ref; }
-        T * operator++(int) { return ref++; }
-        T * operator+(uint64_t i) { return ref + i; }
-        T * operator--(int) { return ref--; }
-        T * operator--() { return --ref; }
-        T * operator++() { return ++ref; }
-        T operator*() { return *ref; }
+        inline T * operator->() { return ref; }
+        inline T * operator++(int) { return ref++; }
+        inline T * operator+(uint64_t i) { return ref + i; }
+        inline T * operator--(int) { return ref--; }
+        inline T * operator--() { return --ref; }
+        inline T * operator++() { return ++ref; }
+        inline T operator*() { return *ref; }
 
         T * ref                 = nullptr;
         CSpinlock * writer_lock = nullptr;

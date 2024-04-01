@@ -75,8 +75,8 @@ namespace graphquery::database::utils
         do
         {
             oldval = m_start[pos / BITS_PER_WORD];
-            newval = oldval | (1L << (pos & BITS_PER_WORD - 1));
-        } while (!utils::atomic_fetch_cas(&m_start[pos / BITS_PER_WORD], oldval, newval));
+            newval = oldval | (1L << (pos & (BITS_PER_WORD - 1)));
+        } while (!utils::atomic_fetch_cas(&m_start[pos / BITS_PER_WORD], oldval, newval, true));
     }
 
     template<typename T>
@@ -94,8 +94,8 @@ namespace graphquery::database::utils
         do
         {
             oldval = m_start[pos / BITS_PER_WORD];
-            newval = oldval ^ (1L << (pos & BITS_PER_WORD - 1));
-        } while (!atomic_cas(m_start[pos / BITS_PER_WORD], oldval, newval));
+            newval = oldval ^ (1L << (pos & (BITS_PER_WORD - 1)));
+        } while (!atomic_fetch_cas(&m_start[pos / BITS_PER_WORD], oldval, newval, true));
     }
 
     template<typename T>

@@ -4,18 +4,20 @@
 
 #include <utility>
 
-graphquery::database::analytic::CGraphAlgorithmPageRank::
-CGraphAlgorithmPageRank(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys) {}
+graphquery::database::analytic::CGraphAlgorithmPageRank::CGraphAlgorithmPageRank(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys)
+{
+}
 
 double
 graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::IModel * graph_model) const noexcept
 {
-    const uint64_t n = graph_model->get_num_vertices();
+    const uint64_t n      = graph_model->get_num_vertices();
     const int64_t n_total = graph_model->get_total_num_vertices();
 
     auto x = new double[n_total];
     auto v = new double[n_total];
     auto y = new double[n_total];
+
     auto sparse = new storage::Id_t[n];
 
     graph_model->calc_vertex_sparse_map(sparse);
@@ -30,7 +32,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::compute(storage::IModel
     for (int i = 0; i < n; ++i)
     {
         x[sparse[i]] = v[sparse[i]] = 1.0 / static_cast<double>(n);
-        y[sparse[i]]        = 0;
+        y[sparse[i]]                = 0;
     }
 
     auto outdeg = new uint32_t[n_total];
@@ -83,6 +85,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::sum(const double * vals
 {
     double d   = 0.0F;
     double err = 0.0F;
+#pragma omp parallel for firstprivate(err) reduction(+ : d)
     for (int i = 0; i < size; ++i)
     {
         const double tmp = d;
@@ -99,6 +102,7 @@ graphquery::database::analytic::CGraphAlgorithmPageRank::norm_diff(const double 
 {
     double d   = 0.0F;
     double err = 0.0F;
+#pragma omp parallel for firstprivate(err) reduction(+ : d)
     for (int i = 0; i < size; ++i)
     {
         const double tmp = d;

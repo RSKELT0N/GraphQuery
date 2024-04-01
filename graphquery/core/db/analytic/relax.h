@@ -18,6 +18,6 @@ namespace graphquery::database::analytic
         IRelax()          = default;
         virtual ~IRelax() = default;
 
-        virtual void relax(storage::Id_t src, storage::Id_t dst) noexcept = 0;
+        virtual inline void relax(storage::Id_t src, storage::Id_t dst) noexcept = 0;
     };
 } // namespace graphquery::database::analytic

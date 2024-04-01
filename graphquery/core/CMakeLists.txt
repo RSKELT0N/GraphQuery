@@ -14,7 +14,9 @@ file(GLOB_RECURSE
         log/loggers/*.cpp)
 
 # Set source files to compile for generating executable
-add_executable(${EXECUTABLE_NAME} ${SOURCES})
+add_executable(${EXECUTABLE_NAME} ${SOURCES}
+        algorithms/scc/scc.cpp
+        algorithms/scc/scc.h)
 
 target_compile_definitions(${EXECUTABLE_NAME}
         PUBLIC
@@ -46,7 +48,7 @@ target_link_libraries(${EXECUTABLE_NAME}
 
 if(OpenMP_CXX_FOUND)
     target_link_libraries(${EXECUTABLE_NAME} PUBLIC OpenMP::OpenMP_CXX)
-    target_compile_options(${EXECUTABLE_NAME} PUBLIC ${OpenMP_CXX_FLAGS})
+    target_compile_options(${EXECUTABLE_NAME} PUBLIC ${OpenMP_CXX_FLAGS} -fopenmp-simd)
 endif()
 
 # Add program include directories

@@ -83,24 +83,24 @@ namespace
 
     graphquery::database::query::CQueryEngine::ResultType _interaction_complex_8(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id) noexcept
     {
+        std::unordered_set<graphquery::database::storage::Id_t> uniq_messages           = {};
+        std::vector<graphquery::database::storage::ILPGModel::SEdge_t> comment_creators = {};
+        std::vector<graphquery::database::storage::ILPGModel::SEdge_t> comments         = {};
         //~ MATCH (start:Person {id: $personId})<-[:HAS_CREATOR]-(:Message)
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> person_comments = graph->get_edges("Message", "hasCreator", _person_id);
 
-        std::unordered_set<int64_t> uniq_messages = {};
         uniq_messages.reserve(person_comments.size());
-
         std::for_each(person_comments.begin(), person_comments.end(), [&uniq_messages](const graphquery::database::storage::ILPGModel::SEdge_t & edge) { uniq_messages.insert(edge.src); });
 
         //~ (start:Person {id: $personId})<-[:HAS_CREATOR]-(:Message)<-[:REPLY_OF]-(comment:Comment)
-        std::vector<graphquery::database::storage::ILPGModel::SEdge_t> comments =
-            graph->get_edges("Comment", "replyOf", [&uniq_messages](const graphquery::database::storage::ILPGModel::SEdge_t & edge) -> bool { return uniq_messages.contains(edge.dst); });
+        comments = graph->get_edges("Comment", "replyOf", [&uniq_messages](const graphquery::database::storage::ILPGModel::SEdge_t & edge) -> bool { return uniq_messages.contains(edge.dst); });
 
-        std::vector<graphquery::database::storage::ILPGModel::SEdge_t> comment_creators = {};
+        comment_creators.reserve(comments.size());
 
         // ~ (comment:Comment)-[:HAS_CREATOR]->(person:Person)
-        for (const graphquery::database::storage::ILPGModel::SEdge_t & edge : comments)
+        for (size_t i = 0; i < comments.size(); i++)
         {
-            auto comment_creator_person = graph->get_edges(edge.src, "hasCreator", "Person");
+            auto comment_creator_person = graph->get_edges(comments[i].src, "hasCreator", "Person");
             comment_creators.insert(comment_creators.begin(), comment_creator_person.begin(), comment_creator_person.end());
         }
 
@@ -109,7 +109,11 @@ namespace
         properties_map.reserve(comment_creators.size());
 
         uint32_t prop_i = 0;
-        for (const graphquery::database::storage::ILPGModel::SEdge_t & edge : comment_creators)
+        for (
+
+            const graphquery::database::storage::ILPGModel::SEdge_t & edge : comment_creators
+
+        )
         {
             auto comment_props   = graph->get_properties_by_id_map(edge.src);
             auto friend_props    = graph->get_properties_by_id_map(edge.dst);

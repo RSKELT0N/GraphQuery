@@ -1,14 +1,14 @@
-#include "connected_components.h"
+#include "wcc.h"
 
 #include <algorithm>
 
-graphquery::database::analytic::CGraphAlgorithmSSSP::
-CGraphAlgorithmSSSP(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys)
+graphquery::database::analytic::CGraphAlgorithmWCC::
+CGraphAlgorithmWCC(std::string name, const std::shared_ptr<logger::CLogSystem> & logsys): IGraphAlgorithm(std::move(name), logsys)
 {
 }
 
 double
-graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::IModel * graph_model) const noexcept
+graphquery::database::analytic::CGraphAlgorithmWCC::compute(storage::IModel * graph_model) const noexcept
 {
     const uint64_t n      = graph_model->get_num_vertices();
     const int64_t total_n = graph_model->get_total_num_vertices();
@@ -51,6 +51,7 @@ graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::IModel * g
         graph_model->edgemap(CCrelax);
         // 2. Check changes and copy data over for new pass
         change = false;
+
         for (int i = 0; i < n; ++i)
         {
             if (x[sparse[i]] != y[sparse[i]])
@@ -59,6 +60,7 @@ graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::IModel * g
                 change       = true;
             }
         }
+        m_log_system->info(fmt::format("Iteration: {}", iter));
         ++iter;
     }
 
@@ -77,7 +79,7 @@ graphquery::database::analytic::CGraphAlgorithmSSSP::compute(storage::IModel * g
         else if (x[sparse[i]] == lg)
             x[sparse[i]] = 0;
         if (x[sparse[i]] == i)
-            remap[sparse[i]] = ncc++;
+            remap[sparse[i]] = utils::atomic_fetch_inc(&ncc);
     }
 
     m_log_system->info(fmt::format("Number of components: {}", ncc));
@@ -103,6 +105,6 @@ extern "C"
 {
     LIB_EXPORT void create_graph_algorithm(graphquery::database::analytic::IGraphAlgorithm ** graph_algorithm, const std::shared_ptr<graphquery::logger::CLogSystem> & logsys)
     {
-        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmSSSP("ConnectedComponents", logsys);
+        *graph_algorithm = new graphquery::database::analytic::CGraphAlgorithmWCC("WCC", logsys);
     }
 }
