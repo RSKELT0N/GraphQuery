@@ -65,11 +65,14 @@ namespace graphquery::database
     //~ Linked symbol of the db loaded graph.
     std::shared_ptr<storage::ILPGModel *> _db_graph = _db_storage->get_graph();
 
-    EStatus initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept
+    EStatus initialise(const bool enable_logging, [[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept
     {
+        EStatus status = EStatus::valid;
         init_env_variables();
         setup_seg_handler();
-        const EStatus status = Initialise_Logging();
+
+        if(enable_logging)
+             status = Initialise_Logging();
 
         _enable_sync_();
         std::thread(&heartbeat).detach();
