@@ -12,7 +12,7 @@
             "binaryDir": "${sourceDir}/build/unix/release/makefile",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "ENABLE_TESTING": "OFF",
+                "BUILD_TESTING": "OFF",
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++"
             }
@@ -23,7 +23,7 @@
             "binaryDir": "${sourceDir}/build/unix/debug/makefile",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "ENABLE_TESTING": "ON",
+                "BUILD_TESTING": "ON",
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++"
             }
@@ -34,7 +34,7 @@
             "binaryDir": "${sourceDir}/build/unix/release/ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "ENABLE_TESTING": "OFF",
+                "BUILD_TESTING": "OFF",
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++"
             }
@@ -45,7 +45,7 @@
             "binaryDir": "${sourceDir}/build/unix/debug/ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "ENABLE_TESTING": "ON",
+                "BUILD_TESTING": "ON",
                 "CMAKE_C_COMPILER": "gcc",
                 "CMAKE_CXX_COMPILER": "g++"
             }

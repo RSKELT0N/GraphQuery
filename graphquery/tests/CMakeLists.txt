@@ -16,7 +16,9 @@ file(GLOB_RECURSE TEST_SOURCES
         ../core/interact/*.cpp
         ../core/log/*.cpp)
 
-add_executable(${SUBMODULE_TESTS} ${TEST_SOURCES})
+add_executable(${SUBMODULE_TESTS} ${TEST_SOURCES}
+        unit_tests/utils.cpp
+)
 
 target_link_libraries(
         ${SUBMODULE_TESTS}
