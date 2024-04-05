@@ -1,6 +1,6 @@
 #include "db/system.h"
 
-#ifdef NDEBUG
+#ifndef NDEBUG
 #define DB_NAME    "DB0"
 #define GRAPH_NAME "GR0"
 #endif
@@ -13,7 +13,7 @@ main([[maybe_unused]] const int argc, [[maybe_unused]] char * argv[])
 
     graphquery::database::_log_system->info("GraphQuery has been initialised");
 
-#ifdef NDEBUG
+#ifndef NDEBUG
     graphquery::database::_db_storage->init(std::filesystem::current_path(), DB_NAME);
 
     if (graphquery::database::_db_storage->check_if_graph_exists(GRAPH_NAME))

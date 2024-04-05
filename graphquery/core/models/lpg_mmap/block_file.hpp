@@ -74,7 +74,7 @@ namespace graphquery::database::storage
         requires(N > 0)
     class CDatablockFile
     {
-    public:
+      public:
         /****************************************************************
          * \struct SBlockFileMetadata_t
          * \brief Describes the metadata for a generic data block file,
@@ -90,8 +90,8 @@ namespace graphquery::database::storage
         {
             int64_t data_blocks_start_addr = {};
             int64_t data_block_size        = {};
-            Id_t free_list                  = END_INDEX;
-            Id_t data_block_c               = {};
+            Id_t free_list                 = END_INDEX;
+            Id_t data_block_c              = {};
         };
 
         using STypeDataBlock = SDataBlock_t<T, N>;
@@ -119,8 +119,9 @@ namespace graphquery::database::storage
         [[nodiscard]] SRef_t<SDataBlock_t<T, N>, true> attain_data_block(uint32_t next_ref = END_INDEX) noexcept;
         [[nodiscard]] std::optional<SRef_t<SDataBlock_t<T, N>, true>> attain_free_data_block() noexcept;
 
-    private:
+      private:
         CDiskDriver m_file;
+        uint8_t gbl_readlock                          = 0;
         static constexpr uint32_t METADATA_START_ADDR = 0x00000000;
     };
 } // namespace graphquery::database::storage
@@ -153,7 +154,7 @@ graphquery::database::storage::CDatablockFile<T, N>::read_entry(int64_t offset) 
 {
     static const auto base_addr      = utils::atomic_load(&read_metadata()->data_blocks_start_addr);
     static const auto datablock_size = utils::atomic_load(&read_metadata()->data_block_size);
-    const int64_t effective_addr        = base_addr + datablock_size * offset;
+    const int64_t effective_addr     = base_addr + datablock_size * offset;
     return m_file.ref<STypeDataBlock, write>(effective_addr);
 }
 
