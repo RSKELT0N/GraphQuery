@@ -18,29 +18,24 @@ namespace
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> message_creators;
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> res;
 
-#pragma omp parallel default(none) shared(graph, _person_id, _friends, message_creators, res)
-        {
-#pragma omp sections nowait
-            {
-#pragma omp section
-                {
-                    //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
-                    _friends = graph->get_edge_dst_vertices(_person_id, "knows", "Person");
-                }
-#pragma omp section
-                {
-                    //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
-                    message_creators = graph->get_edges("Message", "hasCreator");
-                }
-            } // namespace
-        }
+        //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
+        _friends = graph->get_edge_dst_vertices(_person_id, "knows", "Person");
 
+        //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
+        message_creators = graph->get_edges("Message", "hasCreator");
+
+        fmt::print("{}\n", message_creators.size());
+
+        res.reserve(20);
+        for(size_t amount = 0, i = 0; amount < limit_size && i < message_creators.size(); i++)
         for (auto & message_creator : message_creators)
         {
             if (_friends.contains(message_creator.dst))
+            {
                 res.emplace_back(message_creator);
+                amount++;
+            }
         }
-        res.shrink_to_fit();
 
         //~ Generating Map of properties
         std::vector<std::map<std::string, std::string>> properties_map;
@@ -104,7 +99,7 @@ namespace
 
         for (size_t i = 0; i < std::min(limit_size, comment_creators.size()); i++)
         {
-            auto & edge = comment_creators[i];
+            auto & edge          = comment_creators[i];
             auto comment_props   = graph->get_properties_by_id_map(edge.src);
             auto friend_props    = graph->get_properties_by_id_map(edge.dst);
             auto w_comment_props = std::unordered_map<std::string, std::string>();

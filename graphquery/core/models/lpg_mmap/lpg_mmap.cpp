@@ -788,6 +788,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::string_
     auto gbl_v_ptr = m_vertices_file.read_entry(0);
     auto gbl_e_ptr = m_edges_file.read_entry(0);
 
+#pragma omp declare reduction (insert : std::vector<SEdge_t> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end())) initializer(omp_priv = std::vector<SEdge_t>())
+#pragma omp parallel for schedule(static) reduction(insert : ret)
     for (size_t i = 0; i < labelled_vertices_size; i++)
     {
         auto vertex_ptr = gbl_v_ptr + label_vertices[i];
@@ -835,6 +837,8 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::string_
     auto gbl_v_ptr = m_vertices_file.read_entry(0);
     auto gbl_e_ptr = m_edges_file.read_entry(0);
 
+#pragma omp declare reduction (insert : std::vector<SEdge_t> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end())) initializer(omp_priv = std::vector<SEdge_t>())
+#pragma omp parallel for schedule(static) reduction(insert : ret)
     for (size_t i = 0; i < labelled_vertices_size; i++)
     {
         auto vertex_ptr = gbl_v_ptr + label_vertices[i];

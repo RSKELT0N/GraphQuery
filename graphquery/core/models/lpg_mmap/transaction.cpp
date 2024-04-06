@@ -198,15 +198,15 @@ graphquery::database::storage::CTransaction::log_vertex(const std::vector<std::s
     for (const auto & label : labels)
     {
         auto label_ptr = m_transaction_file.ref<ILPGModel::SLabel>(static_cast<int64_t>(curr_addr));
-        strcpy(&label_ptr->label[0], label.data());
+        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH - 1);
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 
     for (const auto & [key, value] : props)
     {
         auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(static_cast<int64_t>(curr_addr));
-        strcpy(&prop->key[0], key);
-        strcpy(&prop->value[0], value);
+        strncpy(&prop->key[0], key, CFG_LPG_PROPERTY_KEY_LENGTH - 1);
+        strncpy(&prop->value[0], value, CFG_LPG_PROPERTY_VALUE_LENGTH - 1);
         curr_addr += sizeof(ILPGModel::SProperty_t);
     }
 
@@ -250,9 +250,7 @@ graphquery::database::storage::CTransaction::log_edge(const Id_t src,
     {
         auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(static_cast<int64_t>(curr_addr));
         strncpy(&prop->key[0], key, CFG_LPG_PROPERTY_KEY_LENGTH - 1);
-	prop->key[CFG_LPG_PROPERTY_KEY_LENGTH - 1] = '\0';
         strncpy(&prop->value[0], value, CFG_LPG_PROPERTY_VALUE_LENGTH - 1);
-	prop->value[CFG_LPG_PROPERTY_VALUE_LENGTH - 1] = '\0';
         curr_addr += sizeof(ILPGModel::SProperty_t);
     }
 
@@ -290,6 +288,7 @@ graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_eo
     std::vector<ILPGModel::SLabel> labels     = {};
     std::vector<ILPGModel::SProperty_t> props = {};
 
+    int i = 0;
     while (curr_addr < rollback_eor_addr)
     {
         type = m_transaction_file.ref<ETransactionType>();
@@ -313,6 +312,7 @@ graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_eo
 
             if (v_transc->committed)
                 process_vertex_transaction(v_transc, labels, props);
+            curr_addr += v_transc->size;
             break;
         }
         case ETransactionType::edge:
@@ -327,15 +327,16 @@ graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_eo
 
             if (e_transc->committed)
                 process_edge_transaction(e_transc, props);
+            curr_addr += e_transc->size;
             break;
         }
         }
-
-        curr_addr = m_transaction_file.get_seek_offset();
+        i++;
 
         labels.clear();
         props.clear();
 
+        type.~SRef_t();
         v_transc.~SRef_t();
         e_transc.~SRef_t();
     }
