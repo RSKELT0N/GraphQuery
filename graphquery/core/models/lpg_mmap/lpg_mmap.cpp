@@ -434,13 +434,13 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_vertex_labels(const std:
 graphquery::database::storage::CMemoryModelMMAPLPG::EActionState_t
 graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const Id_t id, const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & props) noexcept
 {
-    std::unordered_set<uint16_t> label_ids = get_vertex_labels(labels, true);
-
     if (get_vertex_by_id(id).has_value())
         return EActionState_t::invalid;
 
+    std::unordered_set<uint16_t> label_ids = get_vertex_labels(labels, true);
+
     if (!store_vertex_entry(id, label_ids, props))
-        return EActionState_t::invalid;
+        return EActionState_t::abort;
 
     utils::atomic_fetch_pre_inc(&read_graph_metadata()->vertices_c);
 
@@ -459,7 +459,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex_entry(const std::
     if (!store_vertex_entry(vertex_id, label_ids, props))
     {
         utils::atomic_fetch_dec(&read_graph_metadata()->vertices_c);
-        return EActionState_t::invalid;
+        return EActionState_t::abort;
     }
 
     for (const auto label_id : label_ids)
@@ -508,11 +508,13 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge_entry(const Id_t sr
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const Id_t src, const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & prop)
 {
-    uint64_t commit_addr = m_transactions->log_vertex(labels, prop, src);
-    if (add_vertex_entry(src, labels, prop) == EActionState_t::invalid)
+    const uint64_t commit_addr = m_transactions->log_vertex(labels, prop, src);
+    if (const EActionState_t state = add_vertex_entry(src, labels, prop); state > EActionState_t::valid)
     {
         m_log_system->warning(fmt::format("Issue adding vertex"));
-        rollback();
+
+        if(state == EActionState_t::abort)
+            rollback();
         return;
     }
     m_transactions->commit_transaction<CTransaction::SVertexCommit>(commit_addr);
@@ -522,11 +524,13 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const Id_t src, c
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::add_edge(const Id_t src, const Id_t dst, const std::string_view edge_label, const std::vector<SProperty_t> & prop, bool undirected)
 {
-    uint64_t commit_addr = m_transactions->log_edge(src, dst, edge_label, prop, undirected);
-    if (add_edge_entry(src, dst, edge_label, prop, undirected) == EActionState_t::invalid)
+    const uint64_t commit_addr = m_transactions->log_edge(src, dst, edge_label, prop, undirected);
+    if (const EActionState_t state = add_edge_entry(src, dst, edge_label, prop, undirected); state > EActionState_t::valid)
     {
         m_log_system->warning(fmt::format("Issue adding edge({}) to vertex({})", dst, src));
-        rollback();
+
+        if(state == EActionState_t::abort)
+            rollback();
         return;
     }
 
@@ -537,8 +541,15 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge(const Id_t src, con
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const std::vector<std::string_view> & labels, const std::vector<SProperty_t> & prop)
 {
-    uint64_t commit_addr = m_transactions->log_vertex(labels, prop);
-    (void) add_vertex_entry(labels, prop);
+    const uint64_t commit_addr = m_transactions->log_vertex(labels, prop);
+    if(const EActionState_t state = add_vertex_entry(labels, prop); state > EActionState_t::valid)
+    {
+        m_log_system->warning("Issue adding vertex");
+
+        if(state == EActionState_t::abort)
+            rollback();
+        return;
+    }
 
     m_transactions->commit_transaction<CTransaction::SVertexCommit>(commit_addr);
     utils::atomic_store(&read_graph_metadata()->flush_needed, true);
@@ -547,11 +558,13 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const std::vector
 void
 graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex(Id_t src)
 {
-    uint64_t commit_addr = m_transactions->log_rm_vertex(src);
-    if (rm_vertex_entry(src) == EActionState_t::invalid)
+    const uint64_t commit_addr = m_transactions->log_rm_vertex(src);
+    if (const EActionState_t state = rm_vertex_entry(src); state > EActionState_t::valid)
     {
         m_log_system->warning(fmt::format("Issue removing vertex({})", src));
-        rollback();
+
+        if(state == EActionState_t::abort)
+            rollback();
         return;
     }
 
@@ -564,10 +577,12 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(Id_t src, Id_t dst)
 {
     uint64_t commit_addr = m_transactions->log_rm_edge(src, dst);
-    if (rm_edge_entry(src, dst) == EActionState_t::invalid)
+    if (const EActionState_t state = rm_edge_entry(src, dst); state > EActionState_t::valid)
     {
         m_log_system->warning(fmt::format("Issue remvoing edge({}) to vertex({})", dst, src));
-        rollback();
+
+        if(state == EActionState_t::abort)
+            rollback();
         return;
     }
 
@@ -580,10 +595,12 @@ void
 graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(Id_t src, Id_t dst, const std::string_view edge_label)
 {
     uint64_t commit_addr = m_transactions->log_rm_edge(src, dst, edge_label);
-    if (rm_edge_entry(src, dst, edge_label) == EActionState_t::invalid)
+    if (const EActionState_t state = rm_edge_entry(src, dst, edge_label); state > EActionState_t::valid)
     {
         m_log_system->warning(fmt::format("Issue remvoing edge({}) to vertex({})", dst, src));
-        rollback();
+
+        if(state == EActionState_t::abort)
+            rollback();
         return;
     }
 

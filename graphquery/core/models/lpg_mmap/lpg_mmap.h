@@ -53,7 +53,8 @@ namespace graphquery::database::storage
         enum class EActionState_t : int8_t
         {
             valid   = 0,
-            invalid = -1
+            invalid = 1,
+            abort   = 2
         };
 
       private:
