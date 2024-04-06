@@ -27,8 +27,7 @@ target_compile_options(
         -Wextra
         -pthread
         -fPIC
-        -O0
-        -g
+        -O3
         -ffast-math
         -ffinite-math-only
         -funroll-loops               # Unroll loops for better performance

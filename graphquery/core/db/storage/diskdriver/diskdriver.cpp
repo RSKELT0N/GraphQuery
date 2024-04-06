@@ -90,13 +90,6 @@ void
 graphquery::database::storage::CDiskDriver::resize_override(const int64_t file_size) noexcept
 {
     const auto old_size = m_fd_info.st_size;
-
-    if (old_size >= file_size)
-    {
-        m_writer_lock.unlock();
-        return;
-    }
-
     truncate(resize_to_pagesize(file_size));
     remap(old_size);
 }
