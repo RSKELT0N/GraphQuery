@@ -277,11 +277,11 @@ graphquery::database::storage::CTransaction::slabel_to_strview_vector(const std:
 }
 
 void
-graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_entry) noexcept
+graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_eor) noexcept
 {
     m_transaction_file.seek(TRANSACTIONS_START_ADDR);
     auto curr_addr         = m_transaction_file.get_seek_offset();
-    auto rollback_eor_addr = rollback_entry;
+    auto rollback_eor_addr = rollback_eor;
 
     SRef_t<ETransactionType> type;
     SRef_t<SVertexTransaction> v_transc = SRef_t<SVertexTransaction>();
@@ -302,13 +302,13 @@ graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_en
             if (v_transc->commit.label_c > 0)
             {
                 labels.resize(v_transc->commit.label_c);
-                m_transaction_file.read(&labels[0], CFG_LPG_LABEL_LENGTH, v_transc->commit.label_c);
+                m_transaction_file.read(&labels[0], CFG_LPG_LABEL_LENGTH, v_transc->commit.label_c, true);
             }
 
             if (v_transc->commit.property_c > 0)
             {
                 props.resize(v_transc->commit.property_c);
-                m_transaction_file.read(&props[0], CFG_LPG_PROPERTY_KEY_LENGTH + CFG_LPG_PROPERTY_VALUE_LENGTH, v_transc->commit.property_c);
+                m_transaction_file.read(&props[0], CFG_LPG_PROPERTY_KEY_LENGTH + CFG_LPG_PROPERTY_VALUE_LENGTH, v_transc->commit.property_c, true);
             }
 
             if (v_transc->committed)
@@ -322,7 +322,7 @@ graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_en
             if (e_transc->commit.property_c > 0)
             {
                 props.resize(e_transc->commit.property_c);
-                m_transaction_file.read(&props[0], CFG_LPG_PROPERTY_KEY_LENGTH + CFG_LPG_PROPERTY_VALUE_LENGTH, e_transc->commit.property_c);
+                m_transaction_file.read(&props[0], CFG_LPG_PROPERTY_KEY_LENGTH + CFG_LPG_PROPERTY_VALUE_LENGTH, e_transc->commit.property_c, true);
             }
 
             if (e_transc->committed)

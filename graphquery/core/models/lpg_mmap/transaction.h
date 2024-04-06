@@ -62,9 +62,9 @@ namespace graphquery::database::storage
         template <typename T>
         struct STransaction
         {
+            ETransactionType type = ETransactionType::vertex;
             T commit = {};
-	    ETransactionType type = ETransactionType::vertex;
-    	    uint16_t size = {0};
+            uint16_t size         = {0};
             uint8_t committed = {0};
         };
 

@@ -76,8 +76,8 @@ namespace graphquery::database::storage
         {
             char graph_name[CFG_GRAPH_NAME_LENGTH]       = {};
             char graph_type[CFG_GRAPH_MODEL_TYPE_LENGTH] = {};
-            Id_t vertices_c                           = {};
-            Id_t edges_c                              = {};
+            Id_t vertices_c                              = {};
+            Id_t edges_c                                 = {};
             uint32_t vertex_label_table_addr             = {};
             uint32_t edge_label_table_addr               = {};
             uint32_t label_size                          = {};
@@ -108,7 +108,7 @@ namespace graphquery::database::storage
         struct SVertexEntry_t
         {
             SVertex_t metadata = {};
-            Id_t edge_idx  = END_INDEX;
+            Id_t edge_idx      = END_INDEX;
         };
 
       public:
@@ -125,7 +125,7 @@ namespace graphquery::database::storage
         uint32_t in_degree(Id_t id) noexcept override;
         void calc_outdegree(uint32_t[]) noexcept override;
         void calc_indegree(uint32_t[]) noexcept override;
-        void calc_vertex_sparse_map(Id_t []) noexcept override;
+        void calc_vertex_sparse_map(Id_t[]) noexcept override;
         double get_avg_out_degree() noexcept override;
         uint32_t out_degree_by_id(Id_t id) noexcept override;
         void rm_edge(Id_t src, Id_t dst, std::string_view edge_label) override;
@@ -184,8 +184,6 @@ namespace graphquery::database::storage
         void rollback() noexcept;
         void inline reset_graph() noexcept;
         void inline setup_files(const std::filesystem::path & path, bool initialise) noexcept;
-        void inline transaction_preamble() noexcept;
-        void inline transaction_epilogue() noexcept;
         void persist_graph_changes() noexcept;
 
         std::optional<SRef_t<SVertexDataBlock>> get_vertex_by_offset(uint32_t offset) noexcept;
@@ -201,8 +199,10 @@ namespace graphquery::database::storage
         template<bool write = false>
         inline SRef_t<SGraphMetaData_t, write> read_graph_metadata() noexcept;
 
-        template<bool write = false> inline SRef_t<SLabel_t, write> read_vertex_label_entry(uint32_t offset) noexcept;
-        template<bool write = false> inline SRef_t<SLabel_t, write> read_edge_label_entry(uint32_t offset) noexcept;
+        template<bool write = false>
+        inline SRef_t<SLabel_t, write> read_vertex_label_entry(uint32_t offset) noexcept;
+        template<bool write = false>
+        inline SRef_t<SLabel_t, write> read_edge_label_entry(uint32_t offset) noexcept;
 
         [[nodiscard]] EActionState_t rm_vertex_entry(Id_t src) noexcept;
         [[nodiscard]] EActionState_t rm_edge_entry(Id_t src, Id_t dst) noexcept;
@@ -215,6 +215,7 @@ namespace graphquery::database::storage
         [[nodiscard]] bool contains_vertex_label_id(int64_t vertex_offset, uint16_t label_id) noexcept;
         [[nodiscard]] uint16_t create_edge_label(std::string_view) noexcept;
         [[nodiscard]] uint16_t create_vertex_label(std::string_view) noexcept;
+        [[nodiscard]] inline bool check_if_edge_exists(Id_t src_idx, Id_t dst_idx, uint16_t edge_label_id) noexcept;
         [[nodiscard]] inline std::optional<uint16_t> check_if_edge_label_exists(const std::string_view &) noexcept;
         [[nodiscard]] inline std::optional<uint16_t> check_if_vertex_label_exists(const std::string_view &) noexcept;
         [[nodiscard]] inline std::unordered_set<uint16_t> get_vertex_labels(const std::vector<std::string_view> & labels, bool create_if_absent = false) noexcept;
@@ -232,12 +233,6 @@ namespace graphquery::database::storage
         std::vector<std::vector<Id_t>> m_label_vertex;
         std::unordered_map<std::string, uint16_t> m_v_label_map;
         std::unordered_map<std::string, uint16_t> m_e_label_map;
-
-        uint8_t m_syncing;
-        std::mutex m_sync_lock;
-        uint32_t m_transaction_ref_c;
-        std::condition_variable m_cv_sync;
-        std::unique_lock<std::mutex> m_unq_lock;
 
         //~ Disk/file drivers for graph mapping from disk to memory
         CDiskDriver m_master_file;
@@ -262,8 +257,5 @@ namespace graphquery::database::storage
 
         static constexpr uint32_t VERTEX_LABELS_START_ADDR = METADATA_START_ADDR + sizeof(SGraphMetaData_t);
         static constexpr uint32_t EDGE_LABELS_START_ADDR   = METADATA_START_ADDR + sizeof(SGraphMetaData_t) + sizeof(SLabel_t) * VERTEX_LABELS_MAX_AMT;
-
-        const std::function<bool()> wait_on_syncing      = [this]() -> bool { return m_syncing == 0; };
-        const std::function<bool()> wait_on_transactions = [this]() -> bool { return m_transaction_ref_c == 0; };
     };
 } // namespace graphquery::database::storage
