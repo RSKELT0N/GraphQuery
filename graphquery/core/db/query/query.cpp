@@ -39,7 +39,7 @@ namespace
 
         //~ Generating Map of properties
         std::vector<std::map<std::string, std::string>> properties_map;
-        properties_map.reserve(res.size());
+        properties_map.resize(res.size());
 
         for (size_t i = 0; i < std::min(limit_size, res.size()); i++)
         {
@@ -60,7 +60,6 @@ namespace
             w_friend_props["personFirstName"] = friend_props.at("firstName");
             w_friend_props["personLastName"]  = friend_props.at("lastName");
 
-            properties_map.emplace_back();
             properties_map[i].insert(w_friend_props.begin(), w_friend_props.end());
             properties_map[i].insert(w_message_props.begin(), w_message_props.end());
         }
@@ -95,7 +94,7 @@ namespace
 
         //~ Generating Map of properties
         std::vector<std::map<std::string, std::string>> properties_map;
-        properties_map.reserve(comment_creators.size());
+        properties_map.resize(comment_creators.size());
 
         for (size_t i = 0; i < std::min(limit_size, comment_creators.size()); i++)
         {
@@ -113,7 +112,6 @@ namespace
             w_friend_props["personFirstName"] = friend_props.at("firstName");
             w_friend_props["personLastName"]  = friend_props.at("lastName");
 
-            properties_map.emplace_back();
             properties_map[i].insert(w_comment_props.begin(), w_comment_props.end());
             properties_map[i].insert(w_friend_props.begin(), w_friend_props.end());
         }
