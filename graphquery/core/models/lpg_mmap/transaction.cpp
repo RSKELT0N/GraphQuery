@@ -288,7 +288,6 @@ graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_eo
     std::vector<ILPGModel::SLabel> labels     = {};
     std::vector<ILPGModel::SProperty_t> props = {};
 
-    int i = 0;
     while (curr_addr < rollback_eor_addr)
     {
         type = m_transaction_file.ref<ETransactionType>();
@@ -331,7 +330,6 @@ graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_eo
             break;
         }
         }
-        i++;
 
         labels.clear();
         props.clear();

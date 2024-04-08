@@ -129,7 +129,7 @@ namespace graphquery::database::storage
 
     template<typename T>
     void
-    graphquery::database::storage::CTransaction::commit_transaction(const uint64_t transaction_addr) noexcept
+    CTransaction::commit_transaction(const uint64_t transaction_addr) noexcept
     {
         auto ref = m_transaction_file.ref<STransaction<T>>(static_cast<int64_t>(transaction_addr));
         utils::atomic_store(&ref->committed, 1);

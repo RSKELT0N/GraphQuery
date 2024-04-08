@@ -30,8 +30,13 @@ namespace graphquery::database::analytic
 
             void relax(const storage::Id_t src, const storage::Id_t dst) noexcept override
             {
-                auto & y_atomic = reinterpret_cast<std::atomic<double> &>(y[dst]);
-                y_atomic += d / outdeg[src] * x[src];
+                double ydst_curr = 0, ydst_new = 0;
+                const double w = d / outdeg[src] * x[src];
+                do
+                {
+                    ydst_curr = y[dst];
+                    ydst_new = ydst_curr + w;
+                } while(utils::atomic_fetch_cas(&y[dst], ydst_curr, ydst_new, true));
             }
 
             double d;
