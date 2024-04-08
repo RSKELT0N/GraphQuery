@@ -76,6 +76,7 @@ namespace graphquery::database::storage
         void close() noexcept;
         void init() noexcept;
         void reset() noexcept;
+        void close_transaction_gracefully() noexcept;
         void update_graph_state() noexcept;
         void rollback(uint64_t, int64_t start_addr) noexcept;
         void handle_transactions() noexcept;

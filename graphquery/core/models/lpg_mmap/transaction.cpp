@@ -93,6 +93,12 @@ graphquery::database::storage::CTransaction::fetch_rollback_table() noexcept
 }
 
 void
+graphquery::database::storage::CTransaction::close_transaction_gracefully() noexcept
+{
+    utils::atomic_fetch_dec(&read_transaction_header()->running_transactions);
+}
+
+void
 graphquery::database::storage::CTransaction::update_graph_state() noexcept
 {
     if constexpr (LPG_MAP_MODE == MAP_SHARED)

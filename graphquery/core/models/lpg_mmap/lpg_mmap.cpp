@@ -513,6 +513,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const Id_t src, c
     const uint64_t commit_addr = m_transactions->log_vertex(labels, prop, src);
     if (const EActionState_t state = add_vertex_entry(src, labels, prop); state > EActionState_t::valid)
     {
+        m_transactions->close_transaction_gracefully();
         m_log_system->warning(fmt::format("Issue adding vertex"));
 
         if(state == EActionState_t::abort)
@@ -529,6 +530,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_edge(const Id_t src, con
     const uint64_t commit_addr = m_transactions->log_edge(src, dst, edge_label, prop, undirected);
     if (const EActionState_t state = add_edge_entry(src, dst, edge_label, prop, undirected); state > EActionState_t::valid)
     {
+        m_transactions->close_transaction_gracefully();
         m_log_system->warning(fmt::format("Issue adding edge({}) to vertex({})", dst, src));
 
         if(state == EActionState_t::abort)
@@ -546,6 +548,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::add_vertex(const std::vector
     const uint64_t commit_addr = m_transactions->log_vertex(labels, prop);
     if(const EActionState_t state = add_vertex_entry(labels, prop); state > EActionState_t::valid)
     {
+        m_transactions->close_transaction_gracefully();
         m_log_system->warning("Issue adding vertex");
 
         if(state == EActionState_t::abort)
@@ -563,6 +566,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_vertex(Id_t src)
     const uint64_t commit_addr = m_transactions->log_rm_vertex(src);
     if (const EActionState_t state = rm_vertex_entry(src); state > EActionState_t::valid)
     {
+        m_transactions->close_transaction_gracefully();
         m_log_system->warning(fmt::format("Issue removing vertex({})", src));
 
         if(state == EActionState_t::abort)
@@ -581,6 +585,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(Id_t src, Id_t dst)
     uint64_t commit_addr = m_transactions->log_rm_edge(src, dst);
     if (const EActionState_t state = rm_edge_entry(src, dst); state > EActionState_t::valid)
     {
+        m_transactions->close_transaction_gracefully();
         m_log_system->warning(fmt::format("Issue remvoing edge({}) to vertex({})", dst, src));
 
         if(state == EActionState_t::abort)
@@ -599,6 +604,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rm_edge(Id_t src, Id_t dst, 
     uint64_t commit_addr = m_transactions->log_rm_edge(src, dst, edge_label);
     if (const EActionState_t state = rm_edge_entry(src, dst, edge_label); state > EActionState_t::valid)
     {
+        m_transactions->close_transaction_gracefully();
         m_log_system->warning(fmt::format("Issue remvoing edge({}) to vertex({})", dst, src));
 
         if(state == EActionState_t::abort)
@@ -833,7 +839,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edges(const std::string_
     std::vector<SEdge_t> ret;
     ret.reserve(label_vertices.size() * get_avg_out_degree());
 
-    [[maybe_unused]] auto label_pred = [&label_id](const SEdge_t & edge) -> bool { return edge.edge_label_id == label_id; };
+    auto label_pred = [&label_id](const SEdge_t & edge) -> bool { return edge.edge_label_id == label_id; };
     size_t labelled_vertices_size    = label_vertices.size();
 
     auto gbl_v_ptr = m_vertices_file.read_entry(0);
@@ -1301,10 +1307,14 @@ graphquery::database::storage::CMemoryModelMMAPLPG::get_edge_dst_vertices(const 
     {
         const auto lcl_edge_ptr = gbl_edge_ptr + curr;
 
-        for (size_t i = 0; i < lcl_edge_ptr->state.size(); i++)
+        for (size_t i = 0; i < lcl_edge_ptr->payload_amt;)
         {
-            if (pred(lcl_edge_ptr->payload[i].metadata))
-                ret.insert(lcl_edge_ptr->payload[i].metadata.dst);
+            if(lcl_edge_ptr->state.test(i))
+            {
+                if (pred(lcl_edge_ptr->payload[i].metadata))
+                    ret.insert(lcl_edge_ptr->payload[i].metadata.dst);
+                i++;
+            }
         }
         curr = lcl_edge_ptr->next;
     }
