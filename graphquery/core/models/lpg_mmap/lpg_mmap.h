@@ -183,7 +183,7 @@ namespace graphquery::database::storage
         using SLabelRefDataBlock = SDataBlock_t<uint16_t, DATABLOCK_LABEL_REF_PAYLOAD_C>;
 
         void rollback() noexcept;
-        void inline reset_graph() noexcept;
+        void reset_graph() noexcept;
         void inline setup_files(const std::filesystem::path & path, bool initialise) noexcept;
         void persist_graph_changes() noexcept;
 

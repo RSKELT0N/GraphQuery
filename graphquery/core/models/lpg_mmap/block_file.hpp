@@ -96,7 +96,7 @@ namespace graphquery::database::storage
         using STypeDataBlock = SDataBlock_t<T, N>;
 
         ~CDatablockFile() { (void) m_file.close(); }
-        CDatablockFile()                                       = default;
+        CDatablockFile();
         CDatablockFile(const CDatablockFile &)                 = delete;
         CDatablockFile(CDatablockFile &&) noexcept             = delete;
         CDatablockFile & operator=(const CDatablockFile &)     = default;
@@ -124,6 +124,12 @@ namespace graphquery::database::storage
         static constexpr uint32_t METADATA_START_ADDR = 0x00000000;
     };
 } // namespace graphquery::database::storage
+
+template<typename T, uint8_t N>
+    requires(N > 0)
+graphquery::database::storage::CDatablockFile<T, N>::CDatablockFile(): m_file(LPG_MAP_MODE)
+{
+}
 
 template<typename T, uint8_t N>
     requires(N > 0)

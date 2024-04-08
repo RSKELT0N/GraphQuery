@@ -14,7 +14,6 @@
 
 #include <cstdint>
 
-
 namespace graphquery::database::storage
 {
     class CIndexFile
@@ -75,7 +74,9 @@ namespace graphquery::database::storage
     };
 } // namespace graphquery::database::storage
 
-inline graphquery::database::storage::CIndexFile::CIndexFile() = default;
+inline graphquery::database::storage::CIndexFile::CIndexFile(): m_file(LPG_MAP_MODE)
+{
+}
 
 inline
 graphquery::database::storage::CIndexFile::~

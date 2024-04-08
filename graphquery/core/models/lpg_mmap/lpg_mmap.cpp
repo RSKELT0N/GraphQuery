@@ -7,7 +7,8 @@
 #include <optional>
 #include <vector>
 
-graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> & log_system, const bool & sync_state_): ILPGModel(log_system, sync_state_)
+graphquery::database::storage::CMemoryModelMMAPLPG::CMemoryModelMMAPLPG(const std::shared_ptr<logger::CLogSystem> & log_system, const bool & sync_state_):
+    ILPGModel(log_system, sync_state_), m_master_file(LPG_MAP_MODE)
 {
     m_label_vertex = std::vector<std::vector<Id_t>>();
 }
@@ -48,7 +49,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rollback(const uint8_t rollb
     const auto rollback_eor = r_ptr->eor_addr;
 
     m_log_system->info(fmt::format("Starting db rollback ({})", r_ptr->name));
-    const auto & [elapsed] = utils::measure(&CTransaction::rollback, m_transactions, rollback_eor);
+    const auto & [elapsed] = utils::measure(&CTransaction::rollback, m_transactions, rollback_eor, m_transactions->get_transaction_start_addr());
     m_log_system->info(fmt::format("Rollback has completed within {}s", elapsed.count()));
 }
 
@@ -60,7 +61,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::rollback() noexcept
 
     // ~ Rollback graph based on the end valid address.
     const auto rollback_eor = m_transactions->get_valid_eor_addr();
-    m_transactions->rollback(rollback_eor);
+    m_transactions->rollback(rollback_eor, m_transactions->get_transaction_start_addr());
 }
 
 std::vector<std::string>
@@ -117,6 +118,7 @@ graphquery::database::storage::CMemoryModelMMAPLPG::load_graph(const std::filesy
 
     //~ Load graph memory.
     m_transactions->init();
+    m_transactions->update_graph_state();
     read_index_list();
 }
 

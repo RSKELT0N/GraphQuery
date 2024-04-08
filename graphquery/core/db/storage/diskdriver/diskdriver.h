@@ -40,7 +40,7 @@ namespace graphquery::database::storage
             VALID = 0X0000
         };
 
-        explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
+        explicit CDiskDriver(int map_mode_flags = MAP_SHARED, int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE);
         ~CDiskDriver();
 
         static constexpr auto PAGE_SIZE  = KB(4);

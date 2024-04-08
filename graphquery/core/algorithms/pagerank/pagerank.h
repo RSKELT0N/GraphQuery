@@ -36,7 +36,7 @@ namespace graphquery::database::analytic
                 {
                     ydst_curr = y[dst];
                     ydst_new = ydst_curr + w;
-                } while(utils::atomic_fetch_cas(&y[dst], ydst_curr, ydst_new, true));
+                } while (!utils::atomic_fetch_cas(&y[dst], ydst_curr, ydst_new, true));
             }
 
             double d;
