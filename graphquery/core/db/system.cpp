@@ -5,6 +5,7 @@
 
 #include <csignal>
 #include <thread>
+#include <random>
 
 namespace
 {
@@ -42,10 +43,16 @@ namespace
     {
         while (true)
         {
+            std::this_thread::sleep_for(graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL);
+            // static std::random_device dev;
+            // static std::mt19937 rng(dev());
+            // static std::uniform_int_distribution<std::mt19937::result_type> dist6(0, (*graphquery::database::_db_graph)->get_num_vertices()); // distribution in range [1, 6]
+            //
+            // std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            // (*graphquery::database::_db_graph)->add_edge(dist6(rng), dist6(rng), "knows", {});
+
             if (graphquery::database::_db_storage->get_is_graph_loaded() && _sync)
                 (*graphquery::database::_db_graph)->sync_graph();
-
-            std::this_thread::sleep_for(graphquery::database::storage::CFG_SYSTEM_HEARTBEAT_INTERVAL);
         }
     }
 } // namespace
@@ -71,30 +78,27 @@ namespace graphquery::database
         init_env_variables();
         setup_seg_handler();
 
-        if(enable_logging)
-             status = Initialise_Logging();
+        if (enable_logging)
+            status = Initialise_Logging();
 
         _enable_sync_();
         std::thread(&heartbeat).detach();
         return status;
     }
 
-    void
-    _enable_sync_() noexcept
+    void _enable_sync_() noexcept
     {
         _sync = true;
         _log_system->info("Synchronisation has been enabled");
     }
 
-    void
-    _disable_sync_() noexcept
+    void _disable_sync_() noexcept
     {
         _sync = false;
         _log_system->info("Synchronisation has been disabled");
     }
 
-    const bool &
-    _get_sync_state_() noexcept
+    const bool & _get_sync_state_() noexcept
     {
         return _sync;
     }

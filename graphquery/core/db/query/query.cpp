@@ -24,8 +24,6 @@ namespace
         //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
         message_creators = graph->get_edges("Message", "hasCreator");
 
-        fmt::print("{}\n", message_creators.size());
-
         res.reserve(20);
         for(size_t amount = 0, i = 0; amount < limit_size && i < message_creators.size(); i++)
         for (auto & message_creator : message_creators)
