@@ -36,6 +36,7 @@ namespace graphquery::database::storage
         [[nodiscard]] virtual std::string_view get_name() noexcept = 0;
         virtual uint32_t out_degree_by_id(Id_t id) noexcept = 0;
         virtual std::optional<Id_t> get_vertex_idx(Id_t id) noexcept = 0;
+        virtual std::optional<Id_t> get_vertex_id(Id_t idx) noexcept                           = 0;
         virtual void load_graph(std::filesystem::path path, std::string_view graph) noexcept = 0;
         virtual void create_graph(std::filesystem::path path, std::string_view graph) noexcept = 0;
 

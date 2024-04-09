@@ -141,6 +141,17 @@ namespace
         graph->rm_edge(_person_id, _post_id, "LIKES");
     }
 
+    void _interaction_delete_7(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _comment_id) noexcept
+    {
+        auto subcomments = graph->get_edges("Comment", "replyOf", _comment_id);
+
+        for (const auto & edge : subcomments)
+        {
+            auto src_edge_id = graph->get_vertex_id(edge.src);
+            graph->rm_vertex(*src_edge_id);
+        }
+    }
+
     void _interaction_delete_8(graphquery::database::storage::ILPGModel * graph,
                                const graphquery::database::storage::Id_t _src_person_id,
                                const graphquery::database::storage::Id_t _dst_person_id) noexcept
@@ -336,6 +347,13 @@ graphquery::database::query::CQueryEngine::interaction_delete_2(storage::Id_t _p
 {
     auto [elapsed] = utils::measure(&_interaction_delete_2, *m_graph, _person_id, _post_id);
     _log_system->info(fmt::format("Query ({}) executed within {}s", "ID2", elapsed.count()));
+}
+
+void
+graphquery::database::query::CQueryEngine::interaction_delete_7(storage::Id_t _comment_id) const noexcept
+{
+    auto [elapsed] = utils::measure(&_interaction_delete_7, *m_graph, _comment_id);
+    _log_system->info(fmt::format("Query ({}) executed within {}s", "ID7", elapsed.count()));
 }
 
 void

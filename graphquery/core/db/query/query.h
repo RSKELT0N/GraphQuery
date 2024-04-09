@@ -98,6 +98,14 @@ namespace graphquery::database::query
         void interaction_delete_2(storage::Id_t _person_id, storage::Id_t _post_id) const noexcept;
 
         /****************************************************************
+        ** \brief Given a comment ID, find all of the comments that are
+        *        replies and delete them.
+        *
+        *  \param _comment_id - ID of person
+        ***************************************************************/
+        void interaction_delete_7(storage::Id_t _comment_id) const noexcept;
+
+        /****************************************************************
          ** \brief Given two person IDs, delete the "KNOWS" relationship
          *         between the two person nodes, and then return the count
          *         of the deleted relationships.

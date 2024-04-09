@@ -143,6 +143,7 @@ namespace graphquery::database::storage
         [[nodiscard]] std::string_view get_name() noexcept override;
         [[nodiscard]] std::optional<SVertex_t> get_vertex(Id_t id) override;
         [[nodiscard]] std::optional<Id_t> get_vertex_idx(Id_t id) noexcept override;
+        [[nodiscard]] std::optional<Id_t> get_vertex_id(Id_t idx) noexcept override;
         [[nodiscard]] std::vector<SEdge_t> get_edges_by_label(std::string_view label) override;
         [[nodiscard]] std::vector<SVertex_t> get_vertices_by_label(std::string_view label) override;
 
@@ -195,7 +196,7 @@ namespace graphquery::database::storage
         [[nodiscard]] Id_t store_property_entry(const SProperty_t & prop, Id_t next_ref) noexcept;
         [[nodiscard]] bool store_index_entry(Id_t id, const std::unordered_set<uint16_t> & label_ids, uint32_t vertex_offset) noexcept;
         [[nodiscard]] bool store_vertex_entry(Id_t id, const std::unordered_set<uint16_t> & label_id, const std::vector<SProperty_t> & props) noexcept;
-        void store_edge_entry(Id_t src, Id_t dst, uint16_t edge_label_id, const std::vector<SProperty_t> & props, bool undirected) noexcept;
+        void store_edge_entry(Id_t src, Id_t dst, uint16_t edge_label_id, const std::vector<SProperty_t> & props) noexcept;
 
         template<bool write = false>
         inline SRef_t<SGraphMetaData_t, write> read_graph_metadata() noexcept;

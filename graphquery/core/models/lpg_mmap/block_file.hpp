@@ -199,12 +199,15 @@ graphquery::database::storage::CDatablockFile<T, N>::attain_free_data_block() no
     if (head == END_INDEX)
         return std::nullopt;
 
-    auto data_block_ptr = read_entry<true>(head);
+    auto data_block_ptr = read_entry(head);
 
     utils::atomic_store(&metadata->free_list, data_block_ptr->next);
     utils::atomic_store(&data_block_ptr->next, static_cast<uint32_t>(END_INDEX));
 
-    return data_block_ptr;
+    metadata.~SRef_t();
+    data_block_ptr.~SRef_t();
+
+    return std::move(read_entry<true>(head));
 }
 
 template<typename T, uint8_t N>
@@ -219,9 +222,12 @@ graphquery::database::storage::CDatablockFile<T, N>::append_free_data_block(uint
 
     SRef_t<STypeDataBlock> data_block_ptr = read_entry(block_offset);
     data_block_ptr->idx                   = block_offset;
-    data_block_ptr->state                 = 0;
+    data_block_ptr->state                 = {};
     data_block_ptr->next                  = head;
     data_block_ptr->payload               = {};
+
+    if constexpr (N > 1)
+        data_block_ptr->payload_amt = 0;
 }
 
 template<typename T, uint8_t N>

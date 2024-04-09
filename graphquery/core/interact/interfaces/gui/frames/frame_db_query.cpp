@@ -8,13 +8,14 @@
 namespace
 {
     const char * predefined_queries = {"Interaction Complex 2\0"
-        "Interaction Complex 8\0"
-        "Interaction Update 2\0"
-        "Interaction Update 8\0"
-        "Interaction Delete 2\0"
-        "Interaction Delete 8\0"
-        "Interaction Short 2\0"
-        "Interaction Short 8\0\0"};
+                                       "Interaction Complex 8\0"
+                                       "Interaction Update 2\0"
+                                       "Interaction Update 8\0"
+                                       "Interaction Delete 2\0"
+                                       "Interaction Delete 7\0"
+                                       "Interaction Delete 8\0"
+                                       "Interaction Short 2\0"
+                                       "Interaction Short 8\0\0"};
 }
 
 graphquery::interact::CFrameDBQuery::
@@ -193,6 +194,21 @@ graphquery::interact::CFrameDBQuery::render_predefined_query_input() noexcept
         }
         case 5:
         {
+            ImGui::Text("Comment ID: ");
+            ImGui::SameLine();
+            ImGui::InputInt("##_pid5", &in0, 0, 0);
+            ImGui::NewLine();
+
+            if (ImGui::Button("Ok"))
+            {
+                ImGui::CloseCurrentPopup();
+                m_is_excute_query_open = false;
+                database::_db_query->interaction_delete_7(in0);
+            }
+            break;
+        }
+        case 6:
+        {
             ImGui::Text("Person ID: ");
             ImGui::SameLine();
             ImGui::InputInt("##_pid6", &in0, 0, 0);
@@ -209,7 +225,7 @@ graphquery::interact::CFrameDBQuery::render_predefined_query_input() noexcept
             }
             break;
         }
-        case 6:
+        case 7:
         {
             ImGui::Text("Person ID: ");
             ImGui::SameLine();
@@ -224,7 +240,7 @@ graphquery::interact::CFrameDBQuery::render_predefined_query_input() noexcept
             }
             break;
         }
-        case 7:
+        case 8:
         {
             ImGui::Text("Message ID: ");
             ImGui::SameLine();
