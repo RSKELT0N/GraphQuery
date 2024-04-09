@@ -14,8 +14,7 @@
 //~ static symbol link
 std::shared_ptr<graphquery::logger::CLogSystem> graphquery::database::storage::CDiskDriver::m_log_system;
 
-graphquery::database::storage::CDiskDriver::
-CDiskDriver(const int file_mode, const int map_mode_prot, const int map_mode_flags)
+graphquery::database::storage::CDiskDriver::CDiskDriver(const int map_mode_flags, const int file_mode, const int map_mode_prot)
 {
     m_log_system               = logger::CLogSystem::get_instance();
     this->m_file_mode          = file_mode;
@@ -28,7 +27,7 @@ CDiskDriver(const int file_mode, const int map_mode_prot, const int map_mode_fla
 graphquery::database::storage::CDiskDriver::~
 CDiskDriver()
 {
-    if (this->m_initialised)
+    if (this->m_initialised && m_map_mode_flags == MAP_SHARED)
     {
         (void) sync();
         close();
@@ -90,13 +89,6 @@ void
 graphquery::database::storage::CDiskDriver::resize_override(const int64_t file_size) noexcept
 {
     const auto old_size = m_fd_info.st_size;
-
-    if (old_size >= file_size)
-    {
-        m_writer_lock.unlock();
-        return;
-    }
-
     truncate(resize_to_pagesize(file_size));
     remap(old_size);
 }
@@ -284,7 +276,7 @@ graphquery::database::storage::CDiskDriver::open(const std::string_view file_nam
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::sync() const noexcept
 {
-    if (this->m_initialised)
+    if (this->m_initialised && m_map_mode_flags == MAP_SHARED)
     {
         if (msync(m_memory_mapped_file, static_cast<size_t>(m_fd_info.st_size), MS_SYNC) == -1)
         {
@@ -302,7 +294,7 @@ graphquery::database::storage::CDiskDriver::sync() const noexcept
 graphquery::database::storage::CDiskDriver::SRet_t
 graphquery::database::storage::CDiskDriver::async() const noexcept
 {
-    if (this->m_initialised)
+    if (this->m_initialised && m_map_mode_flags == MAP_SHARED)
     {
         if (msync(m_memory_mapped_file, static_cast<size_t>(m_fd_info.st_size), MS_ASYNC) == -1)
         {
@@ -341,7 +333,8 @@ graphquery::database::storage::CDiskDriver::close()
 {
     if (this->m_initialised)
     {
-        assert(sync() == SRet_t::VALID);
+        if (m_map_mode_flags == MAP_SHARED)
+            assert(sync() == SRet_t::VALID);
         assert(unmap() == SRet_t::VALID);
         assert(close_fd() == SRet_t::VALID);
         this->m_initialised = false;

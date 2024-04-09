@@ -48,7 +48,6 @@ namespace graphquery::database::storage
         Id_t next                = END_INDEX;
         std::array<T, N> payload = {};
         std::bitset<N> state     = {};
-        uint32_t version         = END_INDEX;
         uint8_t payload_amt      = {};
     };
 
@@ -97,7 +96,7 @@ namespace graphquery::database::storage
         using STypeDataBlock = SDataBlock_t<T, N>;
 
         ~CDatablockFile() { (void) m_file.close(); }
-        CDatablockFile()                                       = default;
+        CDatablockFile();
         CDatablockFile(const CDatablockFile &)                 = delete;
         CDatablockFile(CDatablockFile &&) noexcept             = delete;
         CDatablockFile & operator=(const CDatablockFile &)     = default;
@@ -121,9 +120,16 @@ namespace graphquery::database::storage
 
       private:
         CDiskDriver m_file;
+        uint8_t gbl_readlock                          = 0;
         static constexpr uint32_t METADATA_START_ADDR = 0x00000000;
     };
 } // namespace graphquery::database::storage
+
+template<typename T, uint8_t N>
+    requires(N > 0)
+graphquery::database::storage::CDatablockFile<T, N>::CDatablockFile(): m_file(LPG_MAP_MODE)
+{
+}
 
 template<typename T, uint8_t N>
     requires(N > 0)
@@ -215,7 +221,6 @@ graphquery::database::storage::CDatablockFile<T, N>::append_free_data_block(uint
     data_block_ptr->idx                   = block_offset;
     data_block_ptr->state                 = 0;
     data_block_ptr->next                  = head;
-    data_block_ptr->version               = END_INDEX;
     data_block_ptr->payload               = {};
 }
 
@@ -230,7 +235,6 @@ graphquery::database::storage::CDatablockFile<T, N>::create_entry(uint32_t next_
     data_block_ptr->idx     = entry_offset;
     data_block_ptr->state   = {};
     data_block_ptr->next    = next_ref;
-    data_block_ptr->version = END_INDEX;
 
     return entry_offset;
 }

@@ -35,7 +35,7 @@ namespace graphquery::database
     **        and analytic engine.
     ** @return EStatus status code for init.
     ***********************************************/
-    [[nodiscard]] EStatus initialise([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) noexcept;
+    [[nodiscard]] EStatus initialise(bool enable_logging = true, [[maybe_unused]] int argc = 0, [[maybe_unused]] char ** argv = nullptr) noexcept;
     void _enable_sync_() noexcept;
     void _disable_sync_() noexcept;
     const bool & _get_sync_state_() noexcept;

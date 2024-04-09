@@ -3,7 +3,7 @@
 #include "lpg_mmap.h"
 
 graphquery::database::storage::CTransaction::CTransaction(const std::filesystem::path & local_path, ILPGModel * lpg, const std::shared_ptr<logger::CLogSystem> & logsys, const bool & sync_state):
-    m_lpg(lpg), _sync_state_(sync_state), m_log_system(logsys)
+    m_lpg(lpg), _sync_state_(sync_state), m_transaction_file(MAP_SHARED), m_log_system(logsys)
 {
     m_transaction_file.set_path(local_path);
 }
@@ -53,7 +53,8 @@ graphquery::database::storage::CTransaction::store_transaction_header()
     utils::atomic_store(&header_ptr->transactions_start_addr, TRANSACTIONS_START_ADDR);
     utils::atomic_store(&header_ptr->rollback_entries_start_addr, ROLLBACK_ENTRIES_START_ADDR);
     utils::atomic_store(&header_ptr->eof_addr, TRANSACTIONS_START_ADDR);
-    utils::atomic_store(&header_ptr->valid_eof_addr, TRANSACTIONS_START_ADDR);
+    utils::atomic_store(&header_ptr->priv_eof_addr, TRANSACTIONS_START_ADDR);
+    utils::atomic_store(&header_ptr->running_transactions, static_cast<uint16_t>(0));
     utils::atomic_store(&header_ptr->rollback_entry_c, static_cast<uint8_t>(0));
 }
 
@@ -91,6 +92,35 @@ graphquery::database::storage::CTransaction::fetch_rollback_table() noexcept
     return rollback_table;
 }
 
+void
+graphquery::database::storage::CTransaction::close_transaction_gracefully() noexcept
+{
+    utils::atomic_fetch_dec(&read_transaction_header()->running_transactions);
+}
+
+void
+graphquery::database::storage::CTransaction::update_graph_state() noexcept
+{
+    if constexpr (LPG_MAP_MODE == MAP_SHARED)
+    {
+        auto transaction_hdr      = read_transaction_header();
+        auto running_transactions = utils::atomic_load(&transaction_hdr->running_transactions);
+        auto priv_eof_addr        = utils::atomic_load(&transaction_hdr->priv_eof_addr);
+        auto eof_addr             = utils::atomic_load(&transaction_hdr->eof_addr);
+
+        if (running_transactions > 0)
+        {
+            dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->reset_graph();
+            rollback(utils::atomic_load(&transaction_hdr->transactions_start_addr), TRANSACTION_HEADER_START_ADDR);
+        }
+        else if (priv_eof_addr < eof_addr)
+        {
+            rollback(eof_addr, static_cast<int64_t>(priv_eof_addr));
+            utils::atomic_store(&transaction_hdr->priv_eof_addr, eof_addr);
+        }
+    }
+}
+
 template<typename T, bool write>
 graphquery::database::storage::SRef_t<T, write>
 graphquery::database::storage::CTransaction::read_transaction(const uint64_t seek)
@@ -118,11 +148,28 @@ graphquery::database::storage::CTransaction::storage_persist() const noexcept
 }
 
 uint64_t
+graphquery::database::storage::CTransaction::get_valid_eor_addr() noexcept
+{
+    return utils::atomic_load(&read_transaction_header()->valid_eof_addr);
+}
+
+int64_t
+graphquery::database::storage::CTransaction::get_transaction_start_addr() noexcept
+{
+    return utils::atomic_load(&read_transaction_header()->transactions_start_addr);
+}
+
+uint64_t
 graphquery::database::storage::CTransaction::log_rm_vertex(const Id_t src) noexcept
 {
-    auto transaction_hdr       = read_transaction_header();
+    auto transaction_hdr           = read_transaction_header();
     static constexpr uint64_t size = sizeof(SVertexTransaction);
-    const auto commit_addr     = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
+    const auto commit_addr         = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
+
+    if constexpr (LPG_MAP_MODE == MAP_SHARED)
+        utils::atomic_fetch_add(&transaction_hdr->priv_eof_addr, size);
+
+    utils::atomic_fetch_inc(&transaction_hdr->running_transactions);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     //~ Lose reference to transaction_hdr
@@ -145,9 +192,14 @@ graphquery::database::storage::CTransaction::log_rm_vertex(const Id_t src) noexc
 uint64_t
 graphquery::database::storage::CTransaction::log_rm_edge(const Id_t src, const Id_t dst, const std::string_view edge_label) noexcept
 {
-    auto transaction_hdr       = read_transaction_header();
+    auto transaction_hdr           = read_transaction_header();
     static constexpr uint64_t size = sizeof(SEdgeTransaction);
-    const auto commit_addr     = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
+    const auto commit_addr         = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
+
+    if constexpr (LPG_MAP_MODE == MAP_SHARED)
+        utils::atomic_fetch_add(&transaction_hdr->priv_eof_addr, size);
+
+    utils::atomic_fetch_inc(&transaction_hdr->running_transactions);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     //~ Lose reference to transaction_hdr
@@ -172,8 +224,13 @@ uint64_t
 graphquery::database::storage::CTransaction::log_vertex(const std::vector<std::string_view> & labels, const std::vector<ILPGModel::SProperty_t> & props, const Id_t optional_id) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
-    const uint64_t size        = sizeof(SVertexTransaction) + props.size() * sizeof(ILPGModel::SProperty_t) + CFG_LPG_LABEL_LENGTH * labels.size();
+    const uint64_t size    = sizeof(SVertexTransaction) + props.size() * sizeof(ILPGModel::SProperty_t) + CFG_LPG_LABEL_LENGTH * labels.size();
     const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
+
+    if constexpr (LPG_MAP_MODE == MAP_SHARED)
+        utils::atomic_fetch_add(&transaction_hdr->priv_eof_addr, size);
+
+    utils::atomic_fetch_inc(&transaction_hdr->running_transactions);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     //~ Lose reference to transaction_hdr
@@ -198,15 +255,15 @@ graphquery::database::storage::CTransaction::log_vertex(const std::vector<std::s
     for (const auto & label : labels)
     {
         auto label_ptr = m_transaction_file.ref<ILPGModel::SLabel>(static_cast<int64_t>(curr_addr));
-        strcpy(&label_ptr->label[0], label.data());
+        strncpy(&label_ptr->label[0], label.data(), CFG_LPG_LABEL_LENGTH - 1);
         curr_addr += CFG_LPG_LABEL_LENGTH;
     }
 
     for (const auto & [key, value] : props)
     {
         auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(static_cast<int64_t>(curr_addr));
-        strcpy(&prop->key[0], key);
-        strcpy(&prop->value[0], value);
+        strncpy(&prop->key[0], key, CFG_LPG_PROPERTY_KEY_LENGTH - 1);
+        strncpy(&prop->value[0], value, CFG_LPG_PROPERTY_VALUE_LENGTH - 1);
         curr_addr += sizeof(ILPGModel::SProperty_t);
     }
 
@@ -221,8 +278,13 @@ graphquery::database::storage::CTransaction::log_edge(const Id_t src,
                                                       const bool undirected) noexcept
 {
     auto transaction_hdr   = read_transaction_header();
-    const uint64_t size        = sizeof(SEdgeTransaction) + props.size() * sizeof(ILPGModel::SProperty_t);
+    const uint64_t size    = sizeof(SEdgeTransaction) + props.size() * sizeof(ILPGModel::SProperty_t);
     const auto commit_addr = utils::atomic_fetch_add(&transaction_hdr->eof_addr, size);
+
+    if constexpr (LPG_MAP_MODE == MAP_SHARED)
+        utils::atomic_fetch_add(&transaction_hdr->priv_eof_addr, size);
+
+    utils::atomic_fetch_inc(&transaction_hdr->running_transactions);
     utils::atomic_fetch_inc(&transaction_hdr->transaction_c);
 
     //~ Lose reference to transaction_hdr
@@ -250,19 +312,11 @@ graphquery::database::storage::CTransaction::log_edge(const Id_t src,
     {
         auto prop = m_transaction_file.ref<ILPGModel::SProperty_t>(static_cast<int64_t>(curr_addr));
         strncpy(&prop->key[0], key, CFG_LPG_PROPERTY_KEY_LENGTH - 1);
-	prop->key[CFG_LPG_PROPERTY_KEY_LENGTH - 1] = '\0';
         strncpy(&prop->value[0], value, CFG_LPG_PROPERTY_VALUE_LENGTH - 1);
-	prop->value[CFG_LPG_PROPERTY_VALUE_LENGTH - 1] = '\0';
         curr_addr += sizeof(ILPGModel::SProperty_t);
     }
 
     return commit_addr;
-}
-
-uint64_t
-graphquery::database::storage::CTransaction::get_valid_eor_addr() noexcept
-{
-    return read_transaction_header()->valid_eof_addr;
 }
 
 std::vector<std::string_view>
@@ -277,11 +331,11 @@ graphquery::database::storage::CTransaction::slabel_to_strview_vector(const std:
 }
 
 void
-graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_entry) noexcept
+graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_eor, const int64_t start_addr) noexcept
 {
-    m_transaction_file.seek(TRANSACTIONS_START_ADDR);
+    m_transaction_file.seek(start_addr);
     auto curr_addr         = m_transaction_file.get_seek_offset();
-    auto rollback_eor_addr = rollback_entry;
+    auto rollback_eor_addr = rollback_eor;
 
     SRef_t<ETransactionType> type;
     SRef_t<SVertexTransaction> v_transc = SRef_t<SVertexTransaction>();
@@ -302,17 +356,18 @@ graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_en
             if (v_transc->commit.label_c > 0)
             {
                 labels.resize(v_transc->commit.label_c);
-                m_transaction_file.read(&labels[0], CFG_LPG_LABEL_LENGTH, v_transc->commit.label_c);
+                m_transaction_file.read(&labels[0], CFG_LPG_LABEL_LENGTH, v_transc->commit.label_c, true);
             }
 
             if (v_transc->commit.property_c > 0)
             {
                 props.resize(v_transc->commit.property_c);
-                m_transaction_file.read(&props[0], CFG_LPG_PROPERTY_KEY_LENGTH + CFG_LPG_PROPERTY_VALUE_LENGTH, v_transc->commit.property_c);
+                m_transaction_file.read(&props[0], CFG_LPG_PROPERTY_KEY_LENGTH + CFG_LPG_PROPERTY_VALUE_LENGTH, v_transc->commit.property_c, true);
             }
 
             if (v_transc->committed)
                 process_vertex_transaction(v_transc, labels, props);
+            curr_addr += v_transc->size;
             break;
         }
         case ETransactionType::edge:
@@ -322,20 +377,20 @@ graphquery::database::storage::CTransaction::rollback(const uint64_t rollback_en
             if (e_transc->commit.property_c > 0)
             {
                 props.resize(e_transc->commit.property_c);
-                m_transaction_file.read(&props[0], CFG_LPG_PROPERTY_KEY_LENGTH + CFG_LPG_PROPERTY_VALUE_LENGTH, e_transc->commit.property_c);
+                m_transaction_file.read(&props[0], CFG_LPG_PROPERTY_KEY_LENGTH + CFG_LPG_PROPERTY_VALUE_LENGTH, e_transc->commit.property_c, true);
             }
 
             if (e_transc->committed)
                 process_edge_transaction(e_transc, props);
+            curr_addr += e_transc->size;
             break;
         }
         }
 
-        curr_addr = m_transaction_file.get_seek_offset();
-
         labels.clear();
         props.clear();
 
+        type.~SRef_t();
         v_transc.~SRef_t();
         e_transc.~SRef_t();
     }

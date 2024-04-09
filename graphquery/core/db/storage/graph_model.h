@@ -56,7 +56,7 @@ namespace graphquery::database::storage
             Id_t dst               = {};
             Id_t property_id       = {};
             uint16_t edge_label_id = {};
-            uint16_t property_c    = {};
+            uint8_t property_c    = {};
 
             SEdge_t() = default;
 
@@ -157,7 +157,7 @@ namespace graphquery::database::storage
         virtual std::vector<SVertex_t> get_vertices(const std::function<bool(const SVertex_t &)> &)                                                      = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, const std::function<bool(const SEdge_t &)> &)                              = 0;
         virtual std::unordered_set<Id_t> get_edge_dst_vertices(Id_t src, const std::function<bool(const SEdge_t &)> &)                                   = 0;
-        virtual std::unordered_set<Id_t> get_edge_dst_vertices(Id_t src, std::string_view edge_label, const std::function<bool(const SEdge_t &)> &)      = 0;
+        virtual std::unordered_set<Id_t> get_edge_dst_vertices(Id_t src, uint16_t edge_label_id, const std::function<bool(const SEdge_t &)> &)      = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, const std::function<bool(const SEdge_t &)> &) = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label)                                               = 0;
         virtual std::vector<SEdge_t> get_edges(std::string_view vertex_label, std::string_view edge_label, std::string_view dst_vertex_label)            = 0;

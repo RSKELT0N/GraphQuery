@@ -12,50 +12,35 @@ namespace
     graphquery::database::query::CQueryEngine::ResultType
     _interaction_complex_2(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id, const int64_t _max_date) noexcept
     {
+        static constexpr size_t limit_size = 20;
+
         std::unordered_set<graphquery::database::storage::Id_t> _friends;
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> message_creators;
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> res;
 
-#pragma omp declare reduction(merge : std::vector<graphquery::database::storage::ILPGModel::SEdge_t> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end())) \
-    initializer(omp_priv = std::vector<graphquery::database::storage::ILPGModel::SEdge_t>())
-#pragma omp parallel default(none) shared(graph, _person_id, _friends, message_creators, res)
-        {
-#pragma omp sections
-            {
-#pragma omp section
-                {
-                    //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
-                    _friends = graph->get_edge_dst_vertices(_person_id, "knows", "Person");
-                }
+        //~ MATCH (:Person {id: $personId })-[:KNOWS]-(friend:Person)
+        _friends = graph->get_edge_dst_vertices(_person_id, "knows", "Person");
 
-#pragma omp section
-                {
-                    //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
-                    message_creators = graph->get_edges("Message", "hasCreator");
-                }
-            }
-            res.reserve(message_creators.size());
-#pragma omp for reduction(merge : res)
-            for (size_t i = 0; i < message_creators.size(); i++)
+        //~ (friend:Person)<-[:HAS_CREATOR]-(message:Message)
+        message_creators = graph->get_edges("Message", "hasCreator");
+
+        res.reserve(20);
+        for(size_t amount = 0, i = 0; amount < limit_size && i < message_creators.size(); i++)
+        {
+            if (_friends.contains(message_creators[i].dst))
             {
-                if (_friends.contains(message_creators[i].dst))
-                    res.emplace_back(message_creators[i]);
+                res.emplace_back(message_creators[i]);
+                amount++;
             }
         }
 
-        res.shrink_to_fit();
-
         //~ Generating Map of properties
         std::vector<std::map<std::string, std::string>> properties_map;
-        properties_map.reserve(res.size());
+        properties_map.resize(res.size());
 
-        uint32_t prop_i = 0;
-        for (
-
-            const graphquery::database::storage::ILPGModel::SEdge_t & edge : res
-
-        )
+        for (size_t i = 0; i < std::min(limit_size, res.size()); i++)
         {
+            auto & edge          = res[i];
             auto message_props   = graph->get_properties_by_id_map(edge.src);
             auto friend_props    = graph->get_properties_by_id_map(edge.dst);
             auto w_message_props = std::unordered_map<std::string, std::string>();
@@ -72,10 +57,8 @@ namespace
             w_friend_props["personFirstName"] = friend_props.at("firstName");
             w_friend_props["personLastName"]  = friend_props.at("lastName");
 
-            properties_map.emplace_back();
-            properties_map[prop_i].insert(w_friend_props.begin(), w_friend_props.end());
-            properties_map[prop_i].insert(w_message_props.begin(), w_message_props.end());
-            prop_i++;
+            properties_map[i].insert(w_friend_props.begin(), w_friend_props.end());
+            properties_map[i].insert(w_message_props.begin(), w_message_props.end());
         }
 
         return {res, properties_map};
@@ -83,6 +66,8 @@ namespace
 
     graphquery::database::query::CQueryEngine::ResultType _interaction_complex_8(graphquery::database::storage::ILPGModel * graph, const graphquery::database::storage::Id_t _person_id) noexcept
     {
+        static constexpr size_t limit_size = 20;
+
         std::unordered_set<graphquery::database::storage::Id_t> uniq_messages           = {};
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> comment_creators = {};
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> comments         = {};
@@ -98,23 +83,19 @@ namespace
         comment_creators.reserve(comments.size());
 
         // ~ (comment:Comment)-[:HAS_CREATOR]->(person:Person)
-        for (size_t i = 0; i < comments.size(); i++)
+        for (auto & comment : comments)
         {
-            auto comment_creator_person = graph->get_edges(comments[i].src, "hasCreator", "Person");
+            auto comment_creator_person = graph->get_edges(comment.src, "hasCreator", "Person");
             comment_creators.insert(comment_creators.begin(), comment_creator_person.begin(), comment_creator_person.end());
         }
 
         //~ Generating Map of properties
         std::vector<std::map<std::string, std::string>> properties_map;
-        properties_map.reserve(comment_creators.size());
+        properties_map.resize(comment_creators.size());
 
-        uint32_t prop_i = 0;
-        for (
-
-            const graphquery::database::storage::ILPGModel::SEdge_t & edge : comment_creators
-
-        )
+        for (size_t i = 0; i < std::min(limit_size, comment_creators.size()); i++)
         {
+            auto & edge          = comment_creators[i];
             auto comment_props   = graph->get_properties_by_id_map(edge.src);
             auto friend_props    = graph->get_properties_by_id_map(edge.dst);
             auto w_comment_props = std::unordered_map<std::string, std::string>();
@@ -128,10 +109,8 @@ namespace
             w_friend_props["personFirstName"] = friend_props.at("firstName");
             w_friend_props["personLastName"]  = friend_props.at("lastName");
 
-            properties_map.emplace_back();
-            properties_map[prop_i].insert(w_comment_props.begin(), w_comment_props.end());
-            properties_map[prop_i].insert(w_friend_props.begin(), w_friend_props.end());
-            prop_i++;
+            properties_map[i].insert(w_comment_props.begin(), w_comment_props.end());
+            properties_map[i].insert(w_friend_props.begin(), w_friend_props.end());
         }
 
         return {comment_creators, properties_map};
@@ -175,13 +154,22 @@ namespace
 
         //~ MATCH (:Person {id: $personId})<-[:HAS_CREATOR]-(message)
         auto person_comments = graph->get_edges("Message", "hasCreator", _person_id);
+        person_comments.resize(message_limit);
 
         //~ MATCH (message)-[:REPLY_OF*0..]->(post:Post)
         std::vector<graphquery::database::storage::ILPGModel::SEdge_t> posts = {};
-        for (size_t i = 0; i < std::min(message_limit, person_comments.size()); i++)
+        for (size_t i = 0; i < person_comments.size(); i++)
         {
             auto post = graph->get_edges(person_comments[i].src, "replyOf", "Post");
-            posts.insert(posts.begin(), post.begin(), post.end());
+
+            if (post.empty())
+            {
+                auto tmp = person_comments[i];
+                tmp.dst  = tmp.src;
+                posts.emplace_back(tmp);
+            }
+            else
+                posts.emplace_back(post[0]);
         }
 
         //~ (post)-[:HAS_CREATOR]->(person)
@@ -189,37 +177,39 @@ namespace
         for (const auto & post : posts)
         {
             auto creator = graph->get_edges(post.dst, "hasCreator", "Person");
-            creator_of_posts.insert(creator_of_posts.begin(), creator.begin(), creator.end());
+            creator_of_posts.emplace_back(creator[0]);
         }
 
         //~ Generating Map of properties
         std::vector<std::map<std::string, std::string>> properties_map;
         properties_map.reserve(creator_of_posts.size());
 
-        uint32_t prop_i = 0;
-        for (const graphquery::database::storage::ILPGModel::SEdge_t & edge : posts)
+        for (size_t i = 0; i < person_comments.size(); i++)
         {
-            auto message_props   = graph->get_properties_by_id_map(edge.src);
-            auto post_props      = graph->get_properties_by_id_map(edge.dst);
-            auto person_props    = graph->get_properties_by_id_map(creator_of_posts[prop_i].dst);
+            auto & person_edge  = person_comments[i];
+            auto & post_edge    = posts[i];
+            auto & creator_edge = creator_of_posts[i];
+
+            auto message_props   = graph->get_properties_by_id_map(person_edge.src);
+            auto post_props      = graph->get_properties_by_id_map(post_edge.dst);
+            auto person_props    = graph->get_properties_by_id_map(creator_edge.dst);
             auto w_message_props = std::unordered_map<std::string, std::string>();
             auto w_post_props    = std::unordered_map<std::string, std::string>();
             auto w_person_props  = std::unordered_map<std::string, std::string>();
 
-            w_message_props["messageId"]           = std::to_string(edge.src);
+            w_message_props["messageId"]           = std::to_string(person_edge.src);
             w_message_props["messageCreationDate"] = message_props.at("creationDate");
 
-            post_props["postId"] = std::to_string(edge.dst);
+            w_post_props["postId"] = std::to_string(post_edge.dst);
 
-            w_person_props["personId"]        = std::to_string(creator_of_posts[prop_i].dst);
+            w_person_props["personId"]        = std::to_string(creator_edge.dst);
             w_person_props["personFirstName"] = person_props.at("firstName");
             w_person_props["personLastName"]  = person_props.at("lastName");
 
             properties_map.emplace_back();
-            properties_map[prop_i].insert(w_message_props.begin(), w_message_props.end());
-            properties_map[prop_i].insert(w_post_props.begin(), w_post_props.end());
-            properties_map[prop_i].insert(w_person_props.begin(), w_person_props.end());
-            prop_i++;
+            properties_map[i].insert(w_message_props.begin(), w_message_props.end());
+            properties_map[i].insert(w_post_props.begin(), w_post_props.end());
+            properties_map[i].insert(w_person_props.begin(), w_person_props.end());
         }
 
         return {posts, properties_map};
@@ -285,7 +275,8 @@ namespace
     }
 } // namespace
 
-graphquery::database::query::CQueryEngine::CQueryEngine(std::shared_ptr<storage::ILPGModel *> graph_model): m_graph(std::move(graph_model))
+graphquery::database::query::CQueryEngine::
+CQueryEngine(std::shared_ptr<storage::ILPGModel *> graph_model): m_graph(std::move(graph_model))
 {
     this->m_results = std::make_shared<std::vector<utils::SResult<ResultType>>>();
 }

@@ -31,7 +31,9 @@ namespace graphquery::database::storage
             uint64_t transactions_start_addr     = {0};
             uint64_t rollback_entries_start_addr = {0};
             uint64_t eof_addr                    = {0};
+            uint64_t priv_eof_addr               = {0};
             uint64_t valid_eof_addr              = {0};
+            uint16_t running_transactions        = {0};
             uint8_t rollback_entry_c             = {0};
         };
 
@@ -46,26 +48,26 @@ namespace graphquery::database::storage
             Id_t optional_id    = {0};
             uint16_t label_c    = {0};
             uint16_t property_c = {0};
-            uint8_t remove = {0};
+            uint8_t remove      = {0};
         };
 
         struct SEdgeCommit
         {
-            Id_t src = {0};
-            Id_t dst = {0};
+            Id_t src                              = {0};
+            Id_t dst                              = {0};
             char edge_label[CFG_LPG_LABEL_LENGTH] = {""};
-            uint16_t property_c = {0};
-            uint8_t remove = {0};
-            uint8_t undirected = {0};
+            uint16_t property_c                   = {0};
+            uint8_t remove                        = {0};
+            uint8_t undirected                    = {0};
         };
 
         template<typename T>
         struct STransaction
         {
-            T commit = {};
-	          ETransactionType type = ETransactionType::vertex;
-    	      uint16_t size = {0};
-            uint8_t committed = {0};
+            ETransactionType type = ETransactionType::vertex;
+            T commit              = {};
+            uint16_t size         = {0};
+            uint8_t committed     = {0};
         };
 
         explicit CTransaction(const std::filesystem::path & local_path, ILPGModel * lpg, const std::shared_ptr<logger::CLogSystem> &, const bool & sync_state_);
@@ -74,9 +76,12 @@ namespace graphquery::database::storage
         void close() noexcept;
         void init() noexcept;
         void reset() noexcept;
-        void rollback(uint64_t) noexcept;
+        void close_transaction_gracefully() noexcept;
+        void update_graph_state() noexcept;
+        void rollback(uint64_t, int64_t start_addr) noexcept;
         void handle_transactions() noexcept;
         uint64_t get_valid_eor_addr() noexcept;
+        int64_t get_transaction_start_addr() noexcept;
         void store_rollback_entry(std::string_view name) noexcept;
         SRef_t<SRollbackEntry> read_rollback_entry(uint8_t) noexcept;
 
@@ -116,9 +121,8 @@ namespace graphquery::database::storage
         static constexpr const char * TRANSACTION_FILE_NAME    = "transactions";
         static constexpr uint8_t ROLLBACK_MAX_AMOUNT           = 5;
         static constexpr int32_t TRANSACTION_HEADER_START_ADDR = 0x00000000;
-        static constexpr int64_t ROLLBACK_ENTRIES_START_ADDR = TRANSACTION_HEADER_START_ADDR + sizeof(SHeaderBlock);
-        static constexpr int64_t TRANSACTIONS_START_ADDR = _align_(ROLLBACK_ENTRIES_START_ADDR + ROLLBACK_MAX_AMOUNT * sizeof(
-            SRollbackEntry));
+        static constexpr int64_t ROLLBACK_ENTRIES_START_ADDR   = TRANSACTION_HEADER_START_ADDR + sizeof(SHeaderBlock);
+        static constexpr int64_t TRANSACTIONS_START_ADDR       = _align_(ROLLBACK_ENTRIES_START_ADDR + ROLLBACK_MAX_AMOUNT * sizeof(SRollbackEntry));
     };
 
     template<typename T>
@@ -128,6 +132,7 @@ namespace graphquery::database::storage
         utils::atomic_store(&ref->committed, 1);
 
         auto header_ptr = read_transaction_header();
+        utils::atomic_fetch_dec(&header_ptr->running_transactions);
         utils::atomic_store(&header_ptr->valid_eof_addr, std::max(header_ptr->valid_eof_addr, transaction_addr + ref->size));
         storage_persist();
     }

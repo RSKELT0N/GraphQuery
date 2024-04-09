@@ -40,7 +40,7 @@ namespace graphquery::database::storage
             VALID = 0X0000
         };
 
-        explicit CDiskDriver(int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE, int map_mode_flags = MAP_SHARED);
+        explicit CDiskDriver(int map_mode_flags = MAP_SHARED, int file_mode = O_RDWR, int map_mode_prot = PROT_READ | PROT_WRITE);
         ~CDiskDriver();
 
         static constexpr auto PAGE_SIZE  = KB(4);
@@ -51,14 +51,14 @@ namespace graphquery::database::storage
         inline SRef_t<T, write> ref(const int64_t seek = -1)
         {
             auto reference = std::bit_cast<T *>(ref<write>(seek, sizeof(T)));
-            return SRef_t<T, write>(reference, &m_writer_lock, &m_reader_lock, &reader_c);
+            return SRef_t<T, write>(reference, &m_writer_lock, &reader_lock, &reader_c);
         }
 
         template<typename T, bool write = false>
         inline SRef_t<T, write> ref_update()
         {
             auto reference = std::bit_cast<T *>(ref_update<write>(sizeof(T)));
-            return SRef_t<T, write>(reference, &m_writer_lock, &m_reader_lock, &reader_c);
+            return SRef_t<T, write>(reference, &m_writer_lock, &reader_lock, &reader_c);
         }
 
       private:
@@ -77,10 +77,10 @@ namespace graphquery::database::storage
 
                 if constexpr (!write)
                 {
-                    m_reader_lock.lock();
+                    reader_lock.lock();
                     if (utils::atomic_fetch_pre_inc(&reader_c) == 1)
                         m_writer_lock.lock();
-                    m_reader_lock.unlock();
+                    reader_lock.unlock();
                 }
 
                 ptr = &this->m_memory_mapped_file[seek];
@@ -103,10 +103,10 @@ namespace graphquery::database::storage
 
                 if constexpr (!write)
                 {
-                    m_reader_lock.lock();
+                    reader_lock.lock();
                     if (utils::atomic_fetch_pre_inc(&reader_c) == 1)
                         m_writer_lock.lock();
-                    m_reader_lock.unlock();
+                    reader_lock.unlock();
                 }
 
                 ptr = &this->m_memory_mapped_file[m_seek_offset];
@@ -142,6 +142,9 @@ namespace graphquery::database::storage
 
         static constexpr auto DEFAULT_FILE_SIZE = PAGE_SIZE;
 
+      public:
+        CSpinlock reader_lock;
+
       private:
         [[nodiscard]] SRet_t unmap() const noexcept;
         [[maybe_unused]] SRet_t open_fd() noexcept;
@@ -154,7 +157,6 @@ namespace graphquery::database::storage
 
         uint8_t reader_c;
         CSpinlock m_writer_lock;
-        CSpinlock m_reader_lock;
         static std::shared_ptr<logger::CLogSystem> m_log_system;
 
         int m_file_mode      = {}; //~ Set file mode of the descriptor when opened.
