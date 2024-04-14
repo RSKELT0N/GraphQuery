@@ -46,7 +46,7 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
     message("-- ${PROJECT_NAME} [${PROJECT_VERSION}] build files have been defined")
 
-    if (CMAKE_BUILD_TYPE MATCHES "^[Rr]elease")
+    if (CMAKE_BUILD_TYPE MATCHES "Debug")
         find_package(Doxygen)
         if (DOXYGEN_FOUND)
             # set input and output files
