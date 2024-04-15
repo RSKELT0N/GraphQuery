@@ -41,9 +41,9 @@ rm -rf [build_directory]
 ### Loading a graph
 <img width="1276" alt="image" src="https://github.com/RSKELT0N/GraphQuery/assets/64985419/e2d494ba-6c39-4cee-9e19-97257f8afdca">
 
-## Lading dataset and performing workload
+## Loading dataset and performing workload
 
-Aanlytic            |  Transactional
+Analytic            |  Transactional
 :-------------------------:|:-------------------------:
 <img width="1279" alt="image" src="https://github.com/RSKELT0N/GraphQuery/assets/64985419/db5c730e-b7eb-4bca-a6dd-cc7458a75b3b"> | <img width="1278" alt="image" src="https://github.com/RSKELT0N/GraphQuery/assets/64985419/5fc1aa29-df34-4574-9783-28e2330ddd27">
 
