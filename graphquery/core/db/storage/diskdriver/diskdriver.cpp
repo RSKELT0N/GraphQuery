@@ -22,6 +22,7 @@ graphquery::database::storage::CDiskDriver::CDiskDriver(const int map_mode_flags
     this->m_map_mode_flags     = map_mode_flags;
     this->m_memory_mapped_file = nullptr;
     this->reader_c             = 0;
+    this->m_writer_lock.unlock();
 }
 
 graphquery::database::storage::CDiskDriver::~
@@ -315,6 +316,8 @@ graphquery::database::storage::CDiskDriver::clear_contents() noexcept
     if (m_initialised)
     {
         memset(&m_memory_mapped_file[0], 0, m_fd_info.st_size);
+        this->reader_c             = 0;
+        this->m_writer_lock.unlock();
     }
 }
 

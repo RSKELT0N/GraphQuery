@@ -4,7 +4,7 @@
 
 namespace
 {
-    constexpr int32_t node_display_upper_limit = 20;
+    constexpr int32_t node_display_upper_limit = 5;
 
     [[maybe_unused]] void sparse_node_positions(const int64_t num_vertices) noexcept
     {
@@ -69,19 +69,19 @@ graphquery::interact::CFrameGraphVisual::render_grid() noexcept
 void
 graphquery::interact::CFrameGraphVisual::render_nodes() noexcept
 {
-    // auto vertices = (*m_graph)->get_num_vertices();
-    //
-    // for (int i = 0; i < std::min(static_cast<int64_t>(node_display_upper_limit), vertices); i++)
-    // {
-    //     auto vertex_i = (*m_graph)->get_vertex(i);
-    //     ImNodes::BeginNode(i);
-    //     ImNodes::BeginNodeTitleBar();
-    //     ImGui::Text("Vertex (%d)", i);
-    //     ImNodes::EndNodeTitleBar();
-    //     ImGui::Text("Neighbours (%u)", vertex_i->neighbour_c);
-    //     ImNodes::EndNode();
-    // }
-    // std::call_once(m_init, sparse_node_positions, vertices);
+    auto vertices = (*m_graph)->get_num_vertices();
+
+    for (int i = 0; i < std::min(static_cast<int64_t>(node_display_upper_limit), vertices); i++)
+    {
+        auto vertex_i = (*m_graph)->get_vertex(i);
+        ImNodes::BeginNode(i);
+        ImNodes::BeginNodeTitleBar();
+        ImGui::Text("Vertex (%d)", i);
+        ImNodes::EndNodeTitleBar();
+        ImGui::Text("Neighbours (%u)", vertex_i->outdegree);
+        ImNodes::EndNode();
+    }
+    std::call_once(m_init, sparse_node_positions, vertices);
 }
 
 void
