@@ -15,7 +15,11 @@ struct CSpinlock {
             while (lock_.load(std::memory_order_relaxed)) {
                 // Issue X86 PAUSE or ARM YIELD instruction to reduce contention between
                 // hyper-threads
+                #if defined (__GNUC__) && !defined(__llvm__)
                 __builtin_ia32_pause();
+                #else
+                __asm__ volatile("pause");
+                #endif
             }
         }
     }
