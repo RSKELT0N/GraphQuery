@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <thread>
 
 struct CSpinlock {
     std::atomic<bool> lock_ = {false};
@@ -18,7 +19,7 @@ struct CSpinlock {
                 #if defined (__GNUC__) && !defined(__llvm__)
                 __builtin_ia32_pause();
                 #else
-                __asm__ volatile("pause");
+                std::this_thread::yield();
                 #endif
             }
         }
