@@ -101,23 +101,22 @@ graphquery::database::storage::CTransaction::close_transaction_gracefully() noex
 void
 graphquery::database::storage::CTransaction::update_graph_state() noexcept
 {
-    if constexpr (LPG_MAP_MODE == MAP_SHARED)
-    {
-        auto transaction_hdr      = read_transaction_header();
-        auto running_transactions = utils::atomic_load(&transaction_hdr->running_transactions);
-        auto priv_eof_addr        = utils::atomic_load(&transaction_hdr->priv_eof_addr);
-        auto eof_addr             = utils::atomic_load(&transaction_hdr->eof_addr);
+    auto transaction_hdr      = read_transaction_header();
+    auto running_transactions = utils::atomic_load(&transaction_hdr->running_transactions);
+    auto priv_eof_addr        = utils::atomic_load(&transaction_hdr->priv_eof_addr);
+    auto eof_addr             = utils::atomic_load(&transaction_hdr->eof_addr);
 
-        if (running_transactions > 0)
-        {
-            dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->reset_graph();
-            rollback(utils::atomic_load(&transaction_hdr->transactions_start_addr), TRANSACTION_HEADER_START_ADDR);
-        }
-        else if (priv_eof_addr < eof_addr)
-        {
-            rollback(eof_addr, static_cast<int64_t>(priv_eof_addr));
+    if (running_transactions > 0)
+    {
+        dynamic_cast<CMemoryModelMMAPLPG *>(m_lpg)->reset_graph();
+        rollback(utils::atomic_load(&transaction_hdr->transactions_start_addr), TRANSACTION_HEADER_START_ADDR);
+    }
+    else if (priv_eof_addr < eof_addr)
+    {
+        rollback(eof_addr, static_cast<int64_t>(priv_eof_addr));
+
+        if constexpr (LPG_MAP_MODE == MAP_SHARED)
             utils::atomic_store(&transaction_hdr->priv_eof_addr, eof_addr);
-        }
     }
 }
 
