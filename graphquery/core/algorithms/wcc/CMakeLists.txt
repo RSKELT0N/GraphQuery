@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.10)
 
 add_library(
         wcc
@@ -16,8 +16,6 @@ target_compile_options(
         PUBLIC
         -fPIC
         -O3
-        -ffast-math
-        -ffinite-math-only
         -funroll-loops               # Unroll loops for better performance
         -ftree-vectorize             # Enable vectorization
         -pthread)

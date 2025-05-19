@@ -1,5 +1,5 @@
 # cmake sub-directory for src specification
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.10)
 
 add_compile_definitions(PROJECT_ROOT="${PROJECT_SOURCE_DIR}")
 
@@ -32,8 +32,6 @@ target_compile_options(
         -Wextra
         -pthread
         -O3
-        -ffast-math
-        -ffinite-math-only
         -funroll-loops               # Unroll loops for better performance
         -ftree-vectorize             # Enable vectorization
 )
