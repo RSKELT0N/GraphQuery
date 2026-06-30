@@ -91,13 +91,14 @@ graphquery::database::analytic::CGraphAlgorithmWCC::compute(storage::IModel * gr
         ++sizes[remap[x[sparse[i]]]];
     }
 
-    m_log_system->info(fmt::format("ConnectedComponents: {} components", ncc));
+    m_log_system->info(fmt::format("Weakly Connected Components: {} components", ncc));
 
     delete[] x;
     delete[] y;
     delete[] degree;
     delete[] remap;
     delete[] sizes;
+    
     return ncc;
 }
 

@@ -84,6 +84,7 @@ graphquery::database::analytic::CGraphAlgorithmBFS::compute(storage::IModel * gr
             utils::atomic_fetch_inc(&is_reachable_c);
     }
 
+    m_log_system->info(fmt::format("Vertices reachable to {}: {}", source, is_reachable_c));
     return static_cast<double>(is_reachable_c);
 }
 

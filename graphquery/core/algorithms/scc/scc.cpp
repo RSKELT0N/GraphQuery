@@ -38,6 +38,8 @@ graphquery::database::analytic::CGraphAlgorithmSCC::compute(storage::IModel * gr
     delete[] disc;
     delete[] low;
     delete[] instack;
+
+    m_log_system->info(fmt::format("Strongly Connected Components found: {}", ncc));
     return static_cast<double>(ncc);
 }
 
